@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<FTP>
+ <ip>192.168.0.94</ip>
+ <user>websphere</user>
+ <password>tnstns</password>
+ <basepath>/home/websphere</basepath>
+</FTP>

@@ -1,0 +1,222 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+'''
+Created on 2011-1-3
+
+@author: ￁ￖ￨￫
+'''
+import ConfigParser
+import os
+import re
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+from ServiceUtil import ParamUtil
+from ServiceUtil import LinkConst
+import logging
+import logging.handlers
+import SystemInfo
+
+def getCommonConfig():
+    """
+      ﾶ￁￈ﾡivrtrack.iniﾵￄￅ￤ￖￃￎￄﾼ￾￐ￅￏﾢ
+    """
+    #global URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
+    global URL
+    global MONITOR_NAME
+    config=ConfigParser.ConfigParser()
+    log.info(os.getcwd()+os.sep+'ivrtrack.ini')
+    ivrtrackFileObject=open(os.getcwd()+os.sep+'monitor.ini')
+    config.readfp(ivrtrackFileObject)
+    URL=config.get('common', 'URL')
+    MONITOR_NAME=config.get('common', 'MONITOR_NAME')
+    if len(URL)==0:
+        URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
+def getMonitorService():
+    """
+       ﾵ￷ￓￃﾷ￾ￎ￱ﾻ￱￈ﾡﾼ￠﾿￘ﾵￄￎￄﾼ￾
+       ﾷﾵﾻ￘ￒﾻﾸ￶￁￐ﾱ￭ﾣﾬￊ�ﾾ￝ﾽ￡ﾹﾹ￈￧ￏￂ:
+       ﾶ￠ﾸ￶ﾹ￘ﾼ￼ￗￖￖﾮﾼ￤ￒￔﾶﾺﾺￅￗ￶ﾷￖﾸ￴.
+       [{'monitorFile':ﾼ￠﾿￘ￎￄﾼ￾,'keys':ﾹ￘ﾼ￼ￗￖﾣﾬ'countMonitor':ﾴￎￊ�ﾸ￦ﾾﾯ,'tailRowNum':tailﾵￄ￐￐ￊ�,'procName':CPUￏ￟ﾳￌￃ￻,'procCpuLimit'ﾣﾺCPUﾸ￦ﾾﾯﾷﾧￖﾵ},('monitorFile':ﾼ￠﾿￘ￎￄﾼ￾,'keys':ﾹ￘ﾼ￼ￗￖﾣﾬ'countMonitor':ﾴￎￊ�ﾸ￦ﾾﾯ)]
+           1 monitorFile monitorFile ﾼ￠﾿￘ￎￄﾼ￾ￃ￻ￂﾷﾾﾶ 
+                2 keys keys ﾼ￠﾿￘ﾹ￘ﾼ￼ￗￖﾣﾬﾶ￠ﾸ￶ﾹ￘ﾼ￼ￗￖￖﾮﾼ￤ﾰﾴￓ￐ﾶﾺﾺￅﾷￖﾸ￴ 
+                3 countMonitor countMonitor ﾸ￦ﾾﾯﾷﾧￖﾵ 
+                4 tailRowNum tailRowNum ﾼ￠﾿￘ￎￄﾼ￾ﾵￄ￐￐ￊ� 
+                ﾱ￭2   rows=1 cols=4 
+                1 cpu_idle_limit cpu_idle_limit CPUﾸ￦ﾾﾯﾷﾧￖﾵ 
+                2 memory_avi_limit memory_avi_limit ﾿￉ￓￃￄￚﾴ￦ﾸ￦ﾾﾯﾷﾧￖﾵ(KB) 
+                3 hardspace_name hardspace_name ￓﾲￅￌￃ￻ﾳￆ(￀�￈￧/dev/sda3) 
+                4 hardspace_limit hardspace_limit ￓﾲￅￌﾸ￦ﾾﾯﾷﾧￖﾵ 
+                ﾱ￭3   rows=1 cols=2 
+                1 proc_name proc_name ￏ￟ﾳￌￃ￻ﾳￆ 
+                2 proc_cpu_limit proc_cpu_limit ￏ￟ﾳￌCPUﾸ￦ﾾﾯﾷﾧￖﾵ 
+
+    """
+    #global URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
+    monitorList=[]
+    paramUtil=ParamUtil()
+    outputParam=paramUtil.invoke("Monitor_Pt_Config", MONITOR_NAME, URL)
+    if outputParam.is_success() :
+        table=outputParam.get_tables().get_first_table()
+        for row in table.get_row_list():
+            monitorObject={};
+            monitorObject['monitorFile']=row.get_one_column(0).get_value()
+            monitorObject['keys']=row.get_one_column(1).get_value()
+            monitorObject['countMonitor']=row.get_one_column(2).get_value()
+            monitorObject['tailRowNum']=row.get_one_column(3).get_value()
+            monitorObject['procName']=row.get_one_column(4).get_value()
+            monitorObject['procCpuLimit']=row.get_one_column(5).get_value()
+            monitorList.append(monitorObject)
+    return monitorList
+
+def monitorFile(monitorList):
+    """
+     ﾼ￠﾿￘￈ￕￖﾾￎￄﾼ￾.ﾷﾵﾻ￘￐￨ￒﾪﾸ￦ﾾﾯﾵￄ￈ￕￖﾾﾱ￭ﾡﾣ
+    """
+    warnToPersonList=[]
+    for monitorObject in monitorList:
+        commondStr='tail -'
+        commondStr=commondStr+monitorObject['tailRowNum']+' '+monitorObject['monitorFile']
+        log.info(commondStr)
+        searchLogStd=os.popen(commondStr)
+        keyList=[]
+        if isinstance(monitorObject['keys'],unicode):#ￓ￶ﾵﾽￖ￐ￎￄﾹ￘ﾼ￼ￗￖﾣﾬￒﾪﾰ￑unicode￀￠￐ￍￗﾪﾻﾻￎﾪstr￀￠￐ￍ.
+            keyList=monitorObject['keys'].encode('GBK').split('||')
+        else:
+            keyList=monitorObject['keys'].split('||')
+        appearCountOfKeyMap={}
+        for key in keyList:
+            appearCountOfKeyMap[key]=0
+            log.info('search key:'+key)
+            for lineLog in searchLogStd.readlines():#ￊￇﾷ￱ￓ￐ﾹ￘ﾼ￼ￗￖￄￚ￈￝
+                if re.search(key,lineLog):
+                    appearCountOfKeyMap[key]=appearCountOfKeyMap[key]+1
+            log.info( 'realLimit:%d,warnLimit:%s'%(appearCountOfKeyMap[key],monitorObject['countMonitor']))
+            if appearCountOfKeyMap[key]>=int(monitorObject['countMonitor']):#ﾵﾽﾴ￯ﾸ￦ﾾﾯￌ￵ﾼ￾ﾣﾬ￐ﾴﾸ￦ﾾﾯￄￚ￈￝
+                warnStr=MONITOR_NAME+' Warnning:log file:'+monitorObject['monitorFile']+' key:'+key+' occur times:'+str(appearCountOfKeyMap[key])
+                print warnStr
+                warnToPersonList.append(warnStr)
+    return warnToPersonList
+
+def sendToWarn(warnToPersonList):
+    """
+    ﾷﾢￋￍﾸ￦ﾾﾯ￐ￅￏﾢﾸ￺ￏ￠ￓﾦﾵￄ￁ﾪￏﾵ￈ￋￔﾱ
+    """
+    paramUtil=ParamUtil()
+    inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
+    inputStr=inputStr+'\r\n'.join(warnToPersonList)
+    outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
+    flag=''
+    if outputParam.is_success() :
+        flag=outputParam.get_first_column_value()
+    return flag=='0'
+
+def monitorProcCpu(monitorObjectList,saveDbMsgDict):
+    """
+    1.ﾸ￹ﾾ￝ￏ￟ﾳￌￃ￻ﾳￆﾻ￱￈ﾡￏ￠ￓﾦￏ￟ﾳￌﾵￄﾸ￦ﾾﾯ￐ￅￏﾢ.
+    2.ﾽﾫￏ￟ﾳￌﾵￄCPU￐ￅￏﾢﾱﾣﾴ￦ﾵﾽￊ�ﾾ￝﾿￢ￖ￐
+    """
+    warnToPersonList=[]
+    procNameMap={}
+    for monitorObject in monitorObjectList:
+        if procNameMap.has_key(monitorObject['procName'])==False and monitorObject['procCpuLimit'].isdigit():
+            procNameMap[monitorObject['procName']]=monitorObject['procCpuLimit']
+    pidObjectList=SystemInfo.getCPUUsedByPidName(procNameMap.keys())
+    saveDBMsgDict['procCpu']=pidObjectList
+    for pidObject in pidObjectList:
+        if pidObject[2]>=float(procNameMap[pidObject[0]]):
+            log.info('ￏ￟ﾳￌCPUﾸ￦ﾾﾯ: pid:%s,pid_name:%s,cpu_limit:%s,real_cpu:%s',pidObject[0],pidObject[1],procNameMap[pidObject[0]],str(pidObject[2]))
+            warnStr=MONITOR_NAME+'proc Warning:pid_name:'+pidObject[0]+' pid_id:'+pidObject[1]+' cpu_limit:'+procNameMap[pidObject[0]]++' real_cpu:'+str(pidObject[2])
+            warnToPersonList.append(warnStr)
+    if len(pidObject)>0:
+        pass #call service.
+    return warnToPersonList
+def monitorCpu(cpuIdleLimit,saveDbMsgDict):
+    """
+     1.ﾸ￹ﾾ￝CPU Idleﾵￄﾸ￦ﾾﾯﾷﾧￖﾵﾣﾬﾷﾢￋￍﾸ￦ﾾﾯ￐ￅￏﾢ
+     2.ﾽﾫCPUﾣﾬﾵￄ￐ￅￏﾢﾱﾣﾴ￦ﾵﾽￊ�ﾾ￝﾿￢ￖ￐.
+    """
+    warnToPersonList=[]
+    cpuIdle=SystemInfo.getCpuIdle()
+    saveDbMsgDict['cpuIdle']=cpuIdle
+    if cpuIdle<float(cpuIdleLimit):
+        log.info("CPU Idleﾸ￦ﾾﾯ: cpuIdle_limit:%s,real_cpuIdle:%s",cpuIdleLimit,str(cpuIdle))
+        warnStr=MONITOR_NAME+'cpu Idle Warning:cpuIdle_limit:'+cpuIdleLimit+' real_cpuIdle:'+str(cpuIdle)
+        warnToPersonList.append(warnStr)
+    return warnToPersonList
+def monitorMemory(aviPhymenLimit,saveDbMsgDict):
+    """
+     1.ﾸ￹ﾾ￝ￄￚﾴ￦ﾵￄﾸ￦ﾾﾯﾷﾧￖﾵﾣﾬﾷﾢￋￍﾸ￦ﾾﾯ￐ￅￏﾢ
+     2.ﾽﾫￄￚﾴ￦￐ￅￏﾢﾱﾣﾴ￦ﾵﾽￊ�ﾾ￝﾿￢ￖ￐.
+    """
+    warnToPersonList=[]
+    memoryObject=SystemInfo.getMemoryInfo()
+    saveDbMsgDict['memory']=memoryObject
+    if memoryObject[1]<float(aviPhymenLimit):
+        log.info("ￄￚﾴ￦ﾸ￦ﾾﾯ: aviPhymenLimit:%sKB,real_aviPhymen:%sKB",aviPhymenLimit,str(memoryObject[1]))
+        warnStr=MONITOR_NAME+'Memory Warning:aviPhymenLimit:'+aviPhymenLimit+'KB real_aviPhymen:'+str(memoryObject[1])+'KB'
+        warnToPersonList.append(warnStr)
+    return warnToPersonList
+
+def saveSystemIinfo(saveDbMsgDict):
+    """
+     ﾽﾫￊￕﾼﾯﾵﾽﾵￄￏﾵￍﾳ￐ￅￏﾢﾱﾣﾴ￦ﾴ￳ￊ�ﾾ￝﾿￢ￖ￐.
+    """
+    procCpuList=saveDbMsgDict['procCpu']#[(name,pid,usedCpu,usedMemory)]
+    cpuIdle=saveDbMsgDict['cpuIdle']
+    memoryObject=saveDbMsgDict['memory']#(total_phymen,avi_phymen.used_phymen) KB 
+    hardSpaceList=SystemInfo.getHardSpace()#[(ￎￄﾼ￾ￏﾵￍﾳ,ￒ￑ￓￃ﾿ￕﾼ￤,﾿￉ￓￃ﾿ￕﾼ￤,ￒ￑ￓￃ%,ﾹￒￔ￘ﾵ￣)]
+    table_1List=[MONITOR_NAME,cpuIdle]+memoryObject
+    table_1=str(LinkConst.SPLIT_COLUMN).join(table_1List)
+    procInputList=[]
+    for procIdObject in procCpuList:
+        procInputList.append(str(LinkConst.SPLIT_COLUMN).join(procIdObject))
+    table_2=str(LinkConst.SPLIT_ROW).join(procInputList)
+    hardSpaceInputList=[]
+    for hardSpaceObject in hardSpaceList:
+        hardSpaceInputList.append(str(LinkConst.SPLIT_COLUMN).join(hardSpaceObject))
+    table_3=str(LinkConst.SPLIT_ROW).join(hardSpaceInputList)
+    inputStr=table_1+LinkConst.SPLIT_TABLE+table_2+LinkConst.SPLIT_TABLE+table_3
+    
+        
+def get_version():
+    version ='1.0.0.0'
+    
+    """
+     ﾻ￱￈ﾡﾰ￦ﾱﾾ￐ￅￏﾢ.
+    """
+    log.info( '=========================================================================')
+    log.info('  pt_monitor.py current version is %s               '%(version))
+    log.info( '=========================================================================')
+    return version
+                
+            
+        
+if __name__ == '__main__':
+    # set Logger Config
+    log = logging.getLogger()
+    log.setLevel(logging.DEBUG)
+    h1 = logging.handlers.RotatingFileHandler(os.getcwd()+os.sep+'monitor.log',maxBytes=2097152,backupCount=5)
+    h1.setLevel(logging.INFO)
+    f=logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    h1.setFormatter(f)
+    log.addHandler(h1)
+    
+    
+    
+    get_version()
+    getCommonConfig()
+    log.info('URL:%s,MONITOR_NAME:%s'%(URL,MONITOR_NAME))
+    monitorList=getMonitorService()
+    if len(monitorList)==0:
+        log.info( 'ￃﾻￓ￐ﾸￃIVRﾵￄﾼ￠﾿￘ￅ￤ￖￃ￐ￅￏﾢﾣﾬￇ￫ﾲ￩﾿ﾴMonitor_Pt_Configﾷ￾ￎ￱.')
+        sys.exit()
+    warnToPersonList=monitorFile(monitorList)
+    saveDBMsgDict={}
+    warnToPersonList=warnToPersonList+monitorProcCpu(monitorList,saveDBMsgDict)
+    warnToPersonList=warnToPersonList+monitorCpu('70',saveDBMsgDict)
+    if len(warnToPersonList)==0:
+        log.info( 'ￃﾻￓ￐ﾸ￦ﾾﾯ￐ￅￏﾢ')
+        sys.exit()
+    sendToWarn(warnToPersonList)

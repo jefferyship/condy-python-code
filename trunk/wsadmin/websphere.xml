@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<websphere>
+        <cellname>Dmgr01Cell</cellname>
+        <managernodename>fjastestCellManager01</managernodename>
+        <JAASAuthDatas>
+                <JAASAuthData>
+                        <alias>condy</alias>
+                        <userId>condy</userId>
+                        <password>condy_test</password>
+                        <!--    <description>condy_test</description>-->
+                </JAASAuthData>
+        </JAASAuthDatas>
+        <JDBCProviders>
+                <JDBCProvider>
+                        <nodename></nodename>
+                        <servername></servername>
+                        <name></name>
+                </JDBCProvider>
+        </JDBCProviders>
+        <J2EEResourcePropertys>
+                <J2EEResourceProperty>
+                        <nodename>fjastestNode01</nodename>
+                        <!--<servername></servername>-->
+                        <jdbcprovider>Oracle JDBC Driver for 10g</jdbcprovider>
+                        <jndiName>createds</jndiName>
+                        <authDataAlias>tccsfj-csk</authDataAlias>
+                        <url>jdbc:oracle:thin:@(DESCRIPTION =(ADDRESS = (PROTOCOL = TCP)(Host = 134.128.138.69)(Port = 1521))(CONNECT_DATA =( SERVICE_NAME = tccs)))</url>
+                        <!--    <description></description>
+                        <maxConnections></maxConnections>
+                        <minConnections></minConnections>
+                        <connectionTimeout></connectionTimeout>-->
+                </J2EEResourceProperty>
+        </J2EEResourcePropertys>
+</websphere>

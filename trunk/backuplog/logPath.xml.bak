@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<LOG_PATHS>
+	<LOG_PATH>
+	  <name>svcmgrlog</name>
+	  <value>d:\temp\urge</value>
+	</LOG_PATH>
+</LOG_PATHS>

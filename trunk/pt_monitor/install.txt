@@ -1,0 +1,55 @@
+平台告警监控程序 版本：1.1.0.7
+ 实现以下功能:
+  1.搜索平台日志文件的关键字，可以定义阀值短信告警。
+  2.监控平台的CPU Idle,物理内存，可定义阀值短信告警
+  3.监控平台的可用磁盘空间，可定义阀值短信告警
+  4.监控平台主要线程的CPU，内存使用情况，可定义阀值短信告警
+  5.搜集平台的CPU Idle,内存使用情况，磁盘空间使用情况到数据库中。
+  6.自动监控，bin目录下的core文件。有core产生时及时告警.
+  7.自动备份平台程序。将平台程序自动FTP到指定的路径下。可以自动定期备份.
+
+依赖运行环境及相关包:
+   1.python 运行环境。版本要在2.4以上.
+      查看python版本的版本.在linux命令行下。运行 python命令，自动会出现版本提示.
+   2.psutil的模块包。可以到http://code.google.com/p/psutil/网站上下载.
+
+配置说明:
+   1.配置monitor.ini文件。
+        1)将url指向正式环境应用服务器的地址.例如:
+           url = http://134.128.196.11:9082/iservuc/ServiceGate/SimpleXMLGate
+        2)MONITOR_NAME指定监控机器的名称，必须是唯一的。可以是IP地址或机器名称.例如:
+           MONITOR_NAME=ivr2
+   2.数据库表配置说明:
+        1)到monitor_pt_machine_name表配置与MONITOR_NAME相对应的机器名称信息.
+        2)到monitor_pt_file_info表配置搜索平台日志文件的关键字，及相关告警阀值
+        3)monitor_pt_proc_info表，配置监控线程CPU,内存使用情况的相关表
+        4)monitor_pt_system_info表，配置平台CPU Idle,内存使用情况，磁盘空间的告警阀值表.
+        5)monitor_pt_hardspace_log表:日志表，收集平台的磁盘空间使用情况
+        6)monitor_pt_proc_log表：在monitor_pt_proc_info表有配置时记录线程的CPU,内存使用情况.
+        7)monitor_pt_system_log表：收集平台的CPU Idle,内存使用情况日志表
+        8)MONITOR_PT_WARNING_PERSON表.平台监控告警联系人配置表
+        9)ECC_CODE_DICT表select gg.*,gg.rowid from ecc_code_dict gg where gg.module='PT_MONITOR'.
+           code='version' 平台监控程序的版本号
+           code='ip','password','username' 补丁的FTP地址，用户名、及密码
+           code='dict' 补丁的路径.
+           正式的补丁路径是code='dict'的value+补丁的版本号。例如补丁(code='version')的版本号是:1.0.0.2
+           补丁路径（code='dict'）为:/home/websphere/python_code。那么真实的FTP的补丁路径为:/home/websphere/python_code/1.0.0.2
+        10)monitor_pt_backup_info表，自动备份平台的程序的配置表.通过调用monitor_pt_backup_file函数实现.
+
+监控程序安装说明:
+       1.安装psutil模块表.
+          0）确认python在2.4版本以上
+          1)tar -xzvf psutil-0.2.0.tar.gz 
+          2) cd psutil-0.2.0
+          3)chmod 777 setup.py
+          4)./setup.py install
+       2.安装监控程序
+         1)tar -xvf monitor.tar
+         2)cd monitor
+         3)chmod 777 monitor.py
+         4)将定时器程序配置crontab -e. 例如配置一个每5分钟执行一次的定时器
+             */5 * * * * /home/tnsmcc/monitor/monitor.py
+  在目录下会自动生成monitor.log的日志信息.
+  
+
+          

@@ -1,0 +1,130 @@
+﻿#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+'''
+Created on 2011-1-3
+
+@author: 林桦
+'''
+import ConfigParser
+import os
+import re
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+from ServiceUtil import ParamUtil
+from ServiceUtil import LinkConst
+import logging
+import logging.handlers
+
+def getCommonConfig():
+    """
+      读取ivrtrack.ini的配置文件信息
+    """
+    #global URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
+    global URL
+    global MONITOR_NAME
+    config=ConfigParser.ConfigParser()
+    log.info(os.getcwd()+os.sep+'ivrtrack.ini')
+    ivrtrackFileObject=open(os.getcwd()+os.sep+'monitor.ini')
+    config.readfp(ivrtrackFileObject)
+    URL=config.get('common', 'URL')
+    MONITOR_NAME=config.get('common', 'MONITOR_NAME')
+    if len(URL)==0:
+        URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
+def getMonitorService():
+    """
+       调用服务获取监控的文件
+       返回一个列表，数据结构如下:
+       多个关键字之间以逗号做分隔.
+       [{'monitorFile':监控文件,'keys':关键字，'countMonitor':次数告警,'tailRowNum':tail的行数},('monitorFile':监控文件,'keys':关键字，'countMonitor':次数告警)]
+    """
+    #global URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
+    monitorList=[]
+    paramUtil=ParamUtil()
+    outputParam=paramUtil.invoke("Monitor_Pt_Config", MONITOR_NAME, URL)
+    if outputParam.is_success() :
+        table=outputParam.get_tables().get_first_table()
+        for row in table.get_row_list():
+            monitorObject={};
+            monitorObject['monitorFile']=row.get_one_column(0).get_value()
+            monitorObject['keys']=row.get_one_column(1).get_value()
+            monitorObject['countMonitor']=row.get_one_column(2).get_value()
+            monitorObject['tailRowNum']=row.get_one_column(3).get_value()
+            monitorList.append(monitorObject)
+    return monitorList
+
+def monitorFile(monitorList):
+    """
+     监控日志文件.返回需要告警的日志表。
+    """
+    warnToPersonList=[]
+    for monitorObject in monitorList:
+        commondStr='tail -'
+        commondStr=commondStr+monitorObject['tailRowNum']+' '+monitorObject['monitorFile']
+        log.info(commondStr)
+        searchLogStd=os.popen(commondStr)
+        keyList=monitorObject['keys'].split('||')
+        appearCountOfKeyMap={}
+        for key in keyList:
+            appearCountOfKeyMap[key]=0
+            for lineLog in searchLogStd.readlines():#是否有关键字内容
+                if re.search(key,lineLog):
+                    appearCountOfKeyMap[key]=appearCountOfKeyMap[key]+1
+            log.info( 'realLimit:%d,warnLimit:%s'%(appearCountOfKeyMap[key],monitorObject['countMonitor']))
+            if appearCountOfKeyMap[key]>=int(monitorObject['countMonitor']):#到达告警条件，写告警内容
+                warnStr=MONITOR_NAME+' Warnning:log file:'+monitorObject['monitorFile']+' key:'+key+' occur times:'+str(appearCountOfKeyMap[key])
+                print warnStr
+                warnToPersonList.append(warnStr)
+    return warnToPersonList
+
+def sendToWarn(warnToPersonList):
+    """
+    发送告警信息跟相应的联系人员
+    """
+    paramUtil=ParamUtil()
+    inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
+    inputStr=inputStr+'\r\n'.join(warnToPersonList)
+    outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
+    flag=''
+    if outputParam.is_success() :
+        flag=outputParam.get_first_column_value()
+    return flag=='0'
+
+def get_version():
+    version ='1.0.0.0'
+    
+    """
+     获取版本信息.
+    """
+    log.info( '=========================================================================')
+    log.info('  pt_monitor.py current version is %s               '%(version))
+    log.info( '=========================================================================')
+    return version
+                
+            
+        
+if __name__ == '__main__':
+    # set Logger Config
+    log = logging.getLogger()
+    log.setLevel(logging.DEBUG)
+    h1 = logging.handlers.RotatingFileHandler(os.getcwd()+os.sep+'monitor.log',maxBytes=2097152,encoding='UTF-8',backupCount=5)
+    h1.setLevel(logging.INFO)
+    f=logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    h1.setFormatter(f)
+    log.addHandler(h1)
+    
+    
+    get_version()
+    getCommonConfig()
+    log.info('URL:%s,MONITOR_NAME:%s'%(URL,MONITOR_NAME))
+    monitorList=getMonitorService()
+    if len(monitorList)==0:
+        log.info( '没有该IVR的监控配置信息，请查看Monitor_Pt_Config服务.')
+        sys.exit()
+    for monitorObject in monitorList:
+    warnToPersonList=monitorFile(monitorList)
+    if len(warnToPersonList)==0:
+        log.info( '没有告警信息')
+        sys.exit()
+    sendToWarn(warnToPersonList)
