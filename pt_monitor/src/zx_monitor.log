@@ -1,0 +1,371 @@
+2011-04-21 17:13:56,484 INFO {'almclk': {'alarm_level': '3', 'alarm_name': '\xca\xb1\xd6\xd3\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almclk'}, 'almpower': {'alarm_level': '4', 'alarm_name': '\xb5\xe7\xd4\xb4\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almpower'}, 'almv5': {'alarm_level': '4', 'alarm_name': 'V5\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almv5'}, 'almoep': {'alarm_level': 5, 'alarm_name': '\xb5\xe7(\xb9\xe2)\xb6\xcb\xbb\xfa\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almoep'}, 'almrst': {'alarm_level': '4', 'alarm_name': '\xcf\xb5\xcd\xb3\xd4\xd9\xc6\xf4\xb6\xaf\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almrst'}, 'almpcm': {'alarm_level': '4', 'alarm_name': 'PCM\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almpcm'}, 'almenv': {'alarm_level': '4', 'alarm_name': '\xbb\xb7\xbe\xb3\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almenv'}, 'almrack': {'alarm_level': '1', 'alarm_name': '\xbb\xfa\xbc\xdc\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almrack'}, 'almcomm': {'alarm_level': '4', 'alarm_name': '\xcd\xa8\xd1\xb6\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almcomm'}, 'almcpu': {'alarm_level': '4', 'alarm_name': 'CPU\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almcpu'}, 'almn7lk': {'alarm_level': 5, 'alarm_name': '7\xba\xc5\xd0\xc5\xc1\xee\xc1\xb4\xc2\xb7\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almn7lk'}, 'almspc': {'alarm_level': '4', 'alarm_name': '\xbd\xbb\xbb\xbb\xbb\xfa\xd4\xcb\xd0\xd0\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almspc'}, 'almcs7': {'alarm_level': 5, 'alarm_name': '7\xba\xc5\xd0\xc5\xc1\xee\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almcs7'}}
+2011-04-21 17:13:56,486 INFO TELNET_IP:134.132.34.3,TELNET_PORT:6688
+2011-04-21 17:14:00,486 INFO 0
+2011-04-21 17:14:00,489 DEBUG recieve data: 
+START
+1 591
+2000418  4
+2011-04-21 05:44:49
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 2
+rack = 1
+shelf = 5
+card = 16
+circuit =
+alarmcode = 位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1
+END
+
+2011-04-21 17:14:00,522 INFO test:fz_fx_monitor1数字中继PCM告警:位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1,PCM开始端口:9570后的30个电路,备注:闽候
+2011-04-21 17:14:04,549 INFO 1
+2011-04-21 17:14:04,549 DEBUG recieve data: 
+START
+1 591
+2000418  4
+2011-04-21 05:44:49
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 2
+rack = 1
+shelf = 5
+card = 16
+circuit =
+alarmcode = 位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1
+END
+
+2011-04-21 17:14:04,576 INFO test:fz_fx_monitor1数字中继PCM告警:位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1,PCM开始端口:9570后的30个电路,备注:闽候
+2011-04-21 17:14:08,598 INFO 2
+2011-04-21 17:14:08,599 DEBUG recieve data: 
+START
+1 591
+2000418  4
+2011-04-21 05:44:49
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 2
+rack = 1
+shelf = 5
+card = 16
+circuit =
+alarmcode = 位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1
+END
+
+2011-04-21 17:14:08,631 INFO test:fz_fx_monitor1数字中继PCM告警:位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1,PCM开始端口:9570后的30个电路,备注:闽候
+2011-04-21 17:14:08,657 ERROR 系统报错
+Traceback (most recent call last):
+  File "F:\python_code\pt_monitor\src\zx_monitor.py", line 319, in <module>
+    tn.close()
+NameError: name 'tn' is not defined
+2011-04-21 17:18:05,381 INFO {'almclk': {'alarm_level': '3', 'alarm_name': '\xca\xb1\xd6\xd3\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almclk'}, 'almpower': {'alarm_level': '4', 'alarm_name': '\xb5\xe7\xd4\xb4\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almpower'}, 'almv5': {'alarm_level': '4', 'alarm_name': 'V5\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almv5'}, 'almoep': {'alarm_level': 5, 'alarm_name': '\xb5\xe7(\xb9\xe2)\xb6\xcb\xbb\xfa\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almoep'}, 'almrst': {'alarm_level': '4', 'alarm_name': '\xcf\xb5\xcd\xb3\xd4\xd9\xc6\xf4\xb6\xaf\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almrst'}, 'almpcm': {'alarm_level': '4', 'alarm_name': 'PCM\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almpcm'}, 'almenv': {'alarm_level': '4', 'alarm_name': '\xbb\xb7\xbe\xb3\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almenv'}, 'almrack': {'alarm_level': '1', 'alarm_name': '\xbb\xfa\xbc\xdc\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almrack'}, 'almcomm': {'alarm_level': '4', 'alarm_name': '\xcd\xa8\xd1\xb6\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almcomm'}, 'almcpu': {'alarm_level': '4', 'alarm_name': 'CPU\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almcpu'}, 'almn7lk': {'alarm_level': 5, 'alarm_name': '7\xba\xc5\xd0\xc5\xc1\xee\xc1\xb4\xc2\xb7\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almn7lk'}, 'almspc': {'alarm_level': '4', 'alarm_name': '\xbd\xbb\xbb\xbb\xbb\xfa\xd4\xcb\xd0\xd0\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almspc'}, 'almcs7': {'alarm_level': 5, 'alarm_name': '7\xba\xc5\xd0\xc5\xc1\xee\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almcs7'}}
+2011-04-21 17:18:05,381 INFO TELNET_IP:134.132.34.3,TELNET_PORT:6688
+2011-04-21 17:18:09,384 INFO 0
+2011-04-21 17:18:09,388 DEBUG recieve data: 
+START
+1 591
+2000418  4
+2011-04-21 05:44:49
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 2
+rack = 1
+shelf = 5
+card = 16
+circuit =
+alarmcode = 位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1
+END
+START
+1 591
+2000061  4
+2011-04-04 17:07:35
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 4
+rack = 1
+shelf = 6
+card = 7
+circuit =
+alarmcode = 位置:2-1-6-7(2行1列)PCM序号:4原因:复帧失步
+END
+START
+1 591
+2000066  4
+2011-04-04 17:07:36
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 14
+rack = 1
+shelf = 5
+card = 15
+circuit =
+alarmcode = 位置:2-1-5-15(2行1列)PCM序号:14原因:PCM接口信号丢失(接收不到对端的信号)
+END
+
+2011-04-21 17:18:09,480 INFO test:fz_fx_monitor1数字中继PCM告警:位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1,PCM开始端口:9570后的30个电路,备注:闽候
+2011-04-21 17:18:09,509 INFO test:fz_fx_monitor1数字中继PCM告警:位置:2-1-5-15(2行1列)PCM序号:14原因:PCM接口信号丢失(接收不到对端的信号),PCM开始端口:9480后的30个电路,备注:普座
+2011-04-21 17:18:13,532 INFO 1
+2011-04-21 17:18:13,533 DEBUG recieve data: 
+START
+1 591
+2000418  4
+2011-04-21 05:44:49
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 2
+rack = 1
+shelf = 5
+card = 16
+circuit =
+alarmcode = 位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1
+END
+START
+1 591
+2000061  4
+2011-04-04 17:07:35
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 4
+rack = 1
+shelf = 6
+card = 7
+circuit =
+alarmcode = 位置:2-1-6-7(2行1列)PCM序号:4原因:复帧失步
+END
+START
+1 591
+2000066  4
+2011-04-04 17:07:36
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 14
+rack = 1
+shelf = 5
+card = 15
+circuit =
+alarmcode = 位置:2-1-5-15(2行1列)PCM序号:14原因:PCM接口信号丢失(接收不到对端的信号)
+END
+
+2011-04-21 17:18:13,628 INFO test:fz_fx_monitor1数字中继PCM告警:位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1,PCM开始端口:9570后的30个电路,备注:闽候
+2011-04-21 17:18:13,648 INFO test:fz_fx_monitor1数字中继PCM告警:位置:2-1-5-15(2行1列)PCM序号:14原因:PCM接口信号丢失(接收不到对端的信号),PCM开始端口:9480后的30个电路,备注:普座
+2011-04-21 17:18:17,668 INFO 2
+2011-04-21 17:18:17,671 DEBUG recieve data: 
+START
+1 591
+2000418  4
+2011-04-21 05:44:49
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 2
+rack = 1
+shelf = 5
+card = 16
+circuit =
+alarmcode = 位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1
+END
+START
+1 591
+2000061  4
+2011-04-04 17:07:35
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 4
+rack = 1
+shelf = 6
+card = 7
+circuit =
+alarmcode = 位置:2-1-6-7(2行1列)PCM序号:4原因:复帧失步
+END
+START
+1 591
+2000066  4
+2011-04-04 17:07:36
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 14
+rack = 1
+shelf = 5
+card = 15
+circuit =
+alarmcode = 位置:2-1-5-15(2行1列)PCM序号:14原因:PCM接口信号丢失(接收不到对端的信号)
+END
+
+2011-04-21 17:18:17,762 INFO test:fz_fx_monitor1数字中继PCM告警:位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1,PCM开始端口:9570后的30个电路,备注:闽候
+2011-04-21 17:18:17,786 INFO test:fz_fx_monitor1数字中继PCM告警:位置:2-1-5-15(2行1列)PCM序号:14原因:PCM接口信号丢失(接收不到对端的信号),PCM开始端口:9480后的30个电路,备注:普座
+2011-04-21 17:18:17,815 ERROR 系统报错
+Traceback (most recent call last):
+  File "F:\python_code\pt_monitor\src\zx_monitor.py", line 347, in <module>
+    tn.close()
+NameError: name 'tn' is not defined
+2011-04-21 17:28:51,609 INFO {'almclk': {'alarm_level': '3', 'alarm_name': '\xca\xb1\xd6\xd3\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almclk'}, 'almpower': {'alarm_level': '4', 'alarm_name': '\xb5\xe7\xd4\xb4\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almpower'}, 'almv5': {'alarm_level': '4', 'alarm_name': 'V5\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almv5'}, 'almoep': {'alarm_level': 5, 'alarm_name': '\xb5\xe7(\xb9\xe2)\xb6\xcb\xbb\xfa\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almoep'}, 'almrst': {'alarm_level': '4', 'alarm_name': '\xcf\xb5\xcd\xb3\xd4\xd9\xc6\xf4\xb6\xaf\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almrst'}, 'almpcm': {'alarm_level': '4', 'alarm_name': 'PCM\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almpcm'}, 'almenv': {'alarm_level': '4', 'alarm_name': '\xbb\xb7\xbe\xb3\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almenv'}, 'almrack': {'alarm_level': '1', 'alarm_name': '\xbb\xfa\xbc\xdc\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almrack'}, 'almcomm': {'alarm_level': '4', 'alarm_name': '\xcd\xa8\xd1\xb6\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almcomm'}, 'almcpu': {'alarm_level': '4', 'alarm_name': 'CPU\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almcpu'}, 'almn7lk': {'alarm_level': 5, 'alarm_name': '7\xba\xc5\xd0\xc5\xc1\xee\xc1\xb4\xc2\xb7\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almn7lk'}, 'almspc': {'alarm_level': '4', 'alarm_name': '\xbd\xbb\xbb\xbb\xbb\xfa\xd4\xcb\xd0\xd0\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almspc'}, 'almcs7': {'alarm_level': 5, 'alarm_name': '7\xba\xc5\xd0\xc5\xc1\xee\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almcs7'}}
+2011-04-21 17:28:51,609 INFO TELNET_IP:134.132.34.3,TELNET_PORT:6688
+2011-04-21 17:28:55,611 DEBUG recieve data: 
+START
+1 591
+2000418  4
+2011-04-21 05:44:49
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 2
+rack = 1
+shelf = 5
+card = 16
+circuit =
+alarmcode = 位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1
+END
+START
+1 591
+2000061  4
+2011-04-04 17:07:35
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 4
+rack = 1
+shelf = 6
+card = 7
+circuit =
+alarmcode = 位置:2-1-6-7(2行1列)PCM序号:4原因:复帧失步
+END
+START
+1 591
+2000066  4
+2011-04-04 17:07:36
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 14
+rack = 1
+shelf = 5
+card = 15
+circuit =
+alarmcode = 位置:2-1-5-15(2行1列)PCM序号:14原因:PCM接口信号丢失(接收不到对端的信号)
+END
+
+2011-04-21 17:28:55,612 INFO aaaaaaaaaaaa:3
+2011-04-21 17:28:55,688 INFO test:fz_fx_monitor1数字中继PCM告警:位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1,PCM开始端口:9570后的30个电路,备注:闽候数字中继PCM告警:位置:2-1-5-15(2行1列)PCM序号:14原因:PCM接口信号丢失(接收不到对端的信号),PCM开始端口:9480后的30个电路,备注:普座
+2011-04-21 17:28:59,717 DEBUG recieve data: 
+START
+1 591
+2000418  4
+2011-04-21 05:44:49
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 2
+rack = 1
+shelf = 5
+card = 16
+circuit =
+alarmcode = 位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1
+END
+START
+1 591
+2000061  4
+2011-04-04 17:07:35
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 4
+rack = 1
+shelf = 6
+card = 7
+circuit =
+alarmcode = 位置:2-1-6-7(2行1列)PCM序号:4原因:复帧失步
+END
+START
+1 591
+2000066  4
+2011-04-04 17:07:36
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 14
+rack = 1
+shelf = 5
+card = 15
+circuit =
+alarmcode = 位置:2-1-5-15(2行1列)PCM序号:14原因:PCM接口信号丢失(接收不到对端的信号)
+END
+
+2011-04-21 17:28:59,719 INFO aaaaaaaaaaaa:3
+2011-04-21 17:28:59,828 INFO test:fz_fx_monitor1数字中继PCM告警:位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1,PCM开始端口:9570后的30个电路,备注:闽候数字中继PCM告警:位置:2-1-5-15(2行1列)PCM序号:14原因:PCM接口信号丢失(接收不到对端的信号),PCM开始端口:9480后的30个电路,备注:普座
+2011-04-21 17:29:03,855 DEBUG recieve data: 
+START
+1 591
+2000418  4
+2011-04-21 05:44:49
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 2
+rack = 1
+shelf = 5
+card = 16
+circuit =
+alarmcode = 位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1
+END
+START
+1 591
+2000061  4
+2011-04-04 17:07:35
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 4
+rack = 1
+shelf = 6
+card = 7
+circuit =
+alarmcode = 位置:2-1-6-7(2行1列)PCM序号:4原因:复帧失步
+END
+START
+1 591
+2000066  4
+2011-04-04 17:07:36
+almpcm     数字中继PCM告警
+IP = 134.132.34.3
+mnode =  2
+snode = 14
+rack = 1
+shelf = 5
+card = 15
+circuit =
+alarmcode = 位置:2-1-5-15(2行1列)PCM序号:14原因:PCM接口信号丢失(接收不到对端的信号)
+END
+
+2011-04-21 17:29:03,857 INFO aaaaaaaaaaaa:3
+2011-04-21 17:29:03,944 INFO test:fz_fx_monitor1数字中继PCM告警:位置:2-1-5-16(2行1列)PCM序号:2原因:TS0全1,PCM开始端口:9570后的30个电路,备注:闽候数字中继PCM告警:位置:2-1-5-15(2行1列)PCM序号:14原因:PCM接口信号丢失(接收不到对端的信号),PCM开始端口:9480后的30个电路,备注:普座
+2011-04-21 17:29:03,963 ERROR 系统报错
+Traceback (most recent call last):
+  File "F:\python_code\pt_monitor\src\zx_monitor.py", line 346, in <module>
+    tn.close()
+NameError: name 'tn' is not defined
+2011-04-21 17:47:33,767 INFO =========================================================================
+2011-04-21 17:47:33,767 INFO   zx_monitor.py current version is 1.1.0.4               
+2011-04-21 17:47:33,767 INFO   author:Condy create time:2011.04.21
+2011-04-21 17:47:33,767 INFO   使用方法:启动方法1.确认zx_monitor.ini中的IS_START=1.启动 nohup ./zx_monitor.py &  
+2011-04-21 17:47:33,767 INFO            关闭:修改zx_monitor.ini中的IS_START参数更改为0.就会自动停止
+2011-04-21 17:47:33,769 INFO  功能点：收集中兴交换记得告警日志及相关告警
+2011-04-21 17:47:33,808 INFO {'almclk': {'alarm_level': '3', 'alarm_name': '\xca\xb1\xd6\xd3\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almclk'}, 'almpower': {'alarm_level': '4', 'alarm_name': '\xb5\xe7\xd4\xb4\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almpower'}, 'almv5': {'alarm_level': '4', 'alarm_name': 'V5\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almv5'}, 'almoep': {'alarm_level': 5, 'alarm_name': '\xb5\xe7(\xb9\xe2)\xb6\xcb\xbb\xfa\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almoep'}, 'almrst': {'alarm_level': '4', 'alarm_name': '\xcf\xb5\xcd\xb3\xd4\xd9\xc6\xf4\xb6\xaf\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almrst'}, 'almpcm': {'alarm_level': '4', 'alarm_name': 'PCM\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almpcm'}, 'almenv': {'alarm_level': '4', 'alarm_name': '\xbb\xb7\xbe\xb3\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almenv'}, 'almrack': {'alarm_level': '1', 'alarm_name': '\xbb\xfa\xbc\xdc\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almrack'}, 'almcomm': {'alarm_level': '4', 'alarm_name': '\xcd\xa8\xd1\xb6\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almcomm'}, 'almcpu': {'alarm_level': '4', 'alarm_name': 'CPU\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almcpu'}, 'almn7lk': {'alarm_level': 5, 'alarm_name': '7\xba\xc5\xd0\xc5\xc1\xee\xc1\xb4\xc2\xb7\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almn7lk'}, 'almspc': {'alarm_level': '4', 'alarm_name': '\xbd\xbb\xbb\xbb\xbb\xfa\xd4\xcb\xd0\xd0\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almspc'}, 'almcs7': {'alarm_level': 5, 'alarm_name': '7\xba\xc5\xd0\xc5\xc1\xee\xb8\xe6\xbe\xaf', 'alarm_type_id': 'almcs7'}}
+2011-04-21 17:47:33,809 INFO TELNET_IP:134.132.34.3,TELNET_PORT:6688
+2011-04-21 17:47:34,809 ERROR 系统报错
+Traceback (most recent call last):
+  File "F:\python_code\pt_monitor\src\zx_monitor.py", line 303, in <module>
+    tn = telnetlib.Telnet(TELNET_IP,TELNET_PORT)
+  File "D:\soft\Python25\lib\telnetlib.py", line 208, in __init__
+    self.open(host, port)
+  File "D:\soft\Python25\lib\telnetlib.py", line 237, in open
+    raise socket.error, msg
+error: (10061, 'Connection refused')

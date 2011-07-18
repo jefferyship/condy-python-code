@@ -1,0 +1,38 @@
+2011-05-25 12:30:23,944 INFO =========================================================================
+2011-05-25 12:30:23,944 INFO   pt_monitor.py current version is 1.1.0.7               
+2011-05-25 12:30:23,944 INFO   author:Condy create time:2011.01.17 modify time:2011.05.10
+2011-05-25 12:30:23,944 INFO  功能点1.监控平台日志
+2011-05-25 12:30:23,944 INFO       2.监控CPU，内存、线程、硬盘告警信息
+2011-05-25 12:30:23,944 INFO       3.收集CPU，内存、线程、硬盘资源信息
+2011-05-25 12:30:23,946 INFO       4.监控平台下的core文件生成
+2011-05-25 12:30:23,946 INFO       5.备份平台的配置及程序
+2011-05-25 12:30:23,982 INFO 数据库的版本配置:{u'ip': '134.128.196.10', u'password': '0590tnstns', u'version': '1.1.0.6', u'dict': '/home/websphere/python_code', u'user': 'websphere'}
+2011-05-25 12:30:23,982 INFO  发现程序版本有最新的，版本号为1.1.0.6,开始更新程序
+2011-05-25 12:30:24,003 INFO =========================================================================
+2011-05-25 12:30:24,003 INFO URL:http://134.128.196.6:9081/iservuc/ServiceGate/SimpleXMLGate,MONITOR_NAME:fjas1
+2011-05-25 13:08:43,822 INFO =========================================================================
+2011-05-25 13:08:43,822 INFO   pt_monitor.py current version is 1.1.0.7               
+2011-05-25 13:08:43,822 INFO   author:Condy create time:2011.01.17 modify time:2011.05.10
+2011-05-25 13:08:43,822 INFO  功能点1.监控平台日志
+2011-05-25 13:08:43,822 INFO       2.监控CPU，内存、线程、硬盘告警信息
+2011-05-25 13:08:43,822 INFO       3.收集CPU，内存、线程、硬盘资源信息
+2011-05-25 13:08:43,822 INFO       4.监控平台下的core文件生成
+2011-05-25 13:08:43,822 INFO       5.备份平台的配置及程序
+2011-05-25 13:08:43,858 INFO 数据库的版本配置:{u'ip': '134.128.196.10', u'password': '0590tnstns', u'version': '1.1.0.6', u'dict': '/home/websphere/python_code', u'user': 'websphere'}
+2011-05-25 13:08:43,859 INFO  发现程序版本有最新的，版本号为1.1.0.6,开始更新程序
+2011-05-25 13:08:43,880 INFO =========================================================================
+2011-05-25 13:08:43,881 INFO URL:http://134.128.196.6:9081/iservuc/ServiceGate/SimpleXMLGate,MONITOR_NAME:fjas1
+2011-05-25 13:09:30,594 INFO URL:http://134.128.196.6:9081/iservuc/ServiceGate/SimpleXMLGate,MONITOR_NAME:fjas1
+2011-05-25 13:10:24,528 INFO URL:http://134.128.196.6:9081/iservuc/ServiceGate/SimpleXMLGate,MONITOR_NAME:fjas1
+2011-05-25 13:10:51,404 INFO URL:http://134.128.196.6:9081/iservuc/ServiceGate/SimpleXMLGate,MONITOR_NAME:fjas1
+2011-05-25 13:11:30,746 INFO URL:http://134.128.196.6:9081/iservuc/ServiceGate/SimpleXMLGate,MONITOR_NAME:fjas1
+2011-05-25 13:11:30,838 INFO creating direcotry /home/websphere/fjas1
+2011-05-25 13:11:30,839 INFO upload file:D:\temp\Script\Function\1.txt 
+2011-05-25 13:14:37,374 INFO URL:http://134.128.196.6:9081/iservuc/ServiceGate/SimpleXMLGate,MONITOR_NAME:fjas1
+2011-05-25 13:14:37,395 INFO upload file:F:\python_code\pt_monitor\src\20110525.zip 
+2011-05-25 13:15:15,915 INFO URL:http://134.128.196.6:9081/iservuc/ServiceGate/SimpleXMLGate,MONITOR_NAME:fjas1
+2011-05-25 13:15:15,940 INFO upload file:F:\python_code\pt_monitor\src\20110525.zip 
+2011-05-25 13:15:46,785 INFO URL:http://134.128.196.6:9081/iservuc/ServiceGate/SimpleXMLGate,MONITOR_NAME:fjas1
+2011-05-25 13:15:46,812 INFO upload file:F:\python_code\pt_monitor\src\20110525.zip 
+2011-05-25 13:16:20,974 INFO URL:http://134.128.196.6:9081/iservuc/ServiceGate/SimpleXMLGate,MONITOR_NAME:fjas1
+2011-05-25 13:16:21,000 INFO upload file:F:\python_code\pt_monitor\src\20110525.zip 
