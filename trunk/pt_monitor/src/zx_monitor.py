@@ -220,7 +220,8 @@ def alarmToPerson(alaramObjectList):
             alaramConfigMap=alarmConfig[alarmObject.get_type_id()]
             if alarmObject.get_log_type()=='1':#告警类型
                 if int(currLevel)<=alaramConfigMap['alarm_level']:
-                    if alarmObject.get_type_id()=='almpcm':
+                    #晚上22-08点就不要发PCM的告警短信了。
+                    if alarmObject.get_type_id()=='almpcm' and sFiveMiniBefore.hour>8 and sFiveMiniBefore.hour<22 :
                         pcmInputList=[]
                         pcmInputList.append('0591')
                         pcmInputList.append(alarmObject.get_item('rack'))
@@ -255,7 +256,16 @@ def alarmToPerson(alaramObjectList):
             log.warn('告警类型未配置:'+alarmObject.get_type_id())
             #log.exception('告警类型未配置:'+alarmObject.get_type_id())
     if len(alarmToPersonList)>0:
-        smsContent=MONITOR_NAME+str(LinkConst.SPLIT_COLUMN)+''.join(alarmToPersonList)
+        isPcmAlarm=False
+        for alarmToPerson in alarmToPersonList:
+            if alarmToPerson.find('PCM')>-1:
+                isPcmAlarm=true
+                break
+        smsContent=''
+        if isPcmAlarm:
+            smsContent=MONITOR_NAME+'_PCM'+str(LinkConst.SPLIT_COLUMN)+''.join(alarmToPersonList)
+        else:
+            smsContent=MONITOR_NAME+str(LinkConst.SPLIT_COLUMN)+''.join(alarmToPersonList)
         global lastSmsContent
         if smsContent==lastSmsContent:
             log.info('发送内容重复，不要发送:%s',smsContent)
@@ -287,7 +297,7 @@ def saveToDB(alaramObjectList):
         return False
 
 def get_version():
-    version ='1.1.0.6'
+    version ='1.1.0.7'
     """
      获取版本信息.
     """
