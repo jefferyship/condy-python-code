@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="gb2312"?>
+<config>
+    <!--在config下依次配置各公共包的配置项目，使用统一的配置文件，但由各类分别解析。-->
+    <database name="Default"><!-- "Default" 是默认的数据库连接，该名称不得随意更改-->
+        <!--驱动程序包名,此处为空就是使用系统自带的DataSource,下面的url就是数据源名-->
+        <drivername>oracle.jdbc.driver.OracleDriver</drivername>
+
+        <!--连接数据库的URL地址-->
+        <url>jdbc:oracle:thin:@134.128.138.69:1521:tccs</url>
+
+        <!--登录数据库用户名-->
+        <user>eccuc</user>
+
+        <!--登录数据库密码-->
+        <pwd>eccuc</pwd>
+
+        <!--该连接池最大连接数-->
+        <max>3</max>
+
+        <!--该连接池最小连接数-->
+        <min>1</min>
+
+        <!--默认sql执行超时时间设置,单位秒-->
+        <time_out>60</time_out>
+
+        <!--数据库类型-->
+        <databasetype>ORACLE</databasetype>
+    </database>    
+</config>
