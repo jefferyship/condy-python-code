@@ -295,6 +295,31 @@ def saveToDB(alaramObjectList):
     except Exception:
         log.exception('系统报错')
         return False
+def checkToWarn(alarmObjectMap,alarmObjectList):
+    """
+      判断是否需要告警，对于10s就自动回复的告警，就不要发给相关人员了.
+    """
+    alarmObjectToPersonList=[]
+    for alarmObject in alarmObjectList:
+        if alarmObject.get_log_type()=='2'and alarmObjectMap.has_key(alarmObject.get_seq()):
+            alarmObjectMap.pop(alarmObject.get_seq())
+        elif alarmObject.get_log_type()=='1':
+            alarmObjectMap[alarmObject.get_seq()]=alarmObject
+        else:
+            alarmObjectToPersonList.append(alarmObject)
+
+    currTime=datetime.datetime.now()
+    tenSecBefore=currTime-datetime.timedelta(seconds=10)
+    for alarmObject,seq in alarmObjectMap.copy().items():
+        if alarmObject.get_time()+tenSecBefore<currTime:
+            alarmObjectToPersonList.append(alarmObject)
+            alarmObjectMap.pop(seq)
+    return alarmObjectToPersonList
+
+
+
+
+
 
 def get_version():
     version ='1.1.0.7'
@@ -318,6 +343,7 @@ if __name__ == '__main__':
         config_dir=os.getcwd()+os.sep
     else:
         config_dir=tempPath[0]+os.sep
+    alarmObjectMap={}
     log = logging.getLogger()
     log.setLevel(logging.DEBUG)
     h1 = logging.handlers.RotatingFileHandler(config_dir+'zx_monitor.log',maxBytes=2097152,backupCount=5)
@@ -338,7 +364,8 @@ if __name__ == '__main__':
             log.debug('recieve data: %s',rawStr)
             alaramObjectList=parseReadData(rawStr)
             if len(alaramObjectList)>0:
-                alarmToPerson(alaramObjectList)
+                alarmToPersonList=checkToWarn(alarmObjectMap,alaramObjectList)
+                alarmToPerson(alarmToPersonList)
                 saveToDB(alaramObjectList)
         tn.close()
         log.info('IS_START value=:'+IS_START+' so exit!')
