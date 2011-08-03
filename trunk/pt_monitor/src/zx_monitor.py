@@ -220,8 +220,7 @@ def alarmToPerson(alaramObjectList):
             alaramConfigMap=alarmConfig[alarmObject.get_type_id()]
             if alarmObject.get_log_type()=='1':#告警类型
                 if int(currLevel)<=alaramConfigMap['alarm_level']:
-                    #晚上22-08点就不要发PCM的告警短信了。
-                    if alarmObject.get_type_id()=='almpcm' and sFiveMiniBefore.hour>8 and sFiveMiniBefore.hour<22 :
+                    if alarmObject.get_type_id()=='almpcm' :
                         pcmInputList=[]
                         pcmInputList.append('0591')
                         pcmInputList.append(alarmObject.get_item('rack'))
@@ -259,7 +258,7 @@ def alarmToPerson(alaramObjectList):
         isPcmAlarm=False
         for alarmToPerson in alarmToPersonList:
             if alarmToPerson.find('PCM')>-1:
-                isPcmAlarm=true
+                isPcmAlarm=True
                 break
         smsContent=''
         if isPcmAlarm:
@@ -285,7 +284,7 @@ def saveToDB(alaramObjectList):
             alarmobject.generateDetailLogUrcp(inputTable2StrList)
 
     inputStr=str(LinkConst.SPLIT_ROW).join(inputTable1StrList)+str(LinkConst.SPLIT_TABLE)+str(LinkConst.SPLIT_ROW).join(inputTable2StrList)
-    log.info(inputStr)
+    log.info('保存到数据输入参数:'+inputStr)
     try:
         outputParam=paramUtil.invoke("monitor_zx_writeAlarmLog", inputStr, URL)
         if outputParam.is_success():
@@ -297,23 +296,29 @@ def saveToDB(alaramObjectList):
         return False
 def checkToWarn(alarmObjectMap,alarmObjectList):
     """
-      判断是否需要告警，对于10s就自动回复的告警，就不要发给相关人员了.
+      判断是否需要告警，对于20s就自动回复的告警，就不要发给相关人员了.
     """
     alarmObjectToPersonList=[]
     for alarmObject in alarmObjectList:
         if alarmObject.get_log_type()=='2'and alarmObjectMap.has_key(alarmObject.get_seq()):
+            log.info('condy:pop key=%s',alarmObject.get_seq())
             alarmObjectMap.pop(alarmObject.get_seq())
         elif alarmObject.get_log_type()=='1':
+            log.info('condy:add key=%s',alarmObject.get_seq())
             alarmObjectMap[alarmObject.get_seq()]=alarmObject
         else:
+            log.info('condy:add warn to Person key=%s',alarmObject.get_seq())
             alarmObjectToPersonList.append(alarmObject)
 
     currTime=datetime.datetime.now()
-    tenSecBefore=currTime-datetime.timedelta(seconds=10)
-    for alarmObject,seq in alarmObjectMap.copy().items():
+    #中兴交换机与告警机之间相差1分45s的时间，所以时间判断是要加上这个1分45s。
+    tenSecBefore=datetime.timedelta(seconds=125)
+    for seq,alarmObject in alarmObjectMap.copy().items():
+        log.info('condy:key=%s,time=%s',seq,alarmObject.get_time_str())
         if alarmObject.get_time()+tenSecBefore<currTime:
             alarmObjectToPersonList.append(alarmObject)
             alarmObjectMap.pop(seq)
+            log.info('condy:to warn person key=%s,time=%s',seq,alarmObject.get_time_str())
     return alarmObjectToPersonList
 
 
@@ -363,9 +368,10 @@ if __name__ == '__main__':
             rawStr=tn.read_very_eager()
             log.debug('recieve data: %s',rawStr)
             alaramObjectList=parseReadData(rawStr)
-            if len(alaramObjectList)>0:
-                alarmToPersonList=checkToWarn(alarmObjectMap,alaramObjectList)
+            alarmToPersonList=checkToWarn(alarmObjectMap,alaramObjectList)
+            if len(alarmToPersonList)>0:
                 alarmToPerson(alarmToPersonList)
+            if len(alaramObjectList)>0:
                 saveToDB(alaramObjectList)
         tn.close()
         log.info('IS_START value=:'+IS_START+' so exit!')
