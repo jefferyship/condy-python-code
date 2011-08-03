@@ -317,7 +317,7 @@ def backupFile():
     for backupPath in backupPathList:
         for root,dirnames,filenames in os.walk(backupPath):
             for filename in filenames:
-                if filename.find('core')==-1 or filename.find('.log')==-1 or filename.find('nohup.out')==-1 or filename.find('.bak')==-1 or filename<>'.' or finename<>'..':
+                if filename.find('core')==-1 and filename.find('.log')==-1 and filename.find('nohup.out')==-1 and filename.find('.bak')==-1 and filename<>'.' and filename<>'..':
                     zipFileNameList.append(os.path.join(root,filename))
     isCreateZipFileSucess=True
     if len(zipFileNameList)>0:
@@ -414,13 +414,13 @@ def saveSystemInfo(saveDbMsgDict):
 
 
 def get_version():
-    version ='1.1.0.12'
+    version ='1.1.0.13'
     """
      获取版本信息.
     """
     log.info( '=========================================================================')
     log.info('  pt_monitor.py current version is %s               '%(version))
-    log.info('  author:Condy create time:2011.01.17 modify time:2011.06.17')
+    log.info('  author:Condy create time:2011.01.17 modify time:2011.08.02')
     log.info(' 功能点1.监控平台日志')
     log.info('      2.监控CPU，内存、线程、硬盘告警信息')
     log.info('      3.收集CPU，内存、线程、硬盘资源信息')
