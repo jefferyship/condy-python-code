@@ -8,6 +8,7 @@ Created on 2011-1-3
 '''
 import ConfigParser
 import os
+import os.path
 import re
 import sys
 from ServiceUtil import ParamUtil
@@ -315,10 +316,16 @@ def backupFile():
     backupPathList=backupPath.split('||')
     zipFileNameList=[]
     for backupPath in backupPathList:
-        for root,dirnames,filenames in os.walk(backupPath):
-            for filename in filenames:
-                if filename.find('core')==-1 and filename.find('.log')==-1 and filename.find('nohup.out')==-1 and filename.find('.bak')==-1 and filename<>'.' and filename<>'..':
-                    zipFileNameList.append(os.path.join(root,filename))
+        if os.path.isdir(backupPath):
+            for root,dirnames,filenames in os.walk(backupPath):
+                for filename in filenames:
+                    if filename.find('core')==-1 and filename.find('.log')==-1 and filename.find('nohup.out')==-1 and filename.find('.bak')==-1 and filename<>'.' and filename<>'..':
+                        zipFileNameList.append(os.path.join(root,filename))
+        elif os.path.isfile(backupPath):
+            zipFileNameList.append(backupPath)
+        else:
+            log.info('无法识别的备份路径:%s',backupPath)
+
     isCreateZipFileSucess=True
     if len(zipFileNameList)>0:
         strCurrDate=datetime.date.today().strftime('%Y%m%d')
@@ -350,7 +357,7 @@ def backupFile():
             log.info('upload file:%s ',zipFileName)
             ftp.storbinary('STOR '+os.path.split(zipFileName)[1],uploadzipFile)
             uploadzipFile.close()
-            #os.remove(zipFileName)
+            os.remove(zipFileName)
         except Exception:
             log.exception('上次日志备份文件错误，文件名:%s',zipFileName)
         return
@@ -414,13 +421,13 @@ def saveSystemInfo(saveDbMsgDict):
 
 
 def get_version():
-    version ='1.1.0.13'
+    version ='1.1.0.14'
     """
      获取版本信息.
     """
     log.info( '=========================================================================')
     log.info('  pt_monitor.py current version is %s               '%(version))
-    log.info('  author:Condy create time:2011.01.17 modify time:2011.08.02')
+    log.info('  author:Condy create time:2011.01.17 modify time:2011.08.04')
     log.info(' 功能点1.监控平台日志')
     log.info('      2.监控CPU，内存、线程、硬盘告警信息')
     log.info('      3.收集CPU，内存、线程、硬盘资源信息')
