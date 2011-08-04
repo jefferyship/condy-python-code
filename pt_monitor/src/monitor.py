@@ -60,6 +60,9 @@ def getMonitorService():
 				表3   rows=1 cols=2
 				1 proc_name proc_name 线程名称
 				2 proc_cpu_limit proc_cpu_limit 线程CPU告警阀值
+                表4   rows=1 cols=2   多行输出
+                  1 command  command  执行命令的名称 用于执行netstat -nat|grep -i '关键字'|wc -l
+                  2 netstat_limit netstat_limit 执行命令返回数字的阀值
 
     """
     #global URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
@@ -67,6 +70,7 @@ def getMonitorService():
     paramUtil=ParamUtil()
     monitorSystemObject={}
     monitorProcObjectList=[]
+    monitorNetstatObjectList=[]
     outputParam=paramUtil.invoke("Monitor_Pt_Config", MONITOR_NAME, URL)
     if outputParam.is_success() :
         table1=outputParam.get_tables().get_first_table()
@@ -101,7 +105,17 @@ def getMonitorService():
                 continue
             else:
                 monitorProcObjectList.append(monitorProcObject)
-    return (monitorFileList,monitorSystemObject,monitorProcObjectList)
+        table4=outputParam.get_tables().get_one_table(3)
+        for row in table4.get_row_list():
+            monitorNetstatObject={}
+            monitorNetstatObject['command']=row.get_one_column(0).get_value()
+            monitorNetstatObject['netstat_limit']=row.get_one_column(1).get_value()
+            convertUnicodeToStr(monitorProcObject)
+            if monitorNetstatObject['command']=='':#如果是空，表示没有配置netstat命令的监控
+                continue
+            else:
+                monitorNetstatObjectList.append(monitorNetstatObject)
+    return (monitorFileList,monitorSystemObject,monitorProcObjectList,monitorNetstatObjectList)
 
 def monitorFile(monitorList):
     """
@@ -291,6 +305,24 @@ def monitorHardSpace(monitorSystemObject,saveDbMsgDict):
                 warnStr=MONITOR_NAME+' 磁盘空间告警:hardspace_name:'+monitorSystemObject['hardspace_name']+' limit_used_percent:'+monitorSystemObject['hardspace_limit']+' real_used_percent:'+hardSpace[4]
                 warnToPersonList.append(warnStr)
     return warnToPersonList
+
+def monitorNetstat(monitorNetstatObjectList):
+    """
+      监控机器上的netstat的连接数。通过netstat -nat|grep -i '关键字'|wc -l。获取连接数大小.
+    """
+    warnToPersonList=[]
+    for monitorNetstatObject in monitorNetstatObjectList:
+        log.info('netstat连接监控: 执行监控命令 %s',monitorNetstatObject['command'])
+        netstatmsgStd=os.popen(monitorNetstatObject['command'])
+        real_count=netstatmsgStd.read()
+        log.info('netstat连接监控: 执行结果为 %s,监控阀值为 %s',real_count,monitorNetstatObject['netstat_limit'])
+        if int(real_count)>=int(monitorNetstatObject['netstat_limit']):
+            log.info("netstat连接监控: 实际连接数 %s,监控阀值为:%s",real_count,monitorNetstatObject['netstat_limit'])
+            warnStr=MONITOR_NAME+' netstat连接监控:实际连接数:'+real_count+' 监控阀值为:'+monitorNetstatObject['netstat_limit']
+            warnToPersonList.append(warnStr)
+
+
+    return warnToPersonList
 def backupFile():
     """
       backupObject['backup_path'] 需要备份的文件的路径,||作为分隔如果多个路径需要备份.
@@ -479,7 +511,7 @@ if __name__ == '__main__':
     getCommonConfig()
     get_version()
     log.info('URL:%s,MONITOR_NAME:%s'%(URL,MONITOR_NAME))
-    monitorFileList,monitorSystemInfo,monitorProcList=getMonitorService()
+    monitorFileList,monitorSystemInfo,monitorProcList,monitorNetstatObjectList=getMonitorService()
     if len(monitorFileList)==0 and len(monitorSystemInfo)==0 and len(monitorProcList)==0:
         log.info( '没有该IVR的监控配置信息，请查看Monitor_Pt_Config服务.')
         sys.exit()
@@ -500,6 +532,7 @@ if __name__ == '__main__':
         warnToPersonList=warnToPersonList+monitorMemory(monitorSystemInfo['memory_avi_limit'],saveDBMsgDict)
     #硬盘监控
     warnToPersonList=warnToPersonList+monitorHardSpace(monitorSystemInfo,saveDBMsgDict)
+    #netstat监控
 
 
     #备份程序
