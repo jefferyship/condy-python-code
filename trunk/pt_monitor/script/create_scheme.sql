@@ -231,6 +231,37 @@ comment on column MONITOR_PT_WARNING_PERSON.CONTACT_PERSONS
   is '多个人之间以;号做分隔';
 
 
+-- Create table
+create table MONITOR_PT_NETSTAT_INFO
+(
+  MONITOR_NAME VARCHAR2(32),
+  COMMAND      VARCHAR2(256),
+  COUNT_LIMIT  VARCHAR2(8)
+)
+tablespace TCCS_TELIS
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 4M
+    next 4M
+    minextents 1
+    maxextents unlimited
+    pctincrease 0
+  );
+-- Add comments to the table 
+comment on table MONITOR_PT_NETSTAT_INFO
+  is 'netstat线程监控';
+-- Add comments to the columns 
+comment on column MONITOR_PT_NETSTAT_INFO.MONITOR_NAME
+  is '监控机器名';
+comment on column MONITOR_PT_NETSTAT_INFO.COMMAND
+  is 'netstat的命令程序';
+comment on column MONITOR_PT_NETSTAT_INFO.COUNT_LIMIT
+  is 'netstat的告警阀值';
+
+
 spool off
 
 --删除服务参数解码
@@ -1398,6 +1429,323 @@ values (V_APP_SOA_OUTPUT_ID_19242,V_APP_SOA_OUTPUT_ID_19247);
 --插入服务组合信息
 insert into SOA_INTERFACE_SERVICE (ORDER_NO, INTERFACE_ID, SERVICE_ID)
 values ('',V_APP_SOA_INTERFACE_ID_3823,V_APP_SOA_SERVICE_ID_3771);
+
+
+commit;
+end;
+/
+set define on;
+
+--删除服务参数解码
+delete from soa_interface_decode where interface_id in(  select interface_id from soa_interface_info where interface_name in('Monitor_Pt_Config'));
+--删除服务错误代码
+delete from soa_interface_error_code where interface_id in(  select interface_id from soa_interface_info where interface_name in('Monitor_Pt_Config'));
+--删除输出映射信息
+delete from soa_output_mapping where s_output_id in (select s_output_id from soa_service_output where service_id in(select s.service_id from soa_interface_info i,soa_interface_service s where i.interface_id=s.interface_id and i.interface_name in ('Monitor_Pt_Config')));
+--删除输入映射信息
+delete from soa_input_mapping where s_input_id in (select s_input_id from soa_service_input where service_id in(select s.service_id from soa_interface_info i,soa_interface_service s where i.interface_id=s.interface_id and i.interface_name in ('Monitor_Pt_Config')));
+--删除服务输出参数信息
+delete from soa_service_output where service_id in(select s.service_id from soa_interface_info i,soa_interface_service s where i.interface_id=s.interface_id and i.interface_name in ('Monitor_Pt_Config'));
+--删除服务输入参数信息
+delete from soa_service_input where service_id in(select s.service_id from soa_interface_info i,soa_interface_service s where i.interface_id=s.interface_id and i.interface_name in ('Monitor_Pt_Config'));
+--删除服务组合信息
+delete from soa_interface_service where service_id in(select s.service_id from soa_interface_info i,soa_interface_service s where i.interface_id=s.interface_id and i.interface_name in ('Monitor_Pt_Config'));
+--删除服务实现信息
+delete from soa_service_info where service_id in(select service_id from soa_service_info where service_name in('Monitor_Pt_Config'));
+--删除接口输出参数信息
+delete from soa_interface_output where interface_id in(select interface_id from soa_interface_info where interface_name in ('Monitor_Pt_Config'));
+--删除接口输入参数信息
+delete from soa_interface_input where interface_id in(select interface_id from soa_interface_info where interface_name in ('Monitor_Pt_Config'));
+--删除接口定义信息
+delete from soa_interface_info where interface_id in(select interface_id from soa_interface_info where interface_name in ('Monitor_Pt_Config'));
+commit;
+
+set define off;
+declare
+V_APP_SOA_INTERFACE_ID_3722 Varchar2(10);
+V_APP_SOA_INPUT_ID_19294 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19528 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19529 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19068 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19069 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19070 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19071 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19072 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19073 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19074 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19075 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19076 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19077 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19078 Varchar2(10);
+V_APP_SOA_SERVICE_ID_3670 Varchar2(10);
+V_APP_SOA_INPUT_ID_19295 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19079 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19080 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19081 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19082 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19083 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19084 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19085 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19086 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19087 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19088 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19089 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19530 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_19531 Varchar2(10);
+begin
+select SEQ_SOA_INTERFACE.nextval into V_APP_SOA_INTERFACE_ID_3722 from dual;
+select SEQ_SOA_INPUT.nextval into V_APP_SOA_INPUT_ID_19294 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19528 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19529 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19068 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19069 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19070 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19071 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19072 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19073 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19074 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19075 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19076 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19077 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19078 from dual;
+select SEQ_SOA_SERVICE.nextval into V_APP_SOA_SERVICE_ID_3670 from dual;
+select SEQ_SOA_INPUT.nextval into V_APP_SOA_INPUT_ID_19295 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19079 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19080 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19081 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19082 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19083 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19084 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19085 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19086 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19087 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19088 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19089 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19530 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_19531 from dual;
+--插入接口信息
+insert into SOA_INTERFACE_INFO (INTERFACE_ID, INTERFACE_NAME, DESCRIPTION,IS_USED, IS_LOG, TYPE, MODULE_NAME, CALL_TYPE)
+values (V_APP_SOA_INTERFACE_ID_3722,'Monitor_Pt_Config','平台监控模块，根据监控平台的名称，获取监控的配置信息.','Y','','0','平台监控','0');
+
+
+--插入接口输入信息
+insert into SOA_INTERFACE_INPUT (COLUMN_INDEX, I_INPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('1',V_APP_SOA_INPUT_ID_19294,'MONITOR_NAME','string','500','N','','N','','Y','监控平台名称','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_19528,'command','string','1000','N','4','Y','table4','Y','netstat执行命令','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('2',V_APP_SOA_OUTPUT_ID_19529,'count_limit','string','100','N','4','Y','table4','Y','连接告警阀值','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_19068,'monitorFile','string','1000','N','1','Y','table1','Y','监控文件名路径','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('2',V_APP_SOA_OUTPUT_ID_19069,'keys','string','2000','N','1','Y','table1','Y','监控关键字，多个关键字之间按有逗号分隔','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('3',V_APP_SOA_OUTPUT_ID_19070,'countMonitor','string','100','N','1','Y','table1','Y','告警阀值','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('4',V_APP_SOA_OUTPUT_ID_19071,'tailRowNum','string','100','N','1','Y','table1','Y','监控文件的行数','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_19072,'cpu_idle_limit','string','100','N','2','N','table2','Y','CPU告警阀值','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('2',V_APP_SOA_OUTPUT_ID_19073,'memory_avi_limit','string','100','N','2','N','table2','Y','可用内存告警阀值(KB)','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('3',V_APP_SOA_OUTPUT_ID_19074,'hardspace_name','string','100','N','2','N','table2','Y','硬盘名称(例如/dev/sda3)','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('4',V_APP_SOA_OUTPUT_ID_19075,'hardspace_limit','string','100','N','2','N','table2','Y','硬盘告警阀值','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_19076,'proc_name','string','100','N','3','Y','table3','Y','线程名称','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('2',V_APP_SOA_OUTPUT_ID_19077,'proc_cpu_limit','string','100','N','3','Y','table3','Y','线程CPU告警阀值','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('5',V_APP_SOA_OUTPUT_ID_19078,'log_type','string','100','N','1','Y','table1','Y','日志类型:websphere,svcsmgr,ctserver等','','',V_APP_SOA_INTERFACE_ID_3722);
+
+
+--插入服务信息
+insert into SOA_SERVICE_INFO (SERVICE_ID, COMPANY_ID, SERVICE_NAME,SERVICE_ATTACH, SERVICE_CLASS, DATASOURCE,MODIFY_STAFF_ID, MODIFY_TIME)
+values (V_APP_SOA_SERVICE_ID_3670,'0','Monitor_Pt_Config','','com.telthink.link.service.CallFunctionImpl','','','');
+
+
+--插入服务输入信息
+insert into SOA_SERVICE_INPUT (COLUMN_INDEX, S_INPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('1',V_APP_SOA_INPUT_ID_19295,'MONITOR_NAME','string','500','N','','N','','Y','监控平台名称','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入输入映射信息
+insert into SOA_INPUT_MAPPING (I_INPUT_ID,S_INPUT_ID)
+values (V_APP_SOA_INPUT_ID_19294,V_APP_SOA_INPUT_ID_19295);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('4',V_APP_SOA_OUTPUT_ID_19079,'tailRowNum','string','100','N','1','Y','table1','Y','监控文件的行数','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_19080,'cpu_idle_limit','string','100','N','2','N','table2','Y','CPU告警阀值','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('2',V_APP_SOA_OUTPUT_ID_19081,'memory_avi_limit','string','100','N','2','N','table2','Y','可用内存告警阀值(KB)','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('3',V_APP_SOA_OUTPUT_ID_19082,'hardspace_name','string','100','N','2','N','table2','Y','硬盘名称(例如/dev/sda3)','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('4',V_APP_SOA_OUTPUT_ID_19083,'hardspace_limit','string','100','N','2','N','table2','Y','硬盘告警阀值','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_19084,'proc_name','string','100','N','3','Y','table3','Y','线程名称','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('2',V_APP_SOA_OUTPUT_ID_19085,'proc_cpu_limit','string','100','N','3','Y','table3','Y','线程CPU告警阀值','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_19086,'monitorFile','string','1000','N','1','Y','table1','Y','监控文件名路径','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('2',V_APP_SOA_OUTPUT_ID_19087,'keys','string','2000','N','1','Y','table1','Y','监控关键字，多个关键字之间按有逗号分隔','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('3',V_APP_SOA_OUTPUT_ID_19088,'countMonitor','string','100','N','1','Y','table1','Y','告警阀值','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('5',V_APP_SOA_OUTPUT_ID_19089,'log_type','string','100','','1','','','Y','','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_19530,'command','string','1000','','4','','','Y','','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('2',V_APP_SOA_OUTPUT_ID_19531,'count_limit','string','100','','4','','','Y','','','',V_APP_SOA_SERVICE_ID_3670);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19071,V_APP_SOA_OUTPUT_ID_19079);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19072,V_APP_SOA_OUTPUT_ID_19080);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19073,V_APP_SOA_OUTPUT_ID_19081);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19074,V_APP_SOA_OUTPUT_ID_19082);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19075,V_APP_SOA_OUTPUT_ID_19083);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19076,V_APP_SOA_OUTPUT_ID_19084);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19077,V_APP_SOA_OUTPUT_ID_19085);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19068,V_APP_SOA_OUTPUT_ID_19086);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19069,V_APP_SOA_OUTPUT_ID_19087);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19070,V_APP_SOA_OUTPUT_ID_19088);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19078,V_APP_SOA_OUTPUT_ID_19089);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19528,V_APP_SOA_OUTPUT_ID_19530);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_19529,V_APP_SOA_OUTPUT_ID_19531);
+
+
+--插入服务组合信息
+insert into SOA_INTERFACE_SERVICE (ORDER_NO, INTERFACE_ID, SERVICE_ID)
+values ('',V_APP_SOA_INTERFACE_ID_3722,V_APP_SOA_SERVICE_ID_3670);
 
 
 commit;

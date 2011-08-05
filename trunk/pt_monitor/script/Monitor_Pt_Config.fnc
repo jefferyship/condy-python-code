@@ -12,6 +12,7 @@ create or replace function Monitor_Pt_Config(monitorName in varchar2) return var
          CPU Idle阀值,可用物理内存阀值(KB),硬盘名称(例如/dev/sda3),硬盘告警阀值(百分比)
       table3:线程告警(多行输出)
          线程名称，告警阀值
+    modify by Condy 2011.08.04 增加netstat的配置信息读取.
     
   */
   returnValue varchar2(2000);
@@ -25,7 +26,7 @@ create or replace function Monitor_Pt_Config(monitorName in varchar2) return var
   v_hardspace_limit varchar2(64);      
 begin
   --日志监控(多行输出).
-   for c in (select monitor_name,file_path,keys,warn_limit,monitor_lines,time_pattern from monitor_pt_file_info where monitor_name=monitorName order by order_num)
+   for c in (select monitor_name,file_path,keys,warn_limit,monitor_lines,time_pattern,log_type from monitor_pt_file_info where monitor_name=monitorName order by order_num)
    loop
     if v_first_loop<>0 then
       returnValue:=returnValue||chr(2);
@@ -34,13 +35,21 @@ begin
     if c.time_pattern ='mmddhh24mi' then 
       v_time:=to_char(sysdate,'mmddhh24');
       v_mi:=to_char(sysdate,'mi');
-      v_mi:=substr(v_mi,1,1)||'0';
+      if c.log_type='resmgr' then --resgmgr的日志是30分钟，生成一次.
+        if v_mi>='00' and v_mi<'30' then
+          v_mi:='00';
+        else
+          v_mi:='30';
+        end if;
+      else
+        v_mi:=substr(v_mi,1,1)||'0';
+      end if;
       v_time:=v_time||v_mi;
       v_file_path:=Replace(c.file_path, '$mmddhh24mi$', v_time);
     else
       v_file_path:=c.file_path;
     end if;
-    returnValue:=returnValue||v_file_path||chr(1)||c.keys||chr(1)||c.warn_limit||chr(1)||c.monitor_lines;
+    returnValue:=returnValue||v_file_path||chr(1)||c.keys||chr(1)||c.warn_limit||chr(1)||c.monitor_lines||chr(1)||c.log_type;
    end loop;
    --returnValue:='0'||chr(1)||'成功'||chr(3)||'/opt/IBM/WebSphere/AppServer/profiles/AppSrv01/logs/fjas2server1/SystemOut.log'||chr(1)||'ERROR'||chr(1)||'10'||chr(1)||'1000';
    --returnValue:=returnValue||chr(2)||'/opt/IBM/WebSphere/AppServer/profiles/AppSrv01/logs/fjas2server2/SystemOut.log'||chr(1)||'ERR'||chr(1)||'10'||chr(1)||'500';
@@ -72,6 +81,17 @@ v_first_loop:=0;
     end if;
     v_first_loop:=v_first_loop+1;
     returnValue:=returnValue||c.proc_name||chr(1)||c.proc_cpu_limit;
+ end loop;
+ --netstat监控(多行输出)
+ v_first_loop:=0;
+ returnValue:=returnValue||chr(3);
+ for c in (select command,count_limit from monitor_pt_netstat_info where monitor_name=monitorName ) 
+ loop
+   if v_first_loop<>0 then
+      returnValue:=returnValue||chr(2);
+    end if;
+    v_first_loop:=v_first_loop+1;
+    returnValue:=returnValue||c.command||chr(1)||c.count_limit;
  end loop;
  return '0'||chr(1)||'成功'||chr(3)||returnValue;
 exception 

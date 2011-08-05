@@ -312,13 +312,12 @@ def monitorNetstat(monitorNetstatObjectList):
     """
     warnToPersonList=[]
     for monitorNetstatObject in monitorNetstatObjectList:
-        log.info('netstat连接监控: 执行监控命令 %s',monitorNetstatObject['command'])
+        log.info('netstat连接监控: 执行监控命令 %s',str(monitorNetstatObject['command']))
         netstatmsgStd=os.popen(monitorNetstatObject['command'])
-        real_count=netstatmsgStd.read()
-        log.info('netstat连接监控: 执行结果为 %s,监控阀值为 %s',real_count,monitorNetstatObject['netstat_limit'])
+        real_count=netstatmsgStd.read().strip()
+        log.info('netstat连接监控: 执行结果为 %s,监控阀值为 %s',real_count,str(monitorNetstatObject['netstat_limit']))
         if int(real_count)>=int(monitorNetstatObject['netstat_limit']):
-            log.info("netstat连接监控: 实际连接数 %s,监控阀值为:%s",real_count,monitorNetstatObject['netstat_limit'])
-            warnStr=MONITOR_NAME+' netstat连接监控:实际连接数:'+real_count+' 监控阀值为:'+monitorNetstatObject['netstat_limit']
+            warnStr=MONITOR_NAME+' netstat连接数告警:命令:'+str(monitorNetstatObject['command'])+'实际连接数:'+real_count+' 监控阀值为:'+str(monitorNetstatObject['netstat_limit'])
             warnToPersonList.append(warnStr)
 
 
@@ -453,19 +452,20 @@ def saveSystemInfo(saveDbMsgDict):
 
 
 def get_version():
-    version ='1.1.0.14'
+    version ='1.1.0.15'
     """
      获取版本信息.
     """
     log.info( '=========================================================================')
     log.info('  pt_monitor.py current version is %s               '%(version))
-    log.info('  author:Condy create time:2011.01.17 modify time:2011.08.04')
+    log.info('  author:Condy create time:2011.01.17 modify time:2011.08.05')
     log.info(' 功能点1.监控平台日志')
     log.info('      2.监控CPU，内存、线程、硬盘告警信息')
     log.info('      3.收集CPU，内存、线程、硬盘资源信息')
     log.info('      4.监控平台下的core文件生成')
     log.info('      5.备份平台的配置及程序')
     log.info('      6.监控平台的指定的线程是否有存在')
+    log.info('      7.监控平台增加netstat命令的监控')
     paramUtil=ParamUtil()
     versionMsg={}
     outputParam=paramUtil.invoke("MGR_GetEccCodeDict", '-1'+LinkConst.SPLIT_COLUMN+'PT_MONITOR'+LinkConst.SPLIT_COLUMN+'PATCH', URL)
@@ -533,6 +533,8 @@ if __name__ == '__main__':
     #硬盘监控
     warnToPersonList=warnToPersonList+monitorHardSpace(monitorSystemInfo,saveDBMsgDict)
     #netstat监控
+    warnToPersonList=warnToPersonList+monitorNetstat(monitorNetstatObjectList)
+
 
 
     #备份程序
