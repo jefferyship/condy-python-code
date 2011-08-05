@@ -1,4 +1,4 @@
-平台告警监控程序 版本：1.1.0.7
+平台告警监控程序 版本：1.1.0.15
  实现以下功能:
   1.搜索平台日志文件的关键字，可以定义阀值短信告警。
   2.监控平台的CPU Idle,物理内存，可定义阀值短信告警
@@ -35,6 +35,7 @@
            正式的补丁路径是code='dict'的value+补丁的版本号。例如补丁(code='version')的版本号是:1.0.0.2
            补丁路径（code='dict'）为:/home/websphere/python_code。那么真实的FTP的补丁路径为:/home/websphere/python_code/1.0.0.2
         10)monitor_pt_backup_info表，自动备份平台的程序的配置表.通过调用monitor_pt_backup_file函数实现.
+        11)monitor_pt_netstat_info表，配置连接数的告警.例如:command字段配置:netstat -nat|grep -i '1521'|wc -l
 
 监控程序安装说明:
        1.安装psutil模块表.
