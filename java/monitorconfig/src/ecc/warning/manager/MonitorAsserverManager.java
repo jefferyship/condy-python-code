@@ -1,6 +1,5 @@
 package ecc.warning.manager;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.nutz.dao.Cnd;
