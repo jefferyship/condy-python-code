@@ -106,15 +106,16 @@ def getMonitorService():
             else:
                 monitorProcObjectList.append(monitorProcObject)
         table4=outputParam.get_tables().get_one_table(3)
-        for row in table4.get_row_list():
-            monitorNetstatObject={}
-            monitorNetstatObject['command']=row.get_one_column(0).get_value()
-            monitorNetstatObject['netstat_limit']=row.get_one_column(1).get_value()
-            convertUnicodeToStr(monitorProcObject)
-            if monitorNetstatObject['command']=='':#如果是空，表示没有配置netstat命令的监控
-                continue
-            else:
-                monitorNetstatObjectList.append(monitorNetstatObject)
+        if table4<>None:
+            for row in table4.get_row_list():
+                monitorNetstatObject={}
+                monitorNetstatObject['command']=row.get_one_column(0).get_value()
+                monitorNetstatObject['netstat_limit']=row.get_one_column(1).get_value()
+                convertUnicodeToStr(monitorProcObject)
+                if monitorNetstatObject['command']=='':#如果是空，表示没有配置netstat命令的监控
+                    continue
+                else:
+                    monitorNetstatObjectList.append(monitorNetstatObject)
     return (monitorFileList,monitorSystemObject,monitorProcObjectList,monitorNetstatObjectList)
 
 def monitorFile(monitorList):
@@ -452,7 +453,7 @@ def saveSystemInfo(saveDbMsgDict):
 
 
 def get_version():
-    version ='1.1.0.15'
+    version ='1.1.0.16'
     """
      获取版本信息.
     """
