@@ -19,6 +19,7 @@ import com.extjs.gxt.ui.client.widget.form.FormPanel;
 import com.extjs.gxt.ui.client.widget.form.HiddenField;
 import com.extjs.gxt.ui.client.widget.form.TextField;
 import com.extjs.gxt.ui.client.widget.form.ComboBox.TriggerAction;
+import com.extjs.gxt.ui.client.widget.grid.Grid;
 import com.extjs.gxt.ui.client.widget.layout.FitLayout;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Element;
@@ -30,10 +31,12 @@ public class ScriptWarningPersonPopup extends Window {
 	private final TextField<String> telPhone=new TextField<String>();
 	private final ComboBox<ModelData> warnLevelCombo = new ComboBox<ModelData>();
 	private final ComboBox<ModelData> warnModelCombo = new ComboBox<ModelData>();
+	private final Grid<ModelData> planGrid;
 	private Logger logger;
 	private final FormPanel formPanel=new FormPanel();
-	public ScriptWarningPersonPopup(){
+	public ScriptWarningPersonPopup(Grid<ModelData> planGrid){
 		logger=Logger.getLogger("ecc.gwt.warning.client.ScriptWarnConfigPanel");
+		this.planGrid=planGrid;
 		setSize(350, 250);
 		setBorders(true);
 		setShadow(false);
@@ -56,6 +59,7 @@ public class ScriptWarningPersonPopup extends Window {
 		
 		staffNo.setAllowBlank(false);
 		staffNo.setFieldLabel("工号");
+		staffNo.setToolTip("输入9位工号,并且回车");
 		
 		
 		staffName.setAllowBlank(false);	
@@ -116,6 +120,7 @@ public class ScriptWarningPersonPopup extends Window {
 	}
 	
 	private void addToWarnPersonStore(){
+		//@TODO 将告警联系人插入数据库.
 		ListStore<ModelData> listStore = (ListStore<ModelData>)Registry.get("PERSON_WARN_STORE");
 		ListStore<ModelData> storeList=listStore;
 		ModelData baseModelData=new BaseModelData();
