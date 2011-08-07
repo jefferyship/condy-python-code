@@ -71,7 +71,6 @@ public class NutDaoFactory {
 			//ds.setMinPoolSize(Integer.parseInt(DatabaseConfig.get(DatabaseConfig.MIN)));
 
 		} catch (PropertyVetoException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return ds;
