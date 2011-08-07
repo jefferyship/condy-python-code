@@ -1,16 +1,22 @@
 package ecc.gwt.warning.client;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 
 import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.Style.LayoutRegion;
 import com.extjs.gxt.ui.client.Style.Scroll;
-import com.extjs.gxt.ui.client.Style.SelectionMode;
+import com.extjs.gxt.ui.client.data.BaseListLoader;
 import com.extjs.gxt.ui.client.data.BaseModelData;
+import com.extjs.gxt.ui.client.data.HttpProxy;
+import com.extjs.gxt.ui.client.data.JsonLoadResultReader;
+import com.extjs.gxt.ui.client.data.ListLoadResult;
 import com.extjs.gxt.ui.client.data.ModelData;
+import com.extjs.gxt.ui.client.data.ModelType;
 import com.extjs.gxt.ui.client.event.ButtonEvent;
 import com.extjs.gxt.ui.client.event.Events;
 import com.extjs.gxt.ui.client.event.GridEvent;
@@ -18,7 +24,6 @@ import com.extjs.gxt.ui.client.event.Listener;
 import com.extjs.gxt.ui.client.event.MessageBoxEvent;
 import com.extjs.gxt.ui.client.event.SelectionListener;
 import com.extjs.gxt.ui.client.store.ListStore;
-import com.extjs.gxt.ui.client.util.Margins;
 import com.extjs.gxt.ui.client.widget.ContentPanel;
 import com.extjs.gxt.ui.client.widget.LayoutContainer;
 import com.extjs.gxt.ui.client.widget.MessageBox;
@@ -36,7 +41,6 @@ import com.extjs.gxt.ui.client.widget.grid.ColumnData;
 import com.extjs.gxt.ui.client.widget.grid.ColumnModel;
 import com.extjs.gxt.ui.client.widget.grid.Grid;
 import com.extjs.gxt.ui.client.widget.grid.GridCellRenderer;
-import com.extjs.gxt.ui.client.widget.grid.GridSelectionModel;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayout;
 import com.extjs.gxt.ui.client.widget.layout.BorderLayoutData;
 import com.extjs.gxt.ui.client.widget.layout.ColumnLayout;
@@ -44,6 +48,9 @@ import com.extjs.gxt.ui.client.widget.layout.FormData;
 import com.extjs.gxt.ui.client.widget.layout.FormLayout;
 import com.extjs.gxt.ui.client.widget.toolbar.SeparatorToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dev.util.collect.HashMap;
+import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 /**
@@ -73,6 +80,8 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
     final TextField<String> dataTagField=new TextField<String>();
     final TextField<Integer> runCycleField=new TextField<Integer>();
     final HiddenField<String> actionTypeField=new HiddenField<String>();
+    //脚本的Area
+    final TextArea scriptArea=new TextArea();
     
 	
 	public ScriptWarnConfigPanel(){
@@ -95,10 +104,11 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		westPanel.setHeading("计划列表");
 		BorderLayoutData westLayoutData=new BorderLayoutData(LayoutRegion.WEST,205,150,300);
 		westLayoutData.setSplit(true);
-		westLayoutData.setMargins(new Margins(5));
+		westLayoutData.setCollapsible(true);
+		//westLayoutData.setMargins(new Margins(5));
 		BorderLayoutData centerLayoutData=new BorderLayoutData(LayoutRegion.CENTER);
 		add(westPanel,westLayoutData);
-	    centerLayoutData.setMargins(new Margins(5));
+	    //centerLayoutData.setMargins(new Margins(5));
 	    add(centerPanel(),centerLayoutData);
 	    
 	}
@@ -138,47 +148,34 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 	    columns.add(runStsColumnConfig);  
 	    ColumnModel cm = new ColumnModel(columns);
 	    
-		String[] names={"催缴告警计划2","催缴是否开启监控"};
-		String[] values={"1","2"};
-		//ListStore<ModelData> listStore=UiUtil.generateStore(names, values);
-		ListStore<ModelData> listStore=new ListStore<ModelData>();
-		ModelData modelData1=new BaseModelData();
-		modelData1.set("planName", "催缴告警计划2");
-		modelData1.set("areaCode", "0591");
-		modelData1.set("planId", "1");
-		modelData1.set("companyId", "1");
-		modelData1.set("remark", "cccccccc");
-		modelData1.set("runCycle", "120");
-		modelData1.set("runStatus", "A");
-		modelData1.set("lastTime", "2011-08-05 20:08");
-		modelData1.set("nextTime", "2011-08-05 20:08");
-		modelData1.set("beginHours", "10");
-		modelData1.set("endHours", "20");
-		modelData1.set("scriptId", "1");
-		modelData1.set("dataTagId", "0591");
-		modelData1.set("sts", "A");
-		ModelData modelData2=new BaseModelData();
-		modelData2.set("planName", "催缴是否开启监控");
-		modelData2.set("areaCode", "0591");
-		modelData2.set("planId", "2");
-		modelData2.set("companyId", "1");
-		modelData2.set("remark", "cccccccc");
-		modelData2.set("runCycle", "120");
-		modelData2.set("runStatus", "A");
-		modelData2.set("lastTime", "2011-08-05 20:08");
-		modelData2.set("nextTime", "2011-08-05 20:08");
-		modelData2.set("beginHours", "10");
-		modelData2.set("endHours", "20");
-		modelData2.set("scriptId", "1");
-		modelData2.set("dataTagId", "0591");
-		modelData2.set("sts", "A");
-		listStore.add(modelData1);
-		listStore.add(modelData2);
+		ModelType type = new ModelType();  
+	    type.setRoot("records");
+		type.addField("planName", "planName");
+		type.addField("areaCode", "areaCode");
+		type.addField("planId", "planId");
+		type.addField("companyId", "companyId");
+		type.addField("remark", "remark");
+		type.addField("runCycle", "runCycle");
+		type.addField("runStatus", "runStatus");
+		type.addField("lastTime", "lastTime");
+		type.addField("nextTime", "nextTime");
+		type.addField("beginHours", "beginHours");
+		type.addField("endHours", "endHours");
+		type.addField("scriptId", "scriptId");
+		type.addField("dataTagId", "dataTagId");
+		type.addField("sts", "sts");
+		String path =  GWT.getHostPageBaseURL()+ "scriptWarnAction/warnPlanList.nut";
+	    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, path);  
+	    HttpProxy<String> proxy = new HttpProxy<String>(builder); 
+	    JsonLoadResultReader<ListLoadResult<ModelData>> reader=new JsonLoadResultReader<ListLoadResult<ModelData>>(type);
+		final BaseListLoader<ListLoadResult<ModelData>> loader=new BaseListLoader<ListLoadResult<ModelData>>(proxy,reader); 
+		final ListStore<ModelData> listStore=new ListStore<ModelData>(loader);
+		
 		Grid<ModelData> grid = new Grid<ModelData>(listStore, cm);  
 		//GridSelectionModel<ModelData> sm=new GridSelectionModel<ModelData>();
 		//sm.setSelectionMode(SelectionMode.SIMPLE);
 		//grid.setSelectionModel(sm);
-		grid.setHeight(480);
+		grid.setHeight(515);
 		grid.setAutoWidth(true);
 		grid.addListener(Events.RowClick, new Listener<GridEvent<ModelData>>(){
 
@@ -203,13 +200,30 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 				areaCodeField.setValue((String)md.get("areaCode"));
 				dataTagField.setValue((String)md.get("dataTagId"));
 				runCycleField.setValue(Integer.parseInt((String)md.get("runCycle")));
-				//@TODO 获取联系号码的grid。
-				//@TODO 获取脚本数据。
 				
+				ListStore<ModelData> listStore=(ListStore<ModelData>)Registry.get("PERSON_WARN_STORE");
+				listStore.getLoadConfig().set("planId", (String)md.get("planId"));
+				listStore.getLoader().load();
+				AsyncCallback getScriptCallBack=new AsyncCallback(){
+					public void onFailure(Throwable caught) {
+						MessageBox.alert("alert",caught.getMessage(),null);
+					}
+					public void onSuccess(Object result) {
+						Map warnScriptMap=(Map)result;
+						scriptArea.setValue((String)warnScriptMap.get("scriptbash"));
+						
+					}
+				};
+				Map<String,String> inputParamMap=new HashMap<String,String>();
+				if(!"".equals(md.get("scriptId"))&&md.get("scriptId")!=null){
+					inputParamMap.put("scriptId", (String)md.get("scriptId"));
+					jsonRpc.request(GWT.getHostPageBaseURL()+ "scriptWarnAction/getWarnScript.nut", inputParamMap, getScriptCallBack);
+				}
 				
 			}
 			
 		});
+		loader.load();
 		return grid;
 		
 	}
@@ -218,13 +232,13 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		ContentPanel centerPanel=new ContentPanel();
 		centerPanel.setHeaderVisible(false);
 		centerPanel.setScrollMode(Scroll.AUTO);
-		//centerPanel.add(createColumnForm());
 		centerPanel.add(planPanel());
 		LayoutContainer mainContainer=new LayoutContainer();
 		mainContainer.setLayout(new ColumnLayout());
-		mainContainer.setAutoHeight(true);
-		mainContainer.setAutoWidth(true);
+		//mainContainer.setAutoHeight(true);
+		//mainContainer.setAutoWidth(true);
 		mainContainer.add(warnPersonPanel(),new com.extjs.gxt.ui.client.widget.layout.ColumnData(0.5));
+		//mainContainer.add(new ContentPanel(),new com.extjs.gxt.ui.client.widget.layout.ColumnData(0.5));
 		mainContainer.add(scriptPanel(),new com.extjs.gxt.ui.client.widget.layout.ColumnData(0.5));
 		centerPanel.add(mainContainer);
 		//centerPanel.add(warnPersonPanel());
@@ -245,6 +259,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		remarkField.setFieldLabel("备注");
 		
 		FormLayout layout = new FormLayout();  
+		layout.setLabelWidth(60);
 		layout.setLabelAlign(LabelAlign.LEFT);  
 		
 		LayoutContainer columnOf2 = new LayoutContainer();
@@ -252,13 +267,14 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		
 		LayoutContainer leftLayOut=new LayoutContainer();
 		leftLayOut.setLayout(layout);
-		leftLayOut.setStyleAttribute("paddingRight", "10px");
+		//leftLayOut.setStyleAttribute("paddingRight", "2px");
 		
 		LayoutContainer rightLayOut=new LayoutContainer();
 		layout = new FormLayout();  
+		layout.setLabelWidth(60);
 		layout.setLabelAlign(LabelAlign.LEFT); 
 		rightLayOut.setLayout(layout);
-		rightLayOut.setStyleAttribute("paddingRight", "10px");
+		rightLayOut.setStyleAttribute("paddingLeft", "10px");
 		
 		
 		leftLayOut.add(planNameField,formData);
@@ -271,21 +287,25 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		LayoutContainer column1 = new LayoutContainer();  
 		column1.setStyleAttribute("paddingRight", "10px"); 
 		layout = new FormLayout();  
+		layout.setLabelWidth(60);
 		layout.setLabelAlign(LabelAlign.LEFT); 
 		column1.setLayout(layout);  
 		LayoutContainer column2 = new LayoutContainer();  
 		column2.setStyleAttribute("paddingLeft", "10px");  
 		layout = new FormLayout();  
+		layout.setLabelWidth(60);
 		layout.setLabelAlign(LabelAlign.LEFT); 
 	    column2.setLayout(layout);
 	    LayoutContainer column3 = new LayoutContainer();  
 		column3.setStyleAttribute("paddingLeft", "10px");  
-		layout = new FormLayout();  
+		layout = new FormLayout();
+		layout.setLabelWidth(60);
 		layout.setLabelAlign(LabelAlign.LEFT); 
 	    column3.setLayout(layout);
 	    LayoutContainer column4 = new LayoutContainer();  
 		column4.setStyleAttribute("paddingLeft", "10px");  
-		layout = new FormLayout();  
+		layout = new FormLayout();
+		layout.setLabelWidth(60);
 		layout.setLabelAlign(LabelAlign.LEFT); 
 	    column4.setLayout(layout);
 	    
@@ -362,6 +382,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 	    planPanel.add(columnOf2,formData);
 	    planPanel.add(columnOf4,formData);
 	    planPanel.setTopComponent(createPlanToolBar());
+	    planPanel.setBodyBorder(true);
 	    
 		return planPanel;
 	}
@@ -371,6 +392,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		createRecordButton.addSelectionListener(new SelectionListener<ButtonEvent>(){
 			 public void componentSelected(ButtonEvent ce) {
 				 isFormFieldReadOnly(false);
+				 planPanel.reset();
 				 companyIdField.setValue("1");
 				 dataTagField.setValue("0591");
 				 areaCodeField.setValue("0591");
@@ -402,9 +424,23 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 					MessageBox.confirm("提示", "确认要删除<"+modelData.get("planName")+">吗?", new Listener<MessageBoxEvent>(){
 
 						public void handleEvent(MessageBoxEvent be) {
-							//@TODO 删除planId的值.
-							planGrid.getStore().remove(modelData);
-							planPanel.reset();
+							AsyncCallback deleteCallBack=new AsyncCallback(){
+								public void onFailure(Throwable caught) {
+									MessageBox.alert("alert",caught.getMessage(),null);
+								}
+								public void onSuccess(Object result) {
+									if((Boolean)result){
+										planGrid.getStore().remove(modelData);
+										planPanel.reset();
+									}else{
+										MessageBox.info("提示","删除失败",null);
+									}
+								}
+							};
+							Map<String,String> inputParamMap=new HashMap<String,String>();
+							inputParamMap.put("planId", (String)modelData.get("planId"));
+							jsonRpc.request(GWT.getHostPageBaseURL()+ "scriptWarnAction/deleteScriptPlan.nut", inputParamMap, deleteCallBack);
+							
 						}
 				
 			 });
@@ -414,16 +450,37 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		comfirmRecordButton.addSelectionListener(new SelectionListener<ButtonEvent>(){
 			 public void componentSelected(ButtonEvent ce) {
 				 if("insert".equals(actionTypeField.getValue()) && planPanel.isValid()){
-					 ModelData md=new BaseModelData();
+					 final ModelData md=new BaseModelData();
 					 transferFormFieldToModelData(md);
-					 //@TODO 新增计划插入数据库中。并且将planId插入到md中.
-					 md.set("planId", "9");//测试.
-					 planGrid.getStore().insert(md, 0);
+					 AsyncCallback insertCallBack=new AsyncCallback(){
+							public void onFailure(Throwable caught) {
+								MessageBox.alert("alert",caught.getMessage(),null);
+							}
+							public void onSuccess(Object result) {
+								String planId=(String)result;
+								md.set("planId", planId);//测试.
+								planGrid.getStore().insert(md, 0);
+							}
+						};
+					jsonRpc.requestStream(GWT.getHostPageBaseURL()+ "scriptWarnAction/insertScriptPlan.nut", md.getProperties(), insertCallBack);
+					 
 				 }else if("modify".equals(actionTypeField.getValue()) && planPanel.isValid()){
-					 ModelData md=planGrid.getSelectionModel().getSelectedItem();
-					//@TODO 更新计划插入数据库中。并且将planId插入到md中.
-					 transferFormFieldToModelData(md);
-					 planGrid.getStore().update(md);
+					 final ModelData md=planGrid.getSelectionModel().getSelectedItem();
+					 AsyncCallback updateCallBack=new AsyncCallback(){
+							public void onFailure(Throwable caught) {
+								MessageBox.alert("alert",caught.getMessage(),null);
+							}
+							public void onSuccess(Object result) {
+								if((Boolean)result){
+								transferFormFieldToModelData(md);
+								planGrid.getStore().update(md);
+								}else{
+									MessageBox.info("提示","更新失败",null);
+								}
+							}
+						};
+					jsonRpc.requestStream(GWT.getHostPageBaseURL()+ "scriptWarnAction/updateScriptPlan.nut", md.getProperties(), updateCallBack);
+					 
 				 }
 				
 			 }
@@ -434,12 +491,29 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 				 if(planIdField.getValue()==null){
 					 MessageBox.alert("警告", "请选择需要复制的计划", null);
 				 }else{
-					 ModelData md=planGrid.getSelectionModel().getSelectedItem();
+					 ModelData willBeCopyModelData=planGrid.getSelectionModel().getSelectedItem();
+					 final ModelData md=new BaseModelData();
+					//获取新的一个ModelData。
+						for (Iterator iterator = willBeCopyModelData.getPropertyNames().iterator(); iterator
+								.hasNext();) {
+							String name = (String) iterator.next();
+							md.set(name, willBeCopyModelData.get(name));
+						}
+
 					 md.set("planId", "");
 					 md.set("planName", (String)md.get("planName")+"_复制");
-					//@TODO 复制到数据库中。并且将planId插入到md中.
-					 md.set("planId", "11");
-					 planGrid.getStore().insert(md, 0);
+					 AsyncCallback copyCallBack=new AsyncCallback(){
+							public void onFailure(Throwable caught) {
+								MessageBox.alert("alert",caught.getMessage(),null);
+							}
+							public void onSuccess(Object result) {
+								String planId=(String)result;
+								 md.set("planId", planId);
+								 planGrid.getStore().insert(md, 0);
+							}
+						};
+					jsonRpc.requestStream(GWT.getHostPageBaseURL()+ "scriptWarnAction/insertScriptPlan.nut", md.getProperties(), copyCallBack);
+					 
 				 }
 				
 			 }
@@ -461,8 +535,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 	private ContentPanel scriptPanel(){
 		ContentPanel scriptFromPanel=new ContentPanel();
 		scriptFromPanel.setHeading("告警脚本");
-		final TextArea scriptArea=new TextArea();
-		scriptArea.setWidth(500);
+		scriptArea.setWidth(400);
 		scriptArea.setHeight(300);
 		scriptFromPanel.add(scriptArea);
 		Button createRecordButton=new Button("编辑");
@@ -485,7 +558,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		centerPanel.setHeading("告警联系人");
 		ColumnConfig staffNameColumnConfig=new ColumnConfig("staffName", "姓名",50);
 	    ColumnConfig staffNoColumnConfig=new ColumnConfig("staffNo", "工号", 75);
-	    ColumnConfig telphoneColumnConfig=new ColumnConfig("telPhone", "电话号码",75);
+	    ColumnConfig telphoneColumnConfig=new ColumnConfig("connNbr", "电话号码",75);
 	    ColumnConfig warnLevelColumnConfig=new ColumnConfig("warnLevel", "告警级别", 75);
 	    ColumnConfig warnModelColumnConfig=new ColumnConfig("warnModel", "告警方式", 75);
 	    warnModelColumnConfig.setRenderer(new GridCellRenderer<ModelData>(){
@@ -513,21 +586,26 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 	    columns.add(warnLevelColumnConfig);
 	    columns.add(warnModelColumnConfig);
 	    ColumnModel cm = new ColumnModel(columns);
-	    ListStore<ModelData> listStore=new ListStore<ModelData>();
-		ModelData modelData1=new BaseModelData();
-		modelData1.set("staffName", "A");
-		modelData1.set("staffNo", "591123426");
-		modelData1.set("telPhone", "18959130026");
-		modelData1.set("warnLevel", "A");
-		modelData1.set("warnMode", "2");
-		listStore.add(modelData1);
-		final Grid<ModelData> grid = new Grid<ModelData>(listStore, cm);  
+		
+		ModelType type = new ModelType();  
+	    type.setRoot("records");
+		type.addField("staffName", "staffName");
+		type.addField("staffNo", "staffNo");
+		type.addField("connNbr", "connNbr");
+		type.addField("warnMode", "warnMode");
+		String path =  GWT.getHostPageBaseURL()+ "scriptWarnAction/warnStaffList.nut";
+	    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, path);  
+	    HttpProxy<String> proxy = new HttpProxy<String>(builder); 
+	    JsonLoadResultReader<ListLoadResult<ModelData>> reader=new JsonLoadResultReader<ListLoadResult<ModelData>>(type);
+		final BaseListLoader<ListLoadResult<ModelData>> loader=new BaseListLoader<ListLoadResult<ModelData>>(proxy,reader); 
+		final ListStore<ModelData> listStore=new ListStore<ModelData>(loader);
+		
+		final Grid<ModelData> warnStaffGrid = new Grid<ModelData>(listStore, cm);  
 		Registry.register("PERSON_WARN_STORE", listStore);
-		grid.setHeight(300);
-		grid.setAutoWidth(true);
-		centerPanel.setAutoHeight(true);
-		centerPanel.setAutoWidth(true);
-		centerPanel.add(grid);
+		warnStaffGrid.setAutoExpandColumn("connNbr");
+		warnStaffGrid.setHeight(304);
+		
+		centerPanel.add(warnStaffGrid);
 		
 		
 		Button createRecordButton=new Button("增加");
@@ -544,11 +622,11 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 			@Override
 			public void componentSelected(ButtonEvent ce) {
 				final ModelData modelData;
-				if(grid.getSelectionModel().getSelectedItem()==null){
+				if(warnStaffGrid.getSelectionModel().getSelectedItem()==null){
 					MessageBox.alert("警告", "请选择需要删除的行", null);
 					return; 
 				}
-				modelData=grid.getSelectionModel().getSelectedItem();
+				modelData=warnStaffGrid.getSelectionModel().getSelectedItem();
 				MessageBox.confirm("提示", "确认要删除<"+modelData.get("staffName")+">吗?", new Listener<MessageBoxEvent>(){
 
 					public void handleEvent(MessageBoxEvent be) {
@@ -561,7 +639,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 							}
 							public void onSuccess(Object result) {
 								if((Boolean)result){
-									grid.getStore().remove(modelData);
+									warnStaffGrid.getStore().remove(modelData);
 									MessageBox.info("提示", "删除成功", null);
 								}else{
 									MessageBox.info("提示","删除失败",null);
@@ -569,8 +647,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 								
 							}
 						};
-						//@TODO 删除数据行的数据
-						//jsonRpc.request(GWT.getHostPageBaseURL()+ "scriptWarnConfig/deleteWarnPerson.nut", modelData.getProperties(), deleteRecordCallBack);
+						jsonRpc.request(GWT.getHostPageBaseURL()+ "scriptWarnAction/deleteScriptPlan.nut", modelData.getProperties(), deleteRecordCallBack);
 						
 					}
 					
@@ -585,7 +662,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 	    toolBar.add(new SeparatorToolItem());
 	    toolBar.add(deleteRecordButton);
 	    centerPanel.setTopComponent(toolBar);
-	    centerPanel.setStyleAttribute("paddingRight", "20px");
+	    centerPanel.setStyleAttribute("paddingRight", "5px");
 		
 		return centerPanel;
 	}

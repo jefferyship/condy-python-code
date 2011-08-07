@@ -110,6 +110,26 @@ public class ScriptWarnManager {
 		
 	}
 	
+	public List<WarnScript> listWarnScript(){
+		Dao dao =NutDaoFactory.getNutDaoInstance();
+		List<WarnScript> list=dao.query(WarnScript.class, null, null);
+		return list;
+	}
 	
-
-}
+	public EccStaffManager getEccStaffManagerByStaffNo(String staffNo){
+		Dao dao =NutDaoFactory.getNutDaoInstance();
+		List<EccStaffManager> esmList=dao.query(EccStaffManager.class, Cnd.where("staffNo", "=", staffNo).and("sts", "=", "A"), null);
+		if(esmList!=null && esmList.size()>0)
+			return esmList.get(0);
+		else
+			return null;
+		
+	}
+	
+	
+}	
+	
+	
+	
+	
+	

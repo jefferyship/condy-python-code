@@ -27,7 +27,16 @@ public class EccStaffManager {
 	private String connNbr;
 	@Column("staff_no")
 	private String staffNo;
+	@Column
+	private String sts;
 	
+	
+	public String getSts() {
+		return sts;
+	}
+	public void setSts(String sts) {
+		this.sts = sts;
+	}
 	/**
 	 * @return the staffNo
 	 */
