@@ -57,7 +57,7 @@ public class ScriptWarnManagerTestCase extends TestCase {
 	
 	public void testInsertWarnScript(){
 		WarnScript warnScript=new WarnScript();
-		warnScript.setRemark("ccc");
+		warnScript.setScriptRemark("ccc");
 		warnScript.setScriptbash("aaaaaaaaaaaa");
 		warnScript.setSts("A");
 		assertTrue(scriptWarnManager.insertWarnScript(warnScript));

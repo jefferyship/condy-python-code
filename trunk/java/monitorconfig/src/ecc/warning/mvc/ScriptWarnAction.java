@@ -29,7 +29,7 @@ public class ScriptWarnAction {
 	}
 	@At("scriptWarnAction/warnStaffList")
 	@Ok("json")
-	public Map warnStaffList(String planId){
+	public Map warnStaffList(@Param("planId")String planId){
 		List<WarnStaff> list=swm.listWarnStaff(planId);
 		Map<String,List> jsonMap=new HashMap<String,List>();
 		jsonMap.put("records", list);
@@ -37,7 +37,7 @@ public class ScriptWarnAction {
 	}
 	@At("scriptWarnAction/getWarnScript")
 	@Ok("json")
-	public JsonReturnObjectOfGwt getWarnScript(String scriptId){
+	public JsonReturnObjectOfGwt getWarnScript(@Param("scriptId")String scriptId){
 		WarnScript warnScript=swm.getWarnScriptById(scriptId);
 		JsonReturnObjectOfGwt result=new JsonReturnObjectOfGwt();
 		if(warnScript==null)
@@ -66,7 +66,6 @@ public class ScriptWarnAction {
 		return result;
 	}
 	@At("scriptWarnAction/planConfirmWarnScript")
-	@AdaptBy(type=JsonAdaptor.class)
 	@Ok("json")
 	public JsonReturnObjectOfGwt planConfirmWarnScript(@Param("planId")String planId,@Param("scriptId")String scriptId){
 		WarnPlanInfo warnPlanInfo=new WarnPlanInfo();
@@ -105,6 +104,7 @@ public class ScriptWarnAction {
 		return result;
 	}
 	@At("scriptWarnAction/insertScriptPlan")
+	@AdaptBy(type=JsonAdaptor.class)
 	@Ok("json")
 	public JsonReturnObjectOfGwt insertScriptPlan(WarnPlanInfo warnPlanInfo){
 		boolean bResult=swm.insertScriptPlan(warnPlanInfo);
@@ -114,9 +114,32 @@ public class ScriptWarnAction {
 	}
 	
 	@At("scriptWarnAction/updateScriptPlan")
+	@AdaptBy(type=JsonAdaptor.class)
 	@Ok("json")
 	public JsonReturnObjectOfGwt updateScriptPlan(WarnPlanInfo warnPlanInfo){
 		boolean bResult=swm.updateScriptPlan(warnPlanInfo);
+		JsonReturnObjectOfGwt result=new JsonReturnObjectOfGwt();
+		result.setResult(bResult);
+		return result;
+	}
+	
+	@At("scriptWarnAction/deleteWarnStaff")
+	@Ok("json")
+	public JsonReturnObjectOfGwt deleteWarnStaff(@Param("planId")String planId,@Param("staffId")String staffId){
+		WarnStaff warnStaff=new WarnStaff();
+		warnStaff.setPlanId(planId);
+		warnStaff.setStaffId(staffId);
+		boolean bResult=swm.deleteWarnStaff(warnStaff);
+		JsonReturnObjectOfGwt result=new JsonReturnObjectOfGwt();
+		result.setResult(bResult);
+		return result;
+	}
+	
+	@At("scriptWarnAction/insertWarnStaff")
+	@AdaptBy(type=JsonAdaptor.class)
+	@Ok("json")
+	public JsonReturnObjectOfGwt insertWarnStaff(WarnStaff warnStaff){
+		boolean bResult=swm.insertWarnStaff(warnStaff);
 		JsonReturnObjectOfGwt result=new JsonReturnObjectOfGwt();
 		result.setResult(bResult);
 		return result;
