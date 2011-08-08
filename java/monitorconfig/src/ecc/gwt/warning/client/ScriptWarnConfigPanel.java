@@ -1,6 +1,7 @@
 package ecc.gwt.warning.client;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -10,10 +11,12 @@ import java.util.logging.Logger;
 import com.extjs.gxt.ui.client.Registry;
 import com.extjs.gxt.ui.client.Style.LayoutRegion;
 import com.extjs.gxt.ui.client.Style.Scroll;
+import com.extjs.gxt.ui.client.data.BaseListLoadConfig;
 import com.extjs.gxt.ui.client.data.BaseListLoader;
 import com.extjs.gxt.ui.client.data.BaseModelData;
 import com.extjs.gxt.ui.client.data.HttpProxy;
 import com.extjs.gxt.ui.client.data.JsonLoadResultReader;
+import com.extjs.gxt.ui.client.data.ListLoadConfig;
 import com.extjs.gxt.ui.client.data.ListLoadResult;
 import com.extjs.gxt.ui.client.data.ModelData;
 import com.extjs.gxt.ui.client.data.ModelType;
@@ -49,7 +52,6 @@ import com.extjs.gxt.ui.client.widget.layout.FormLayout;
 import com.extjs.gxt.ui.client.widget.toolbar.SeparatorToolItem;
 import com.extjs.gxt.ui.client.widget.toolbar.ToolBar;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -202,8 +204,9 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 				runCycleField.setValue(Integer.parseInt((String)md.get("runCycle")));
 				
 				ListStore<ModelData> listStore=(ListStore<ModelData>)Registry.get("PERSON_WARN_STORE");
-				listStore.getLoadConfig().set("planId", (String)md.get("planId"));
-				listStore.getLoader().load();
+				ListLoadConfig llc=new BaseListLoadConfig();
+				llc.set("planId", (String)md.get("planId"));
+				listStore.getLoader().load(llc);
 				AsyncCallback getScriptCallBack=new AsyncCallback(){
 					public void onFailure(Throwable caught) {
 						MessageBox.alert("alert",caught.getMessage(),null);
@@ -460,20 +463,22 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 								String planId=(String)result;
 								md.set("planId", planId);//测试.
 								planGrid.getStore().insert(md, 0);
+								MessageBox.info("提示","插入成功",null);
 							}
 						};
 					jsonRpc.requestStream(GWT.getHostPageBaseURL()+ "scriptWarnAction/insertScriptPlan.nut", md.getProperties(), insertCallBack);
 					 
 				 }else if("modify".equals(actionTypeField.getValue()) && planPanel.isValid()){
 					 final ModelData md=planGrid.getSelectionModel().getSelectedItem();
+					 transferFormFieldToModelData(md);
 					 AsyncCallback updateCallBack=new AsyncCallback(){
 							public void onFailure(Throwable caught) {
 								MessageBox.alert("alert",caught.getMessage(),null);
 							}
 							public void onSuccess(Object result) {
 								if((Boolean)result){
-								transferFormFieldToModelData(md);
 								planGrid.getStore().update(md);
+								MessageBox.info("提示","更新成功",null);
 								}else{
 									MessageBox.info("提示","更新失败",null);
 								}
@@ -560,7 +565,21 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 	    ColumnConfig staffNoColumnConfig=new ColumnConfig("staffNo", "工号", 75);
 	    ColumnConfig telphoneColumnConfig=new ColumnConfig("connNbr", "电话号码",75);
 	    ColumnConfig warnLevelColumnConfig=new ColumnConfig("warnLevel", "告警级别", 75);
-	    ColumnConfig warnModelColumnConfig=new ColumnConfig("warnModel", "告警方式", 75);
+	    ColumnConfig warnModelColumnConfig=new ColumnConfig("warnMode", "告警方式", 75);
+	    ColumnConfig stsColumnConfig=new ColumnConfig("sts", "状态", 50);
+	    stsColumnConfig.setRenderer(new GridCellRenderer<ModelData>(){
+
+			public Object render(ModelData model, String property,
+					ColumnData config, int rowIndex, int colIndex,
+					ListStore<ModelData> store, Grid<ModelData> grid) {
+				String sts=model.get("sts");
+				if("A".equals(sts))
+					return "在用";
+				else
+					return "不再用";
+			}
+	    	
+	    });
 	    warnModelColumnConfig.setRenderer(new GridCellRenderer<ModelData>(){
 			public Object render(ModelData model, String property,
 					ColumnData config, int rowIndex, int colIndex,
@@ -575,7 +594,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 				else if("4".equals(warnMode))
 					return "Email";
 				else
-					return "未知";
+					return warnMode+"未知";
 			}
 	    });
 	   
@@ -585,6 +604,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 	    columns.add(telphoneColumnConfig);
 	    columns.add(warnLevelColumnConfig);
 	    columns.add(warnModelColumnConfig);
+	    columns.add(stsColumnConfig);
 	    ColumnModel cm = new ColumnModel(columns);
 		
 		ModelType type = new ModelType();  
@@ -593,6 +613,9 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		type.addField("staffNo", "staffNo");
 		type.addField("connNbr", "connNbr");
 		type.addField("warnMode", "warnMode");
+		type.addField("sts", "sts");
+		type.addField("planId", "planId");
+		type.addField("staffId", "staffId");
 		String path =  GWT.getHostPageBaseURL()+ "scriptWarnAction/warnStaffList.nut";
 	    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, path);  
 	    HttpProxy<String> proxy = new HttpProxy<String>(builder); 
@@ -647,7 +670,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 								
 							}
 						};
-						jsonRpc.request(GWT.getHostPageBaseURL()+ "scriptWarnAction/deleteScriptPlan.nut", modelData.getProperties(), deleteRecordCallBack);
+						jsonRpc.request(GWT.getHostPageBaseURL()+ "scriptWarnAction/deleteWarnStaff.nut", modelData.getProperties(), deleteRecordCallBack);
 						
 					}
 					
