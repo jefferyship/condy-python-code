@@ -1,6 +1,7 @@
 package ecc.gwt.warning.client;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -33,7 +34,6 @@ import com.extjs.gxt.ui.client.widget.grid.Grid;
 import com.extjs.gxt.ui.client.widget.grid.RowNumberer;
 import com.extjs.gxt.ui.client.widget.layout.ColumnLayout;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -242,7 +242,7 @@ public class ScriptWarningScriptPopup extends Window {
 					Map<String,String> inputParamMap=new HashMap<String,String>();
 					inputParamMap.put("planId", (String)planModelData.get("planId"));
 					inputParamMap.put("scriptId", (String)currModelData.get("scriptId"));
-				    jsonRpc.request(GWT.getHostPageBaseURL()+ "scriptWarnAction/updateWarnScript.nut", inputParamMap, confirmCallBack);
+				    jsonRpc.request(GWT.getHostPageBaseURL()+ "scriptWarnAction/planConfirmWarnScript.nut", inputParamMap, confirmCallBack);
 				}
 			}
 			

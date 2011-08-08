@@ -31,6 +31,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class ScriptWarningPersonPopup extends Window {
 	private final HiddenField<String> staffId=new HiddenField<String>();
+	private final HiddenField<String> sts=new HiddenField<String>();
 	private final TextField<String> staffNo=new TextField<String>();
 	private final TextField<String> staffName=new TextField<String>();
 	private final TextField<String> telPhone=new TextField<String>();
@@ -71,6 +72,7 @@ public class ScriptWarningPersonPopup extends Window {
 		staffName.setAllowBlank(false);	
 		staffName.setReadOnly(true);
 		staffName.setFieldLabel("姓名");
+		sts.setValue("A");
 		
 		telPhone.setReadOnly(true);
 		telPhone.setFieldLabel("联系电话");
@@ -115,16 +117,21 @@ public class ScriptWarningPersonPopup extends Window {
 			public void componentSelected(ButtonEvent ce) {
 				final ListStore<ModelData> listStore = (ListStore<ModelData>)Registry.get("PERSON_WARN_STORE");
 				ModelData currModelData=listStore.findModel("staffId", staffId.getValue());
+				ModelData planModelData=planGrid.getSelectionModel().getSelectedItem();
 				if(currModelData!=null){
 					MessageBox.alert("提示","已经存在<"+staffNo.getValue()+"的告警联系人",null);
+				}else if(planModelData==null){
+					MessageBox.alert("提示","请先选择计划",null);
 				}else{
 					final ModelData baseModelData=new BaseModelData();
 					baseModelData.set("staffName", staffName.getValue());
 					baseModelData.set("staffNo", staffNo.getValue());
-					baseModelData.set("warnLevel", warnLevelCombo.getValue());
+					baseModelData.set("warnLevel", warnLevelCombo.getValue().get("value"));
 					baseModelData.set("telPhone", telPhone.getValue());
-					baseModelData.set("warnMode", warnModelCombo.getValue());
+					baseModelData.set("warnMode", warnModelCombo.getValue().get("value"));
 					baseModelData.set("staffId", staffId.getValue());
+					baseModelData.set("sts", sts.getValue());
+					baseModelData.set("planId", planModelData.get("planId"));
 					AsyncCallback insertWarnStaffCallBack=new AsyncCallback(){
 						public void onFailure(Throwable caught) {
 							MessageBox.alert("alert",caught.getMessage(),null);
@@ -137,7 +144,7 @@ public class ScriptWarningPersonPopup extends Window {
 							}
 						}
 					};
-					jsonRpc.requestStream(GWT.getHostPageBaseURL()+ "scriptWarnAction/insertWarnScript.nut", baseModelData.getProperties(), insertWarnStaffCallBack);
+					jsonRpc.requestStream(GWT.getHostPageBaseURL()+ "scriptWarnAction/insertWarnStaff.nut", baseModelData.getProperties(), insertWarnStaffCallBack);
 				}
 			}
 			
@@ -145,6 +152,7 @@ public class ScriptWarningPersonPopup extends Window {
 		formPanel.setHeaderVisible(true);
 		formPanel.setButtonAlign(HorizontalAlignment.CENTER);
 		formPanel.add(staffId);
+		formPanel.add(sts);
 		formPanel.add(staffNo);
 		formPanel.add(staffName);
 		formPanel.add(telPhone);
