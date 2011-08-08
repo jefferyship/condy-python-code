@@ -17,8 +17,8 @@ public class WarnScript {
 	private String scriptId;
 	@Column
 	private String sts;
-	@Column
-	private String remark;
+	@Column("remark")
+	private String scriptRemark;
 	@Column("SCRIPTBASH")
 	private String scriptbash;
 	/**
@@ -45,17 +45,18 @@ public class WarnScript {
 	public void setSts(String sts) {
 		this.sts = sts;
 	}
+	
 	/**
-	 * @return the remark
+	 * @return the scriptRemark
 	 */
-	public String getRemark() {
-		return remark;
+	public String getScriptRemark() {
+		return scriptRemark;
 	}
 	/**
-	 * @param remark the remark to set
+	 * @param scriptRemark the scriptRemark to set
 	 */
-	public void setRemark(String remark) {
-		this.remark = remark;
+	public void setScriptRemark(String scriptRemark) {
+		this.scriptRemark = scriptRemark;
 	}
 	/**
 	 * @return the scriptbash
