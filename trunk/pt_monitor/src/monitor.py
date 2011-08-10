@@ -234,6 +234,9 @@ def monitorProcExist(monitorObjectList):
         if procNameMap.has_key(monitorProcObject['proc_name'])==False:
             procNameMap[monitorProcObject['proc_name']]=False
     pidObjectList=SystemInfo.getCPUUsedByPidName(procNameMap.keys())
+    if pidObjectList==None:
+        log.info('psutil的插件没有安装，或者不支持psutil的低版本的linux。')
+        return warnToPersonList
     for pidObject in pidObjectList:#如果线程已经存在，将状态设置成True
         procNameMap[pidObject[0]]=True
     warnStr=''
@@ -259,6 +262,9 @@ def monitorProcCpu(monitorObjectList,saveDbMsgDict):
         if procNameMap.has_key(monitorProcObject['proc_name'])==False and monitorProcObject['proc_cpu_limit'].isdigit():
             procNameMap[monitorProcObject['proc_name']]=monitorProcObject['proc_cpu_limit']
     pidObjectList=SystemInfo.getCPUUsedByPidName(procNameMap.keys())
+    if pidObjectList==None:
+        log.info('psutil的插件没有安装，或者不支持psutil的低版本的linux。')
+        return warnToPersonList
     saveDBMsgDict['procCpu']=pidObjectList
     for pidObject in pidObjectList:
         if pidObject[2]>=float(procNameMap[pidObject[0]]):
@@ -272,6 +278,9 @@ def monitorCpu(cpuIdleLimit,saveDbMsgDict):
     """
     warnToPersonList=[]
     cpuIdle=SystemInfo.getCpuIdle()
+    if cpuIdle==None:
+        log.info('psutil的插件没有安装，或者不支持psutil的低版本的linux。')
+        return warnToPersonList
     saveDbMsgDict['cpuIdle']=cpuIdle
     if cpuIdleLimit.isdigit() and cpuIdle<float(cpuIdleLimit):
         log.info("CPU Idle告警: cpuIdle_limit:%s,real_cpuIdle:%s",cpuIdleLimit,str(cpuIdle))
@@ -285,6 +294,9 @@ def monitorMemory(aviPhymenLimit,saveDbMsgDict):
     """
     warnToPersonList=[]
     memoryObject=SystemInfo.getMemoryInfo()
+    if memoryObject==None:
+        log.info('psutil的插件没有安装，或者不支持psutil的低版本的linux。')
+        return warnToPersonList
     saveDbMsgDict['memory']=memoryObject
     if aviPhymenLimit.isdigit() and memoryObject[1]<float(aviPhymenLimit):
         log.info("内存告警: aviPhymenLimit:%sKB,real_aviPhymen:%sKB",aviPhymenLimit,str(memoryObject[1]))
@@ -453,13 +465,13 @@ def saveSystemInfo(saveDbMsgDict):
 
 
 def get_version():
-    version ='1.1.0.16'
+    version ='1.2.0.0'
     """
      获取版本信息.
     """
     log.info( '=========================================================================')
     log.info('  pt_monitor.py current version is %s               '%(version))
-    log.info('  author:Condy create time:2011.01.17 modify time:2011.08.05')
+    log.info('  author:Condy create time:2011.01.17 modify time:2011.08.10')
     log.info(' 功能点1.监控平台日志')
     log.info('      2.监控CPU，内存、线程、硬盘告警信息')
     log.info('      3.收集CPU，内存、线程、硬盘资源信息')

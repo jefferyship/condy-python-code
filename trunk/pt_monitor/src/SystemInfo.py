@@ -5,7 +5,11 @@ Created on 2011-1-7
 @author: 林桦
 '''
 import os
-import psutil
+psutilUsed=True
+try:
+    import psutil
+except Exception:
+    psutilUsed=False
 def getHardSpace():
     """
     获取文件系统的磁盘空间
@@ -31,10 +35,12 @@ def getCpuIdle():
     """
      Get System Cpu Information.
     """
+    if psutilUsed==False: return None
     usedPercent=psutil.cpu_percent(.2)
     return round(100-usedPercent,3)
 def getMemoryInfo():
     """ return a tuple(total_phymen,avi_phymen.used_phymen) KB .get System Memory Inforation"""
+    if psutilUsed==False: return None
     totalPhymen=psutil.TOTAL_PHYMEM
     aviPhymen=psutil.avail_phymem()
     usedPhymen=psutil.used_phymem()
@@ -43,6 +49,7 @@ def getMemoryInfo():
 def getCPUUsedByPidName(pidNameList):
     """ return a list [(name,pid,usedCpu,usedMemory)]"""
     pidObjectList=[]
+    if psutilUsed==False: return None
     if len(pidNameList)==0:
         return pidObjectList
     pidStrList=psutil.get_pid_list()
@@ -56,15 +63,5 @@ def getCPUUsedByPidName(pidNameList):
             pid=p.pid
             memoryPercent=p.get_memory_percent()
             pidObjectList.append((name,pid,cpuPercent,memoryPercent))
-            
+
     return pidObjectList
-    
-        
-        
-        
-        
-
-   
-    
-
-        
