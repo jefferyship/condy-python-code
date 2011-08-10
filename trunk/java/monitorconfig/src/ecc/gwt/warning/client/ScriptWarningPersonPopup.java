@@ -31,7 +31,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class ScriptWarningPersonPopup extends Window {
 	private final HiddenField<String> staffId=new HiddenField<String>();
-	private final HiddenField<String> sts=new HiddenField<String>();
+	private final ComboBox<ModelData> stsCombo=new ComboBox<ModelData>();
+	private final HiddenField<String> actionType=new HiddenField<String>();
 	private final TextField<String> staffNo=new TextField<String>();
 	private final TextField<String> staffName=new TextField<String>();
 	private final TextField<String> telPhone=new TextField<String>();
@@ -39,12 +40,39 @@ public class ScriptWarningPersonPopup extends Window {
 	private final ComboBox<ModelData> warnModelCombo = new ComboBox<ModelData>();
 	private final Grid<ModelData> planGrid;
 	private Logger logger;
-	private final FormPanel formPanel=new FormPanel();
+    final FormPanel formPanel=new FormPanel();
 	final private JsonRpc jsonRpc=new JsonRpc();
+	
+	void setFormFied(String actionType,ModelData modelData){
+		this.actionType.setValue(actionType);
+		if("insert".equals(actionType)){
+			staffId.setReadOnly(false);
+			staffNo.setReadOnly(false);
+			staffName.setReadOnly(false);
+			stsCombo.setValue(stsCombo.getStore().findModel("value", "A"));
+			warnLevelCombo.setValue(warnLevelCombo.getStore().findModel("value", "A"));
+			warnModelCombo.setValue(warnModelCombo.getStore().findModel("name", "短信"));
+		}else if("modify".equals(actionType)){
+		staffId.setValue((String)modelData.get("staffId"));
+		logger.info((String)modelData.get("sts"));
+		logger.info(String.valueOf(stsCombo.getStore().findModel("value", (String)modelData.get("sts"))));
+		stsCombo.setValue(stsCombo.getStore().findModel("value", (String)modelData.get("sts")));
+		staffNo.setValue((String)modelData.get("staffNo"));
+		staffName.setValue((String)modelData.get("staffName"));
+		telPhone.setValue((String)modelData.get("connNbr"));
+		warnLevelCombo.setValue(warnLevelCombo.getStore().findModel("value", (String)modelData.get("warnLevel")));
+		warnModelCombo.setValue(warnModelCombo.getStore().findModel("value", (String)modelData.get("warnMode")));
+		staffId.setReadOnly(true);
+		staffNo.setReadOnly(true);
+		staffName.setReadOnly(true);
+		}
+		
+	}
+
 	public ScriptWarningPersonPopup(Grid<ModelData> planGrid){
 		logger=Logger.getLogger("ecc.gwt.warning.client.ScriptWarnConfigPanel");
 		this.planGrid=planGrid;
-		setSize(350, 250);
+		setSize(350, 270);
 		setBorders(true);
 		setShadow(false);
 		setAutoHide(false);
@@ -72,7 +100,6 @@ public class ScriptWarningPersonPopup extends Window {
 		staffName.setAllowBlank(false);	
 		staffName.setReadOnly(true);
 		staffName.setFieldLabel("姓名");
-		sts.setValue("A");
 		
 		telPhone.setReadOnly(true);
 		telPhone.setFieldLabel("联系电话");
@@ -90,6 +117,13 @@ public class ScriptWarningPersonPopup extends Window {
 		warnModelCombo.setStore(UiUtil.generateStore(new String[]{"短信"},new String[]{"2"}));
 		warnModelCombo.setTriggerAction(TriggerAction.ALL);
 		warnModelCombo.setEditable(false);
+		
+		stsCombo.setFieldLabel("状态");
+		stsCombo.setAllowBlank(false);
+		stsCombo.setDisplayField("name");
+		stsCombo.setStore(UiUtil.generateStore(new String[]{"在用","不在用"},new String[]{"A","B"}));
+		stsCombo.setTriggerAction(TriggerAction.ALL);
+		stsCombo.setEditable(false);
 		
 		staffNo.addKeyListener(new KeyListener(){
 			@Override
@@ -116,55 +150,84 @@ public class ScriptWarningPersonPopup extends Window {
 			@Override
 			public void componentSelected(ButtonEvent ce) {
 				final ListStore<ModelData> listStore = (ListStore<ModelData>)Registry.get("PERSON_WARN_STORE");
-				ModelData currModelData=listStore.findModel("staffId", staffId.getValue());
+				final ModelData currModelData=listStore.findModel("staffId", staffId.getValue());
 				ModelData planModelData=planGrid.getSelectionModel().getSelectedItem();
-				if(currModelData!=null){
-					MessageBox.alert("提示","已经存在<"+staffNo.getValue()+"的告警联系人",null);
-				}else if(planModelData==null){
+				if(planModelData==null){
 					MessageBox.alert("提示","请先选择计划",null);
-				}else{
-					final ModelData baseModelData=new BaseModelData();
-					baseModelData.set("staffName", staffName.getValue());
-					baseModelData.set("staffNo", staffNo.getValue());
-					baseModelData.set("warnLevel", warnLevelCombo.getValue().get("value"));
-					baseModelData.set("telPhone", telPhone.getValue());
-					baseModelData.set("warnMode", warnModelCombo.getValue().get("value"));
-					baseModelData.set("staffId", staffId.getValue());
-					baseModelData.set("sts", sts.getValue());
-					baseModelData.set("planId", planModelData.get("planId"));
-					AsyncCallback insertWarnStaffCallBack=new AsyncCallback(){
+					return ;
+				}
+				if("insert".equals(actionType.getValue())){
+					if(currModelData!=null){
+						MessageBox.alert("提示","已经存在<"+staffNo.getValue()+"的告警联系人",null);
+						return ;
+					}else {
+						final ModelData baseModelData=new BaseModelData();
+						baseModelData.set("staffName", staffName.getValue());
+						baseModelData.set("staffNo", staffNo.getValue());
+						baseModelData.set("warnLevel", warnLevelCombo.getValue().get("value"));
+						baseModelData.set("connNbr", telPhone.getValue());
+						baseModelData.set("warnMode", warnModelCombo.getValue().get("value"));
+						baseModelData.set("staffId", staffId.getValue());
+						baseModelData.set("sts", stsCombo.getValue().get("value"));
+						baseModelData.set("planId", planModelData.get("planId"));
+						AsyncCallback insertWarnStaffCallBack=new AsyncCallback(){
+							public void onFailure(Throwable caught) {
+								MessageBox.alert("alert",caught.getMessage(),null);
+							}
+							public void onSuccess(Object result) {
+								if((Boolean)result){
+									listStore.insert(baseModelData, 0);
+									MessageBox.alert("提示","插入成功",null);
+									formPanel.reset();
+									hide();
+								}
+							}
+						};
+						jsonRpc.requestStream(GWT.getHostPageBaseURL()+ "scriptWarnAction/insertWarnStaff.nut", baseModelData.getProperties(), insertWarnStaffCallBack);
+					}
+				}else if("modify".equals(actionType.getValue())){
+					if(currModelData==null){
+						MessageBox.alert("提示","请先选择要修改的联系人",null);
+						return ;
+					}
+					currModelData.set("staffName", staffName.getValue());
+					currModelData.set("staffNo", staffNo.getValue());
+					currModelData.set("warnLevel", warnLevelCombo.getValue().get("value"));
+					currModelData.set("connNbr", telPhone.getValue());
+					currModelData.set("warnMode", warnModelCombo.getValue().get("value"));
+					currModelData.set("staffId", staffId.getValue());
+					currModelData.set("sts", stsCombo.getValue().get("value"));
+					AsyncCallback updateWarnStaffCallBack=new AsyncCallback(){
 						public void onFailure(Throwable caught) {
 							MessageBox.alert("alert",caught.getMessage(),null);
 						}
 						public void onSuccess(Object result) {
 							if((Boolean)result){
-								listStore.insert(baseModelData, 0);
+								listStore.update(currModelData);
+								MessageBox.alert("提示","更新成功",null);
 								formPanel.reset();
 								hide();
 							}
 						}
 					};
-					jsonRpc.requestStream(GWT.getHostPageBaseURL()+ "scriptWarnAction/insertWarnStaff.nut", baseModelData.getProperties(), insertWarnStaffCallBack);
+					jsonRpc.requestStream(GWT.getHostPageBaseURL()+ "scriptWarnAction/updateWarnStaff.nut", currModelData.getProperties(), updateWarnStaffCallBack);
 				}
+				
+				
+				
 			}
 			
 		});
 		formPanel.setHeaderVisible(true);
 		formPanel.setButtonAlign(HorizontalAlignment.CENTER);
 		formPanel.add(staffId);
-		formPanel.add(sts);
 		formPanel.add(staffNo);
 		formPanel.add(staffName);
 		formPanel.add(telPhone);
 		formPanel.add(warnLevelCombo);
 		formPanel.add(warnModelCombo);
+		formPanel.add(stsCombo);
 		formPanel.addButton(btnAdd);
-		formPanel.addButton(new Button("重置",new SelectionListener<ButtonEvent>(){
-			public void componentSelected(ButtonEvent ce) {
-				formPanel.reset();
-			}
-			
-		}));
 		return formPanel;
 		
 	}

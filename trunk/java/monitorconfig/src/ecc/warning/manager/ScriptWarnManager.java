@@ -95,8 +95,16 @@ public class ScriptWarnManager {
 		dao.update(warnScript);
 		bResult=true;
 	return bResult;
-		
 	}
+	
+	public boolean updateWarnStaff(WarnStaff warnStaff){
+		boolean bResult=false;
+		Dao dao =NutDaoFactory.getNutDaoInstance();
+		dao.update(warnStaff);
+		bResult=true;
+	return bResult;
+	}
+	
 	public boolean deleteWarnScript(String scriptId){
 		boolean bResult=false;
 		Dao dao =NutDaoFactory.getNutDaoInstance();
