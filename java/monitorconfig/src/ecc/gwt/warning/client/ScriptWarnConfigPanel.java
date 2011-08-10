@@ -64,7 +64,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 	private Logger logger;
 	final private JsonRpc jsonRpc=new JsonRpc();
 	final private Grid<ModelData> planGrid;
-	final Window scriptWarningPersonPopup;
+	final ScriptWarningPersonPopup scriptWarningPersonPopup;
 	final ScriptWarningScriptPopup scriptWarningScriptPopup;
 	//FormPanel的对象.
 	final FormPanel planPanel=new FormPanel();
@@ -614,6 +614,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		type.addField("connNbr", "connNbr");
 		type.addField("warnMode", "warnMode");
 		type.addField("sts", "sts");
+		type.addField("warnLevel", "warnLevel");
 		type.addField("planId", "planId");
 		type.addField("staffId", "staffId");
 		String path =  GWT.getHostPageBaseURL()+ "scriptWarnAction/warnStaffList.nut";
@@ -636,6 +637,22 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 			@Override
 			public void componentSelected(ButtonEvent ce) {
 				scriptWarningPersonPopup.show();
+				scriptWarningPersonPopup.setFormFied("insert",null);
+			}
+			
+		});
+		Button modifyRecordButton=new Button("修改");
+		modifyRecordButton.addSelectionListener(new SelectionListener<ButtonEvent>(){
+
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				if(warnStaffGrid.getSelectionModel().getSelectedItem()==null){
+					MessageBox.alert("警告", "请选择需要修改的行", null);
+					return; 
+				}
+				final ModelData modelData=warnStaffGrid.getSelectionModel().getSelectedItem();
+				scriptWarningPersonPopup.show();
+				scriptWarningPersonPopup.setFormFied("modify",modelData);
 			}
 			
 		});
@@ -683,6 +700,9 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		ToolBar toolBar = new ToolBar();
 	    toolBar.add(createRecordButton);
 	    toolBar.add(new SeparatorToolItem());
+	    toolBar.add(modifyRecordButton);
+	    toolBar.add(new SeparatorToolItem());
+	    
 	    toolBar.add(deleteRecordButton);
 	    centerPanel.setTopComponent(toolBar);
 	    centerPanel.setStyleAttribute("paddingRight", "5px");

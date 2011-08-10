@@ -145,6 +145,16 @@ public class ScriptWarnAction {
 		return result;
 	}
 	
+	@At("scriptWarnAction/updateWarnStaff")
+	@AdaptBy(type=JsonAdaptor.class)
+	@Ok("json")
+	public JsonReturnObjectOfGwt updateWarnStaff(WarnStaff warnStaff){
+		boolean bResult=swm.updateWarnStaff(warnStaff);
+		JsonReturnObjectOfGwt result=new JsonReturnObjectOfGwt();
+		result.setResult(bResult);
+		return result;
+	}
+	
 	
 
 }

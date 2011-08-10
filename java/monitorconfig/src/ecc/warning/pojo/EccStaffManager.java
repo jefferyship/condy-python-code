@@ -15,6 +15,7 @@ public class EccStaffManager {
 		esm.staffId=rs.getString("staff_id");
 		esm.staffName=rs.getString("staff_name");
 		esm.connNbr=rs.getString("conn_nbr");
+		esm.staffNo=rs.getString("staff_no");
 		return esm;
 		
 	}
