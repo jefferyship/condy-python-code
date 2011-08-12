@@ -65,3 +65,10 @@ def getCPUUsedByPidName(pidNameList):
             pidObjectList.append((name,pid,cpuPercent,memoryPercent))
 
     return pidObjectList
+def getdiskByPath(path):
+    """
+     返回Tuple(total,used,free,usedPercent)
+    """
+    if psutil.version_info>=(0,3,0):#0.3以上版本支持这个功能。
+        return psutil.disk_usage(path)
+    else:return None
