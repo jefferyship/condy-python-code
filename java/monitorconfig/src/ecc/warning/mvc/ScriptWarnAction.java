@@ -1,5 +1,8 @@
 package ecc.warning.mvc;
 
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,9 +110,26 @@ public class ScriptWarnAction {
 	@AdaptBy(type=JsonAdaptor.class)
 	@Ok("json")
 	public JsonReturnObjectOfGwt insertScriptPlan(WarnPlanInfo warnPlanInfo){
-		boolean bResult=swm.insertScriptPlan(warnPlanInfo);
+		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		JsonReturnObjectOfGwt result=new JsonReturnObjectOfGwt();
-		result.setResult(bResult);
+		if(warnPlanInfo.getNextTimeStr()!=null&&!"".equals(warnPlanInfo.getNextTimeStr())){
+			try {
+				warnPlanInfo.setNextTime(new Timestamp(sdf.parse(warnPlanInfo.getNextTimeStr()).getTime()));
+			} catch (ParseException e) {
+				result.setError("日期转换错误");
+			}
+		}
+		if(warnPlanInfo.getLastTimeStr()!=null&&!"".equals(warnPlanInfo.getLastTimeStr())){
+			try {
+				warnPlanInfo.setLastTime(new Timestamp(sdf.parse(warnPlanInfo.getLastTimeStr()).getTime()));
+			} catch (ParseException e) {
+				result.setError("日期转换错误");
+			}
+		}
+		if(result.getError()==null){
+			boolean bResult=swm.insertScriptPlan(warnPlanInfo);
+			result.setResult(bResult);
+		}
 		return result;
 	}
 	
@@ -117,9 +137,26 @@ public class ScriptWarnAction {
 	@AdaptBy(type=JsonAdaptor.class)
 	@Ok("json")
 	public JsonReturnObjectOfGwt updateScriptPlan(WarnPlanInfo warnPlanInfo){
-		boolean bResult=swm.updateScriptPlan(warnPlanInfo);
 		JsonReturnObjectOfGwt result=new JsonReturnObjectOfGwt();
-		result.setResult(bResult);
+		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		if(warnPlanInfo.getNextTimeStr()!=null&&!"".equals(warnPlanInfo.getNextTimeStr())){
+			try {
+				warnPlanInfo.setNextTime(new Timestamp(sdf.parse(warnPlanInfo.getNextTimeStr()).getTime()));
+			} catch (ParseException e) {
+				result.setError("日期转换错误");
+			}
+		}
+		if(warnPlanInfo.getLastTimeStr()!=null&&!"".equals(warnPlanInfo.getLastTimeStr())){
+			try {
+				warnPlanInfo.setLastTime(new Timestamp(sdf.parse(warnPlanInfo.getLastTimeStr()).getTime()));
+			} catch (ParseException e) {
+				result.setError("日期转换错误");
+			}
+		}
+		if(result.getError()==null){
+			boolean bResult=swm.updateScriptPlan(warnPlanInfo);
+			result.setResult(bResult);
+		}
 		return result;
 	}
 	

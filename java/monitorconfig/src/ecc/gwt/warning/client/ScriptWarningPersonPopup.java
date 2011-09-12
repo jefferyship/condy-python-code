@@ -36,6 +36,7 @@ public class ScriptWarningPersonPopup extends Window {
 	private final TextField<String> staffNo=new TextField<String>();
 	private final TextField<String> staffName=new TextField<String>();
 	private final TextField<String> telPhone=new TextField<String>();
+	private final TextField<String> email=new TextField<String>();
 	private final ComboBox<ModelData> warnLevelCombo = new ComboBox<ModelData>();
 	private final ComboBox<ModelData> warnModelCombo = new ComboBox<ModelData>();
 	private final Grid<ModelData> planGrid;
@@ -60,6 +61,7 @@ public class ScriptWarningPersonPopup extends Window {
 		staffNo.setValue((String)modelData.get("staffNo"));
 		staffName.setValue((String)modelData.get("staffName"));
 		telPhone.setValue((String)modelData.get("connNbr"));
+		email.setValue((String)modelData.get("email"));
 		warnLevelCombo.setValue(warnLevelCombo.getStore().findModel("value", (String)modelData.get("warnLevel")));
 		warnModelCombo.setValue(warnModelCombo.getStore().findModel("value", (String)modelData.get("warnMode")));
 		staffId.setReadOnly(true);
@@ -103,6 +105,8 @@ public class ScriptWarningPersonPopup extends Window {
 		
 		telPhone.setReadOnly(true);
 		telPhone.setFieldLabel("联系电话");
+		email.setFieldLabel("Email");
+		email.setReadOnly(true);
 		
 		warnLevelCombo.setFieldLabel("告警级别");
 		warnLevelCombo.setDisplayField("name");
@@ -114,7 +118,7 @@ public class ScriptWarningPersonPopup extends Window {
 		warnModelCombo.setFieldLabel("告警方式");
 		warnModelCombo.setAllowBlank(false);
 		warnModelCombo.setDisplayField("name");
-		warnModelCombo.setStore(UiUtil.generateStore(new String[]{"短信"},new String[]{"2"}));
+		warnModelCombo.setStore(UiUtil.generateStore(new String[]{"短信","Email","语音","软墙板"},new String[]{"2","4","3","1"}));
 		warnModelCombo.setTriggerAction(TriggerAction.ALL);
 		warnModelCombo.setEditable(false);
 		
@@ -138,6 +142,7 @@ public class ScriptWarningPersonPopup extends Window {
 							staffName.setValue((String)eccStaffMsgMap.get("staffName"));
 							staffId.setValue((String)eccStaffMsgMap.get("staffId"));
 							telPhone.setValue((String)eccStaffMsgMap.get("connNbr"));
+							email.setValue((String)eccStaffMsgMap.get("email"));
 						}
 					};
 					Map<String,String> inputparamMap=new HashMap<String,String>();
@@ -166,6 +171,7 @@ public class ScriptWarningPersonPopup extends Window {
 						baseModelData.set("staffNo", staffNo.getValue());
 						baseModelData.set("warnLevel", warnLevelCombo.getValue().get("value"));
 						baseModelData.set("connNbr", telPhone.getValue());
+						baseModelData.set("email", email.getValue());
 						baseModelData.set("warnMode", warnModelCombo.getValue().get("value"));
 						baseModelData.set("staffId", staffId.getValue());
 						baseModelData.set("sts", stsCombo.getValue().get("value"));
@@ -194,6 +200,7 @@ public class ScriptWarningPersonPopup extends Window {
 					currModelData.set("staffNo", staffNo.getValue());
 					currModelData.set("warnLevel", warnLevelCombo.getValue().get("value"));
 					currModelData.set("connNbr", telPhone.getValue());
+					currModelData.set("email", email.getValue());
 					currModelData.set("warnMode", warnModelCombo.getValue().get("value"));
 					currModelData.set("staffId", staffId.getValue());
 					currModelData.set("sts", stsCombo.getValue().get("value"));
@@ -224,10 +231,12 @@ public class ScriptWarningPersonPopup extends Window {
 		formPanel.add(staffNo);
 		formPanel.add(staffName);
 		formPanel.add(telPhone);
+		formPanel.add(email);
 		formPanel.add(warnLevelCombo);
 		formPanel.add(warnModelCombo);
 		formPanel.add(stsCombo);
 		formPanel.addButton(btnAdd);
+		formPanel.setHeaderVisible(false);
 		return formPanel;
 		
 	}

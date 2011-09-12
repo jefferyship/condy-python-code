@@ -159,8 +159,8 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		type.addField("remark", "remark");
 		type.addField("runCycle", "runCycle");
 		type.addField("runStatus", "runStatus");
-		type.addField("lastTime", "lastTime");
-		type.addField("nextTime", "nextTime");
+		type.addField("lastTimeStr", "lastTimeStr");
+		type.addField("nextTimeStr", "nextTimeStr");
 		type.addField("beginHours", "beginHours");
 		type.addField("endHours", "endHours");
 		type.addField("scriptId", "scriptId");
@@ -189,12 +189,12 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 				remarkField.setValue((String)md.get("remark"));
 				ModelData startHourModelData=beginHoursCombo.getStore().findModel("value", (String)md.get("beginHours"));
 				beginHoursCombo.setValue(startHourModelData);
-				lasttTimeField.setValue((String)md.get("lastTime"));
+				lasttTimeField.setValue((String)md.get("lastTimeStr"));
 				ModelData runStsModelData=runStsCombo.getStore().findModel("value", (String)md.get("runStatus"));
 				runStsCombo.setValue(runStsModelData);
 				ModelData endHourModelData=endHoursCombo.getStore().findModel("value", (String)md.get("endHours"));
 				endHoursCombo.setValue(endHourModelData);
-				nextTimeField.setValue((String)md.get("nextTime"));
+				nextTimeField.setValue((String)md.get("nextTimeStr"));
 				ModelData stsModelData=stsCombo.getStore().findModel("value", (String)md.get("sts"));
 				stsCombo.setValue(stsModelData);
 				planIdField.setValue((String)md.get("planId"));
@@ -322,6 +322,8 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		beginHoursCombo.setAllowBlank(false);
 		
 		lasttTimeField.setFieldLabel("上次时间");
+		lasttTimeField.setRegex("2[0-9]{3}-[0-1][0-9]-[0-1][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]");
+		lasttTimeField.setToolTip("请输入正确的时间格式:<strong>yyyy-mm-dd hh24:mi:ss</strong>");
 		
 		
 		runStsCombo.setFieldLabel("运行状态");
@@ -340,6 +342,10 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 	    endHoursCombo.setAllowBlank(false);
 	    
 	    nextTimeField.setFieldLabel("下次时间");
+	    //时间格式:yyyy-mm-dd hh24:mi:ss
+	    //nextTimeField.setRegex("[2][0-9]{3}-[0-3][0-9]-[0-3][0-9] [0-1][0-9]:[0-5][0-9]:[0-5][0-9]");
+	    nextTimeField.setRegex("2[0-9]{3}-[0-1][0-9]-[0-1][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]");
+	    nextTimeField.setToolTip("请输入正确的时间格式:<strong>yyyy-mm-dd hh24:mi:ss</strong>");
 	    
 	   
 	    stsCombo.setFieldLabel("计划状态");
@@ -435,6 +441,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 									if((Boolean)result){
 										planGrid.getStore().remove(modelData);
 										planPanel.reset();
+										MessageBox.info("提示","删除成功",null);
 									}else{
 										MessageBox.info("提示","删除失败",null);
 									}
@@ -540,7 +547,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 	private ContentPanel scriptPanel(){
 		ContentPanel scriptFromPanel=new ContentPanel();
 		scriptFromPanel.setHeading("告警脚本");
-		scriptArea.setWidth(400);
+		scriptArea.setWidth("100%");
 		scriptArea.setHeight(300);
 		scriptFromPanel.add(scriptArea);
 		Button createRecordButton=new Button("编辑");
@@ -564,6 +571,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		ColumnConfig staffNameColumnConfig=new ColumnConfig("staffName", "姓名",50);
 	    ColumnConfig staffNoColumnConfig=new ColumnConfig("staffNo", "工号", 75);
 	    ColumnConfig telphoneColumnConfig=new ColumnConfig("connNbr", "电话号码",75);
+	    ColumnConfig emailColumnConfig=new ColumnConfig("email", "email",75);
 	    ColumnConfig warnLevelColumnConfig=new ColumnConfig("warnLevel", "告警级别", 75);
 	    ColumnConfig warnModelColumnConfig=new ColumnConfig("warnMode", "告警方式", 75);
 	    ColumnConfig stsColumnConfig=new ColumnConfig("sts", "状态", 50);
@@ -612,6 +620,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		type.addField("staffName", "staffName");
 		type.addField("staffNo", "staffNo");
 		type.addField("connNbr", "connNbr");
+		type.addField("email", "email");
 		type.addField("warnMode", "warnMode");
 		type.addField("sts", "sts");
 		type.addField("warnLevel", "warnLevel");
@@ -719,8 +728,8 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		md.set("runCycle", String.valueOf(runCycleField.getValue()));
 		ModelData runStsMd=runStsCombo.getValue();
 		md.set("runStatus", runStsMd.get("value"));
-		md.set("lastTime", lasttTimeField.getValue());
-		md.set("nextTime", nextTimeField.getValue());
+		md.set("lastTimeStr", lasttTimeField.getValue());
+		md.set("nextTimeStr", nextTimeField.getValue());
 		ModelData beginHoursMd=beginHoursCombo.getValue();
 		md.set("beginHours", beginHoursMd.get("value"));
 		ModelData endHoursMd=endHoursCombo.getValue();

@@ -16,6 +16,7 @@ public class EccStaffManager {
 		esm.staffName=rs.getString("staff_name");
 		esm.connNbr=rs.getString("conn_nbr");
 		esm.staffNo=rs.getString("staff_no");
+		esm.email=rs.getString("e-mail");
 		return esm;
 		
 	}
@@ -30,8 +31,22 @@ public class EccStaffManager {
 	private String staffNo;
 	@Column
 	private String sts;
+	@Column("e-mail")
+	private String email;
 	
 	
+	/**
+	 * @return the email
+	 */
+	public String getEmail() {
+		return email;
+	}
+	/**
+	 * @param email the email to set
+	 */
+	public void setEmail(String email) {
+		this.email = email;
+	}
 	public String getSts() {
 		return sts;
 	}

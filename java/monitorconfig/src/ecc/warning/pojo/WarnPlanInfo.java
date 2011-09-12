@@ -3,6 +3,7 @@ package ecc.warning.pojo;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.List;
 
 import org.nutz.dao.entity.annotation.Column;
@@ -27,8 +28,8 @@ public class WarnPlanInfo {
 		warnPlanInfo.remark=rs.getString("remark");
 		warnPlanInfo.runCycle=rs.getString("run_cycle");
 		warnPlanInfo.runStatus=rs.getString("run_status");
-		warnPlanInfo.lastTime=rs.getDate("last_time");
-		warnPlanInfo.nextTime=rs.getDate("next_time");
+		warnPlanInfo.lastTime=rs.getTimestamp("last_time");
+		warnPlanInfo.nextTime=rs.getTimestamp("next_time");
 		warnPlanInfo.beginHours=rs.getString("begin_hours");
 		warnPlanInfo.endHours=rs.getString("end_hours");
 		warnPlanInfo.scriptId=rs.getString("script_id");
@@ -56,9 +57,9 @@ public class WarnPlanInfo {
 	private String runStatus;
 	@Column("last_time")
 	@Readonly
-	private Date lastTime;
+	private Timestamp lastTime;
 	@Column("next_time")
-	private Date nextTime;
+	private Timestamp nextTime;
 	@Column("begin_hours")
 	private String beginHours;
 	@Column("end_hours")
@@ -71,7 +72,34 @@ public class WarnPlanInfo {
 	private String sts;
 	@Many(target=WarnStaff.class,field="planId")
 	private List<WarnStaff> warnStaffList;
+	private String lastTimeStr;
+	private String nextTimeStr;
 	
+	
+	/**
+	 * @return the lastTimeStr
+	 */
+	public String getLastTimeStr() {
+		return lastTimeStr;
+	}
+	/**
+	 * @param lastTimeStr the lastTimeStr to set
+	 */
+	public void setLastTimeStr(String lastTimeStr) {
+		this.lastTimeStr = lastTimeStr;
+	}
+	/**
+	 * @return the nextTimeStr
+	 */
+	public String getNextTimeStr() {
+		return nextTimeStr;
+	}
+	/**
+	 * @param nextTimeStr the nextTimeStr to set
+	 */
+	public void setNextTimeStr(String nextTimeStr) {
+		this.nextTimeStr = nextTimeStr;
+	}
 	/**
 	 * @return the warnStaffList
 	 */
@@ -171,25 +199,25 @@ public class WarnPlanInfo {
 	/**
 	 * @return the lastTime
 	 */
-	public Date getLastTime() {
+	public Timestamp getLastTime() {
 		return lastTime;
 	}
 	/**
 	 * @param lastTime the lastTime to set
 	 */
-	public void setLastTime(Date lastTime) {
+	public void setLastTime(Timestamp lastTime) {
 		this.lastTime = lastTime;
 	}
 	/**
 	 * @return the nextTime
 	 */
-	public Date getNextTime() {
+	public Timestamp getNextTime() {
 		return nextTime;
 	}
 	/**
 	 * @param nextTime the nextTime to set
 	 */
-	public void setNextTime(Date nextTime) {
+	public void setNextTime(Timestamp nextTime) {
 		this.nextTime = nextTime;
 	}
 	/**
@@ -204,6 +232,7 @@ public class WarnPlanInfo {
 	public void setBeginHours(String beginHours) {
 		this.beginHours = beginHours;
 	}
+	
 	/**
 	 * @return the endHours
 	 */
