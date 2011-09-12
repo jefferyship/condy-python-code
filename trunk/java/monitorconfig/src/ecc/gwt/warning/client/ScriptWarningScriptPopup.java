@@ -184,6 +184,7 @@ public class ScriptWarningScriptPopup extends Window {
 						};
 						jsonRpc.requestStream(GWT.getHostPageBaseURL()+ "scriptWarnAction/insertWarnScript.nut", newModelData.getProperties(), insertCallBack);
 					 
+						
 					 
 				 }else if ("modify".equals(actionType.getValue())&& formPanel.isValid()){
 					 final ModelData currModelData=grid.getSelectionModel().getSelectedItem();

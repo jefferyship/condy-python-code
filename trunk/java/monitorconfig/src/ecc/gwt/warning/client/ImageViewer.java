@@ -65,6 +65,8 @@ public class ImageViewer implements EntryPoint {
 						tabItem.add(new WebServerConfigGrid());
 					}else if("script".equals(itemId)){
 						tabItem.add(new ScriptWarnConfigPanel());
+					}else if("zx".equals(itemId)){
+						tabItem.add(new ZXWarnViewPanel());
 					}
 					tabPanel.add(tabItem);
 					tabPanel.setSelection(tabItem);

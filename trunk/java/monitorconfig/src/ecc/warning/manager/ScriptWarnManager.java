@@ -1,5 +1,7 @@
 package ecc.warning.manager;
 
+import java.text.SimpleDateFormat;
+import java.util.Iterator;
 import java.util.List;
 
 import org.nutz.dao.Cnd;
@@ -40,8 +42,18 @@ public class ScriptWarnManager {
 	return bResult;
 	}
 	public List<WarnPlanInfo> listPlan(){
+		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Dao dao =NutDaoFactory.getNutDaoInstance();
 		List<WarnPlanInfo> list=dao.query(WarnPlanInfo.class, null, null);
+		if(list!=null){
+			for (WarnPlanInfo warnPlanInfo : list) {
+				if(warnPlanInfo.getLastTime()!=null)
+					warnPlanInfo.setLastTimeStr(sdf.format(warnPlanInfo.getLastTime()));
+				if(warnPlanInfo.getNextTime()!=null)
+					warnPlanInfo.setNextTimeStr(sdf.format(warnPlanInfo.getNextTime()));
+			}
+			
+		}
 		return list;
 	}
 	
@@ -75,11 +87,13 @@ public class ScriptWarnManager {
 				warnStaff.setStaffName(eccStaffManager.getStaffName());
 				warnStaff.setStaffNo(eccStaffManager.getStaffNo());
 				warnStaff.setConnNbr(eccStaffManager.getConnNbr());
+				warnStaff.setEmail(eccStaffManager.getEmail());
 				warnStaff.setEccStaffManger(null);
 			}
 		}
 		return list;
 	}
+	
 	
 	public boolean insertWarnScript(WarnScript warnScript){
 		boolean bResult=false;
