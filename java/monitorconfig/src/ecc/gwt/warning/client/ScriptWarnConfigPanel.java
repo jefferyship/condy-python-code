@@ -322,7 +322,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		beginHoursCombo.setAllowBlank(false);
 		
 		lasttTimeField.setFieldLabel("上次时间");
-		lasttTimeField.setRegex("2[0-9]{3}-[0-1][0-9]-[0-1][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]");
+		lasttTimeField.setRegex("2[0-9]{3}-[0-1][0-9]-[0-2][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]");
 		lasttTimeField.setToolTip("请输入正确的时间格式:<strong>yyyy-mm-dd hh24:mi:ss</strong>");
 		
 		
@@ -344,7 +344,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 	    nextTimeField.setFieldLabel("下次时间");
 	    //时间格式:yyyy-mm-dd hh24:mi:ss
 	    //nextTimeField.setRegex("[2][0-9]{3}-[0-3][0-9]-[0-3][0-9] [0-1][0-9]:[0-5][0-9]:[0-5][0-9]");
-	    nextTimeField.setRegex("2[0-9]{3}-[0-1][0-9]-[0-1][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]");
+	    nextTimeField.setRegex("2[0-9]{3}-[0-1][0-9]-[0-2][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]");
 	    nextTimeField.setToolTip("请输入正确的时间格式:<strong>yyyy-mm-dd hh24:mi:ss</strong>");
 	    
 	   
@@ -610,6 +610,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 	    columns.add(staffNameColumnConfig);
 	    columns.add(staffNoColumnConfig);
 	    columns.add(telphoneColumnConfig);
+	    columns.add(emailColumnConfig);
 	    columns.add(warnLevelColumnConfig);
 	    columns.add(warnModelColumnConfig);
 	    columns.add(stsColumnConfig);

@@ -52,7 +52,7 @@ public class ScriptWarningScriptPopup extends Window {
 	private Logger logger;
 	public ScriptWarningScriptPopup(Grid<ModelData> planGrid){
 		logger=Logger.getLogger("ecc.gwt.warning.client.ScriptWarnConfigPanel");
-		setSize(450, 230);
+		setSize(800, 450);
 		setBorders(true);
 		setShadow(false);
 		setAutoHide(false);
@@ -77,8 +77,8 @@ public class ScriptWarningScriptPopup extends Window {
 		super.onRender(target, index);
 		setLayout(new ColumnLayout());
 		ContentPanel centerPanel=new ContentPanel();centerPanel.setHeaderVisible(false);
-		centerPanel.setAutoHeight(true);
-		centerPanel.setAutoWidth(true);
+		//centerPanel.setAutoHeight(true);
+		//centerPanel.setAutoWidth(true);
 		centerPanel.add(grid);
 		add(centerPanel,new com.extjs.gxt.ui.client.widget.layout.ColumnData(0.3));
 		add(createScriptFormPanel(),new com.extjs.gxt.ui.client.widget.layout.ColumnData(0.7));
@@ -86,7 +86,7 @@ public class ScriptWarningScriptPopup extends Window {
 	private Grid<ModelData> createScriptGrid(){
 		
 		ColumnConfig scriptIdColumnConfig=new ColumnConfig("scriptId", "id",30);
-	    ColumnConfig scriptRemarkColumnConfig=new ColumnConfig("scriptRemark", "名称", 75);
+	    ColumnConfig scriptRemarkColumnConfig=new ColumnConfig("scriptRemark", "名称", 100);
 	    List<ColumnConfig> columns = new ArrayList<ColumnConfig>(); 
 	    columns.add(new RowNumberer());
 	    columns.add(scriptRemarkColumnConfig);
@@ -116,10 +116,11 @@ public class ScriptWarningScriptPopup extends Window {
 			}
 			
 		});
-		grid.setHeight(150);
+		grid.setAutoExpandColumn("scriptRemark");
+		grid.setHeight(350);
 	    grid.setLoadMask(true);  
 	    loader.load();
-		grid.setAutoWidth(true);
+		//grid.setAutoWidth(true);
 		
 		return grid;
 	}
@@ -129,10 +130,15 @@ public class ScriptWarningScriptPopup extends Window {
 		 scriptRemark.setAllowBlank(false);
 		 scriptRemark.setFieldLabel("名称");
 		 scriptRemark.setReadOnly(true);
+		 scriptRemark.setWidth("100%");
 		 scriptContent.setAllowBlank(true);
 		 scriptContent.setFieldLabel("脚本");
 		 scriptContent.setReadOnly(true);
-		 scriptContent.setHeight(100);
+		 scriptContent.setHeight(300);
+		 scriptContent.setWidth("100%");
+		 formPanel.setLabelWidth(40);
+		 formPanel.setFieldWidth(430);
+		 
 		 formPanel.add(actionType);
 		 formPanel.add(scriptId);
 		 formPanel.add(scriptRemark);
@@ -253,6 +259,7 @@ public class ScriptWarningScriptPopup extends Window {
 		 formPanel.addButton(modifyRecordButton);
 		 formPanel.addButton(comfirmRecordButton);
 		 formPanel.addButton(checkRecordButton);
+		// formPanel.setWidth("100%");
 		 
 		 
 		return formPanel;

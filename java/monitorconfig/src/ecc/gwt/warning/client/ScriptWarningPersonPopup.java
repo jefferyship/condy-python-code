@@ -46,17 +46,18 @@ public class ScriptWarningPersonPopup extends Window {
 	
 	void setFormFied(String actionType,ModelData modelData){
 		this.actionType.setValue(actionType);
+		formPanel.reset();
 		if("insert".equals(actionType)){
 			staffId.setReadOnly(false);
 			staffNo.setReadOnly(false);
 			staffName.setReadOnly(false);
 			stsCombo.setValue(stsCombo.getStore().findModel("value", "A"));
-			warnLevelCombo.setValue(warnLevelCombo.getStore().findModel("value", "A"));
+			//warnLevelCombo.setValue(warnLevelCombo.getStore().findModel("value", "A"));
+			warnLevelCombo.setValue(warnLevelCombo.getStore().findModel("name", "A"));
 			warnModelCombo.setValue(warnModelCombo.getStore().findModel("name", "短信"));
+			
 		}else if("modify".equals(actionType)){
 		staffId.setValue((String)modelData.get("staffId"));
-		logger.info((String)modelData.get("sts"));
-		logger.info(String.valueOf(stsCombo.getStore().findModel("value", (String)modelData.get("sts"))));
 		stsCombo.setValue(stsCombo.getStore().findModel("value", (String)modelData.get("sts")));
 		staffNo.setValue((String)modelData.get("staffNo"));
 		staffName.setValue((String)modelData.get("staffName"));
@@ -103,15 +104,15 @@ public class ScriptWarningPersonPopup extends Window {
 		staffName.setReadOnly(true);
 		staffName.setFieldLabel("姓名");
 		
-		telPhone.setReadOnly(true);
 		telPhone.setFieldLabel("联系电话");
+		telPhone.setReadOnly(true);
 		email.setFieldLabel("Email");
 		email.setReadOnly(true);
 		
 		warnLevelCombo.setFieldLabel("告警级别");
+		warnLevelCombo.setAllowBlank(false);
 		warnLevelCombo.setDisplayField("name");
 		warnLevelCombo.setStore(UiUtil.generateStore(new String[]{"A","B","C"},new String[]{"A","B","C"}));
-		warnLevelCombo.setAllowBlank(false);	
 		warnLevelCombo.setTriggerAction(TriggerAction.ALL);
 		warnLevelCombo.setEditable(false);
 		
@@ -141,7 +142,10 @@ public class ScriptWarningPersonPopup extends Window {
 							Map eccStaffMsgMap=(Map)result;
 							staffName.setValue((String)eccStaffMsgMap.get("staffName"));
 							staffId.setValue((String)eccStaffMsgMap.get("staffId"));
+							logger.info("connNbr:"+eccStaffMsgMap.get("connNbr"));
 							telPhone.setValue((String)eccStaffMsgMap.get("connNbr"));
+							//telPhone.setValue("aaaaaaaaaaaaa");
+							//logger.info("connNbr:"+eccStaffMsgMap.get("connNbr")+","+telPhone.getValue());
 							email.setValue((String)eccStaffMsgMap.get("email"));
 						}
 					};
