@@ -4,9 +4,11 @@
 	<inherits name="com.google.gwt.http.HTTP" />
 	<inherits name="com.google.gwt.json.JSON" />
 	<inherits name="com.extjs.gxt.ui.GXT"/>
-	<inherits name="com.google.gwt.logging.Logging"/>
+	<!-- <inherits name="com.google.gwt.logging.Logging"/>
+	<set-property name="gwt.logging.consoleHandler" value="ENABLED" />
+	 -->
 	<inherits name="com.google.gwt.i18n.I18N"/>
 	<entry-point class="ecc.gwt.warning.client.ImageViewer"/>
 	 <source path='client'/>
-	<set-property name="gwt.logging.consoleHandler" value="ENABLED" />
+	
 </module>

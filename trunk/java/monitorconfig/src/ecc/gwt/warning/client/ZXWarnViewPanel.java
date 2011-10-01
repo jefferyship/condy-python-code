@@ -24,6 +24,7 @@ import com.extjs.gxt.ui.client.data.JsonLoadResultReader;
 import com.extjs.gxt.ui.client.data.JsonPagingLoadResultReader;
 import com.extjs.gxt.ui.client.data.ListLoadConfig;
 import com.extjs.gxt.ui.client.data.ListLoadResult;
+import com.extjs.gxt.ui.client.data.LoadEvent;
 import com.extjs.gxt.ui.client.data.ModelData;
 import com.extjs.gxt.ui.client.data.ModelType;
 import com.extjs.gxt.ui.client.data.PagingLoadConfig;
@@ -33,6 +34,7 @@ import com.extjs.gxt.ui.client.event.ButtonEvent;
 import com.extjs.gxt.ui.client.event.Events;
 import com.extjs.gxt.ui.client.event.GridEvent;
 import com.extjs.gxt.ui.client.event.Listener;
+import com.extjs.gxt.ui.client.event.LoadListener;
 import com.extjs.gxt.ui.client.event.RowEditorEvent;
 import com.extjs.gxt.ui.client.event.SelectionListener;
 import com.extjs.gxt.ui.client.store.ListStore;
@@ -73,7 +75,7 @@ public class ZXWarnViewPanel extends LayoutContainer {
 	final private Grid<ModelData> grid;
 	final private JsonRpc jsonRpc=new JsonRpc();
 	final private ListStore<ModelData> alarmConfigList;
-	final PagingToolBar toolBar = new PagingToolBar(50);  
+	final PagingToolBar toolBar = new PagingToolBar(25);  
 	final DateTimeFormat sdf=DateTimeFormat.getFormat("yyyy-MM-dd");
 	final private ListStore<ModelData> logLevelStore=UiUtil.generateStore(new String[]{"所有","1级告警","2级告警","3级告警","4级告警"},new String[]{"all","1","2","3","4"});
 	public ZXWarnViewPanel() {
@@ -156,7 +158,7 @@ public class ZXWarnViewPanel extends LayoutContainer {
 				//ListLoadConfig loadCofig=grid.getStore().getLoadConfig();
 				PagingLoadConfig config = new BasePagingLoadConfig(); 
 				config.setOffset(0);  
-				config.setLimit(50);  
+				config.setLimit(25);  
 		            
 		          Map<String, Object> state = grid.getState();  
 		          /*if (state.containsKey("offset")) {  
@@ -173,6 +175,7 @@ public class ZXWarnViewPanel extends LayoutContainer {
 		          config.set("startDate", startDateStr);
 		          config.set("endDate", endDateStr);
 		          config.set("alarmTypeId", alarmTypeStr);
+		          config.set("totalCount", "");
 				  grid.getStore().getLoader().load(config);
 				
 			}
@@ -209,6 +212,18 @@ public class ZXWarnViewPanel extends LayoutContainer {
 	    ColumnConfig alarmLevelColumnConfig=new ColumnConfig("alarmLevel", "告警级别", 100);
 	    ColumnConfig alarmTimeColumnConfig=new ColumnConfig("alarmTime", "告警时间", 150);
 	    ColumnConfig logTypeConfig=new ColumnConfig("logType", "告警状态", 100);
+	    logTypeConfig.setRenderer(new GridCellRenderer<ModelData>(){
+			public Object render(ModelData model, String property,
+					ColumnData config, int rowIndex, int colIndex,
+					ListStore<ModelData> store, Grid<ModelData> grid) {
+				String logType=model.get("logType");
+				if("2".equals(logType))
+					return "已恢复";
+				else
+					return "未恢复";
+			}
+	    	
+	    });
 	    ColumnConfig recoverTimeColumnConfig=new ColumnConfig("recoverTime", "恢复时间", 150);
 	    ColumnConfig remarkColumnConfig=new ColumnConfig("remark", "备注", 150);
 	    
@@ -269,6 +284,23 @@ public class ZXWarnViewPanel extends LayoutContainer {
 		final Grid<ModelData> grid = new Grid<ModelData>(store, cm);  
 		grid.setStateId("pagingGridExample");  
 		grid.setStateful(true);
+		loader.addLoadListener(new LoadListener(){
+
+			/* (non-Javadoc)
+			 * @see com.extjs.gxt.ui.client.event.LoadListener#loaderBeforeLoad(com.extjs.gxt.ui.client.data.LoadEvent)
+			 */
+			@Override
+			public void loaderBeforeLoad(LoadEvent le) {
+				super.loaderBeforeLoad(le);
+				if (loader.getLastConfig() instanceof PagingLoadConfig) {
+					PagingLoadConfig config = (PagingLoadConfig) loader.getLastConfig();
+					if(!config.getProperties().containsKey("totalCount"))
+						config.set("totalCount", loader.getTotalCount());
+				}
+				
+			}
+			
+		});
 	    toolBar.bind(loader);
 	    /*grid.addListener(Events.Attach, new Listener<GridEvent<ModelData>>() {  
 	        public void handleEvent(GridEvent<ModelData> be) {  
