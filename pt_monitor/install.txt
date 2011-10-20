@@ -7,6 +7,7 @@
   5.搜集平台的CPU Idle,内存使用情况，磁盘空间使用情况到数据库中。
   6.自动监控，bin目录下的core文件。有core产生时及时告警.
   7.自动备份平台程序。将平台程序自动FTP到指定的路径下。可以自动定期备份.
+  8.写服务器最新的更新时间，结合脚本告警，可以判断服务器是否死机。
 
 依赖运行环境及相关包:
    1.python 运行环境。版本要在2.4以上.
@@ -36,6 +37,7 @@
            补丁路径（code='dict'）为:/home/websphere/python_code。那么真实的FTP的补丁路径为:/home/websphere/python_code/1.0.0.2
         10)monitor_pt_backup_info表，自动备份平台的程序的配置表.通过调用monitor_pt_backup_file函数实现.
         11)monitor_pt_netstat_info表，配置连接数的告警.例如:command字段配置:netstat -nat|grep -i '1521'|wc -l
+        12)monitor_pt_alive_log表。服务器最近执行脚本的时间.
 
 监控程序安装说明:
        1.安装psutil模块表.
