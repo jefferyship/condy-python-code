@@ -34,6 +34,7 @@ def getCommonConfig():
     #global URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
     global URL
     global MONITOR_NAME
+    global lastmonitorFileSmContent
     config=ConfigParser.ConfigParser()
     ivrtrackFileObject=open(config_dir+'monitor.ini')
     config.readfp(ivrtrackFileObject)
@@ -41,6 +42,22 @@ def getCommonConfig():
     MONITOR_NAME=config.get('common', 'MONITOR_NAME')
     if len(URL)==0:
         URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
+    if config.has_option('common', 'lastmonitorFileSmContent'):
+        lastmonitorFileSmContent=config.get('common', 'lastmonitorFileSmContent')
+    else:lastmonitorFileSmContent=''
+    ivrtrackFileObject.close()
+
+def writeCommonConfig(option,value):
+    """
+     设置值到monitor.ini的common，section中.
+    """
+    config=ConfigParser.ConfigParser()
+    config.read(config_dir+'monitor.ini')
+    config.set('common',option,value)
+    ivrtrackFileObject=open(config_dir+'monitor.ini',"r+")
+    config.write(ivrtrackFileObject)
+    ivrtrackFileObject.close()
+
 def getMonitorService():
     """
        调用服务获取监控的文件
@@ -122,6 +139,7 @@ def monitorFile(monitorList):
     """
      监控日志文件.返回需要告警的日志表。
     """
+
     CTI_ERR_KEY='"ConsultationCall\[7\]",OperResult=\[1\]'
     warnToPersonList=[]
     for monitorObject in monitorList:
@@ -151,29 +169,18 @@ def monitorFile(monitorList):
 
         commondStr='tail -'
         commondStr=commondStr+monitorObject['tailRowNum']+' '+monitorObject['monitorFile']
-        isWarnToPerson=True #需要短信告警.
         if len(keyList)>0:
             log.info(commondStr)
             searchLogStd=os.popen(commondStr)
             for lineLog in searchLogStd.readlines():#是否有关键字内容
                 for key in keyList:
                     if re.search(key,lineLog):appearCountOfKeyMap[key]=appearCountOfKeyMap[key]+1
-            ##由于Systemout日志比较少打，所以对最后的时间做一个判断，如果最后一条日志的时间在5分钟之前的就不告警了.
-            if monitorObject['monitorFile'].find('SystemOut.log')>0:
-                try:
-                    lastLineDateTuple=time.strptime(lineLog[1:16],'%y-%m-%d %H:%M:%S')
-                    fiveMiniuteBefore=datetime.datetime.now()+datetime.timedelta(minutes=-7)
-                    lastLineDate=datetime.datetime(lastLineDateTuple.tm_year,lastLineDateTuple.tm_mon,lastLineDateTuple.tm_mday,lastLineDateTuple.tm_hour,lastLineDateTuple.tm_min,lastLineDateTuple.tm_sec)
-                    if lastLineDate<fiveMiniuteBefore:isWarnToPerson=False
-                except TypeError:
-                    pass
-
-
         if bIsGrepInCtServer:keyList.append(CTI_ERR_KEY)#CTI的关键字加入运算.
         for key in keyList:
             log.info( 'key:%s,realLimit:%d,warnLimit:%s'%(key,appearCountOfKeyMap[key],monitorObject['countMonitor']))
-            if isWarnToPerson and appearCountOfKeyMap[key]>=int(monitorObject['countMonitor']):#到达告警条件，写告警内容
+            if  appearCountOfKeyMap[key]>=int(monitorObject['countMonitor']):#到达告警条件，写告警内容
                 warnStr=MONITOR_NAME+' 告警,日志文件:'+monitorObject['monitorFile']+' 关键字:'+key+' 出现次数:'+str(appearCountOfKeyMap[key])
+                lastmonitorFileSmContent=warnStr
                 log.info(warnStr)
                 warnToPersonList.append(warnStr)
     return warnToPersonList
@@ -182,14 +189,27 @@ def sendToWarn(warnToPersonList):
     """
     发送告警信息跟相应的联系人员
     """
+    global lastmonitorFileSmContent
     paramUtil=ParamUtil()
     inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
     inputStr=inputStr+'\r\n'.join(warnToPersonList)
-    log.info('告警发送短信:%s',inputStr)
-    outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
+    if lastmonitorFileSmContent==inputStr:
+        log.info('重复告警短信不发送:%s',inputStr)
+        return True;
+
+    outputParam=paramUtil.invoke("Monitor_machine_info", MONITOR_NAME, URL)
+    planId=''
+    if outputParam.is_success() :
+       planId=outputParam.get_column_value(0,0,4)
     flag=''
+    if planId!='':#调用10000号和外包都通用的服务，外包可以发送邮件。
+        inputStr=planId.encode('GBK')+LinkConst.SPLIT_COLUMN+'A'+LinkConst.SPLIT_COLUMN+'\r\n'.join(warnToPersonList)
+        outputParam=paramUtil.invoke("WarnToPerson", inputStr, URL)
+    else:
+        outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
     if outputParam.is_success() :
         flag=outputParam.get_first_column_value()
+    writeCommonConfig('lastmonitorFileSmContent',inputStr)
     return flag=='0'
 def monitorCoreFile(monitorList):
     """
@@ -406,6 +426,13 @@ def backupFile():
             log.exception('上次日志备份文件错误，文件名:%s',zipFileName)
         return
 
+def sendToAlive():
+    """
+     更新monitor_pt_alive_log表，表示本服务处于存活状态,通过脚本的计划监控，如果这个服务器在一定
+     时间内没有更新，表示服务器出现异常。需要告警处理。
+    """
+    paramUtil=ParamUtil()
+    outputParam=paramUtil.invoke("Monitor_alive", MONITOR_NAME, URL)
 def saveSystemInfo(saveDbMsgDict):
     """
      将收集到的系统信息保存大数据库中.
@@ -510,6 +537,8 @@ if __name__ == '__main__':
         config_dir=os.getcwd()+os.sep
     else:
         config_dir=tempPath[0]+os.sep
+    ##文件监控的短信告警，由于websphere的日志报警的时，日志跳动不频繁，造成同一的短信一直告警。
+    lastmonitorFileSmContent='' #文件监控的短信告警
     # set Logger Config
     log = logging.getLogger()
     log.setLevel(logging.DEBUG)
@@ -523,6 +552,8 @@ if __name__ == '__main__':
 
     getCommonConfig()
     get_version()
+    #表示系统处于存活状态.
+    sendToAlive()
     log.info('URL:%s,MONITOR_NAME:%s'%(URL,MONITOR_NAME))
     monitorFileList,monitorSystemInfo,monitorProcList,monitorNetstatObjectList=getMonitorService()
     if len(monitorFileList)==0 and len(monitorSystemInfo)==0 and len(monitorProcList)==0:
