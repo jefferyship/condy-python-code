@@ -62,6 +62,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  */
 public class ScriptWarnConfigPanel extends LayoutContainer {
 	private Logger logger;
+	
 	final private JsonRpc jsonRpc=new JsonRpc();
 	final private Grid<ModelData> planGrid;
 	final ScriptWarningPersonPopup scriptWarningPersonPopup;
@@ -102,7 +103,18 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 		ContentPanel westPanel=new ContentPanel();
 		westPanel.setAutoHeight(true);
 		westPanel.setAutoWidth(true);
+		ToolBar westPanelToolBar = new ToolBar();
+		Button refreshButton=new Button("刷新");
+		refreshButton.addSelectionListener(new SelectionListener<ButtonEvent>(){
+			@Override
+			public void componentSelected(ButtonEvent ce) {
+				planGrid.getStore().getLoader().load();
+			}
+			
+		});
+		westPanelToolBar.add(refreshButton);
 		westPanel.add(planGrid);
+		westPanel.setTopComponent(westPanelToolBar);
 		westPanel.setHeading("计划列表");
 		BorderLayoutData westLayoutData=new BorderLayoutData(LayoutRegion.WEST,205,150,300);
 		westLayoutData.setSplit(true);
@@ -522,6 +534,7 @@ public class ScriptWarnConfigPanel extends LayoutContainer {
 								String planId=(String)result;
 								 md.set("planId", planId);
 								 planGrid.getStore().insert(md, 0);
+								 MessageBox.info("提示","复制成功",null);
 							}
 						};
 					jsonRpc.requestStream(GWT.getHostPageBaseURL()+ "scriptWarnAction/insertScriptPlan.nut", md.getProperties(), copyCallBack);
