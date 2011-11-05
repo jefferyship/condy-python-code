@@ -1,6 +1,5 @@
 package ecc.warning.pojo;
 
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -53,7 +52,6 @@ public class WarnPlanInfo {
 	@Column("run_cycle")
 	private String runCycle;
 	@Column("run_status")
-	@Readonly
 	private String runStatus;
 	@Column("last_time")
 	@Readonly

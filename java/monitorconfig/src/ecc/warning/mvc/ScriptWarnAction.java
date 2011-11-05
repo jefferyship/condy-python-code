@@ -55,7 +55,12 @@ public class ScriptWarnAction {
 	public JsonReturnObjectOfGwt insertWarnScript(WarnScript warnScript){
 		boolean bResult=swm.insertWarnScript(warnScript);
 		JsonReturnObjectOfGwt result=new JsonReturnObjectOfGwt();
-		result.setResult(warnScript.getScriptId());
+		if(bResult){
+		    result.setResult(warnScript.getScriptId());
+		}else{
+			result.setError("计划插入失败");
+		}
+			
 		return result;
 	}
 	
@@ -128,7 +133,10 @@ public class ScriptWarnAction {
 		}
 		if(result.getError()==null){
 			boolean bResult=swm.insertScriptPlan(warnPlanInfo);
-			result.setResult(bResult);
+			if(bResult)
+				result.setResult(warnPlanInfo.getPlanId());
+			else
+				result.setError("插入计划失败");
 		}
 		return result;
 	}
