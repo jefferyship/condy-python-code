@@ -19,6 +19,14 @@ import time
 from ServiceUtil import ParamUtil
 from ServiceUtil import LinkConst
 import SystemInfo
+import time
+import datetime
+import zipfile
+
+def convertUnicodeToStr(unicodeMap):
+    for key in unicodeMap.keys():
+        if isinstance(unicodeMap[key],unicode):#遇到中文关键字，要把unicode类型转换为str类型.
+            unicodeMap[key]=unicodeMap[key].encode('GBK')
 
 def getCommonConfig():
     """
@@ -28,12 +36,18 @@ def getCommonConfig():
     global URL
     global MONITOR_NAME
     global IS_START
+    global RECYCLE_TIMES
     config=ConfigParser.ConfigParser()
     ivrtrackFileObject=open(config_dir+'monitorForWindow.ini')
     config.readfp(ivrtrackFileObject)
     URL=config.get('common', 'URL')
     MONITOR_NAME=config.get('common', 'MONITOR_NAME')
     IS_START=config.get('common', 'IS_START')
+    try:
+        RECYCLE_TIMES=float(config.get('common', 'RECYCLE_TIMES'))
+    except TypeError:
+        RECYCLE_TIMES=10
+
     if len(URL)==0:
         URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
 def sendToWarn(warnToPersonList):
@@ -127,9 +141,194 @@ def getMonitorService():
                     monitorNetstatObjectList.append(monitorNetstatObject)
     return (monitorFileList,monitorSystemObject,monitorProcObjectList,monitorNetstatObjectList)
 
+def saveSystemInfo(saveDbMsgDict):
+    """
+     将收集到的系统信息保存大数据库中.
+    """
+    procCpuList=[]
+    try:
+        procCpuList=saveDbMsgDict['procCpu']#[(name,pid,usedCpu,usedMemory)]
+    except KeyError:
+        pass
+    cpuIdle=None
+    try:
+        cpuIdle=saveDbMsgDict['cpuIdle']
+    except KeyError:
+        pass
+    memoryObject=()
+    try:
+        memoryObject=saveDbMsgDict['memory']#(total_phymen,avi_phymen.used_phymen) KB
+    except KeyError:
+        pass
+    hardSpaceList=[]
+    try:
+        hardSpaceList=saveDbMsgDict['hardSpace']#[(文件系统,总计大小,已用空间,可用空间,已用%,挂载点)]
+    except KeyError:
+        pass
+    table_1List=[str(cpuIdle)]
+    for object in memoryObject:
+        table_1List.append(str(object))
+    #table1:host_name
+    #table2:cpu_idle,total_phy_men,avi_phymen,used_phymen
+    #table3:proc_name,pid,used_cpu,used_memory.有可能是多行.
+    #table4:hardspace_name,used_hardspace,avi_hardspace,used_hard_space_percent,file_hand_up
+    table_2=str(LinkConst.SPLIT_COLUMN).join(table_1List)
+    procInputList=[]
+    for procIdObject in procCpuList:
+        tempList=[]
+        for temp in procIdObject:
+            tempList.append(str(temp))
+        tempStr=str(LinkConst.SPLIT_COLUMN).join(tempList)
+        procInputList.append(tempStr)
+    table_3=str(LinkConst.SPLIT_ROW).join(procInputList)
+    hardSpaceInputList=[]
+    for hardSpaceObject in hardSpaceList:
+        hardSpaceInputList.append(str(LinkConst.SPLIT_COLUMN).join(hardSpaceObject))
+    table_4=str(LinkConst.SPLIT_ROW).join(hardSpaceInputList)
+    inputStr=MONITOR_NAME+LinkConst.SPLIT_TABLE+table_2+LinkConst.SPLIT_TABLE+table_3+LinkConst.SPLIT_TABLE+table_4
+    #savePtResourceInfo
+    paramUtil=ParamUtil()
+    outputParam=paramUtil.invoke("savePtResourceInfo", inputStr, URL)
+    if outputParam.is_success():
+        flag=outputParam.get_first_column_value()
+        flagMsg=outputParam.get_column_value(0,0,1)
+        if isinstance(flagMsg,unicode):
+            flagMsg=flagMsg.encode('GBK')
+        log.info('调用savePtResourceInfo服务成功.输入参数:%s,输出结果:%s',inputStr,flagMsg)
+    else:
+        log.info('调用savePtResourceInfo服务失败.输入参数:%s',inputStr)
+
+
+def monitorDisk(monitorSystemObject,saveDbMsgDict):
+    """
+    @monitorSystemObject {'cpu_idle_limit':cpu_idle_limit,'memory_avi_limit':memory_avi_limit,'hardspace_name':hardspace_name,'hardspace_limit':hardspace_limit}
+    hardspace_name:有可能是用||分隔的多行参数.hardspace_limit:有可能是ongoing||分隔的多行.
+    windows 版本的磁盘空间检查,monitorDiskOjectList [{'hardspace_name':hardspace_name,'hardspace_limit':hardspace_limit}]
+    """
+    warnToPersonList=[]
+    monitorDiskObjectList=[]
+    saveToDBList=[]#[(文件系统,总计大小,已用空间,可用空间,已用%,挂载点)]
+    if monitorSystemObject.has_key('hardspace_name')==False or monitorSystemObject.has_key('hardspace_limit')==False:
+        return warnToPersonList
+    elif len(monitorSystemObject['hardspace_name'].split('||'))<>len(monitorSystemObject['hardspace_limit'].split('||')):
+        log.info('磁盘监控:monitor_pt_system_info表的hardspace_name值与hardspace_limit值配置的不完全匹配')
+        return warnToPersonList
+    for i in range(len(monitorSystemObject['hardspace_name'].split('||'))):
+        monitorDiskObjectList.append({'hardspace_name':monitorSystemObject['hardspace_name'].split('||')[i],'hardspace_limit':monitorSystemObject['hardspace_limit'].split('||')[i]})
+
+    saveDbMsgDict['hardSpace']=saveToDBList
+    for monitorDiskObject in monitorDiskObjectList:
+        try:
+            log.info('磁盘告警配置：%s',str(monitorDiskObject))
+            if monitorDiskObject['hardspace_limit'].isdigit():
+                total,used,free,usedPecent=SystemInfo.getdiskByPath(monitorDiskObject['hardspace_name'])
+                saveToDBList.append((monitorDiskObject['hardspace_name'],str(total/1024),str(used/1024),str(free/1024),str(usedPecent),''))
+                limitPercent=float(monitorDiskObject['hardspace_limit'])
+                if usedPecent>=limitPercent:
+                    log.info("磁盘空间告警: hardspace_name:%s,limit_used_percent:%s,real_used_percent:%s",monitorDiskObject['hardspace_name'],monitorDiskObject['hardspace_limit'],str(round(usedPecent,2)))
+                    warnStr=MONITOR_NAME+' 磁盘空间告警:hardspace_name:'+monitorDiskObject['hardspace_name']+' limit_used_percent:'+monitorDiskObject['hardspace_limit']+' real_used_percent:'+str(round(usedPecent,2))
+                    warnToPersonList.append(warnStr)
+            else:
+                log.info('磁盘告警配置,磁盘空间%s的阀值非数值=%s',monitorDiskObject['hardspace_name'],monitorDiskObject['hardspace_limit'])
+        except Exception:
+            log.exception('获取磁盘空间报错。磁盘为:'+monitorDiskObject['hardspace_name'])
+
+    return warnToPersonList
+
+def backupFile():
+    """
+      backupObject['backup_path'] 需要备份的文件的路径,||作为分隔如果多个路径需要备份.
+      backupObject['ip'].备份FTP的地址
+      backupObject['user'].备份FTP的用户名
+      backupObject['password'].备份FTP的密码
+      backupObject['ftp_backup_path'].备份FTP的路径.
+      备份平台的日志。
+    """
+    backupObject={}
+    paramUtil=ParamUtil()
+    outputParam=paramUtil.invoke("Monitor_pt_backup_file", MONITOR_NAME, URL)
+    if outputParam.is_success() and len(outputParam.get_tables().get_table_list())>0:#判断是否有值
+        backupObject['backup_path']=outputParam.get_column_value(0,0,0)
+        backupObject['ip']=outputParam.get_column_value(0,0,1)
+        backupObject['user']=outputParam.get_column_value(0,0,2)
+        backupObject['password']=outputParam.get_column_value(0,0,3)
+        backupObject['ftp_backup_path']=outputParam.get_column_value(0,0,4)
+    else:#不需要备份，返回.
+        return ;
+    convertUnicodeToStr(backupObject)
+    backupPath=backupObject['backup_path']
+    backupPathList=backupPath.split('||')
+    zipFileNameList=[]
+    for backupPath in backupPathList:
+        if os.path.isdir(backupPath):
+            for root,dirnames,filenames in os.walk(backupPath):
+                for filename in filenames:
+                    if filename.find('core')==-1 and filename.find('.log')==-1 and filename.find('nohup.out')==-1 and filename.find('.bak')==-1 and filename<>'.' and filename<>'..':
+                        zipFileNameList.append(os.path.join(root,filename))
+        elif os.path.isfile(backupPath):
+            zipFileNameList.append(backupPath)
+        else:
+            log.info('无法识别的备份路径:%s',backupPath)
+
+    isCreateZipFileSucess=True
+    if len(zipFileNameList)>0:
+        strCurrDate=datetime.date.today().strftime('%Y%m%d')
+        zipFileName=config_dir+strCurrDate+'.zip'
+        zipFile=zipfile.ZipFile(zipFileName,'w')#tarfile.open(zipFileName,"w:gz")
+        try:
+            for filename in zipFileNameList:
+                log.info('备份'+filename)
+                zipFile.write(filename)
+            zipFile.close()
+        except Exception:
+            isCreateZipFileSucess=False
+            log.exception('压缩备用日志出错.文件名:%s',zipFileName)
+        #finally:
+        if isCreateZipFileSucess==False:return#创建不成功返回.
+        ################################上传到FTP服务器##########################
+        ftp=FTP(backupObject['ip'],backupObject['user'],backupObject['password'])
+        ftpBackupPathList=[]
+        ftpBackupPathList.append(backupObject['ftp_backup_path'])
+        ftpBackupPathList.append(backupObject['ftp_backup_path']+'/'+MONITOR_NAME)
+        for ftpBackupPath in ftpBackupPathList:#修改，并且创建路径.
+            try:
+                ftp.cwd(ftpBackupPath)
+            except Exception:
+                log.info('creating direcotry '+ ftp.mkd(ftpBackupPath))
+                ftp.cwd(ftpBackupPath)
+        try:
+            uploadzipFile=open(zipFileName)
+            log.info('upload file:%s ',zipFileName)
+            ftp.storbinary('STOR '+os.path.split(zipFileName)[1],uploadzipFile)
+            uploadzipFile.close()
+            os.remove(zipFileName)
+        except Exception:
+            log.exception('上次日志备份文件错误，文件名:%s',zipFileName)
+        return
+def sendToWarn(warnToPersonList):
+    """
+    发送告警信息跟相应的联系人员
+    """
+    paramUtil=ParamUtil()
+    inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
+    inputStr=inputStr+'\r\n'.join(warnToPersonList)
+    log.info('告警发送短信:%s',inputStr)
+    outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
+    flag=''
+    if outputParam.is_success() :
+        flag=outputParam.get_first_column_value()
+    return flag=='0'
+
+def sendToAlive():
+    """
+     更新monitor_pt_alive_log表，表示本服务处于存活状态,通过脚本的计划监控，如果这个服务器在一定
+     时间内没有更新，表示服务器出现异常。需要告警处理。
+    """
+    paramUtil=ParamUtil()
+    outputParam=paramUtil.invoke("Monitor_alive", MONITOR_NAME, URL)
 
 def get_version():
-    version ='1.1.0.0'
+    version ='1.1.0.1'
     """
      获取版本信息.
     """
@@ -137,9 +336,10 @@ def get_version():
     log.info('  monitorForWindow.py current version is %s               '%(version))
     log.info('  author:Condy create time:2011.08.12 modify time:2011.08.05')
     log.info(' 功能点1.监控windows的磁盘空间')
+    log.info(' 功能点2.对指定的目录进行备份')
     paramUtil=ParamUtil()
     versionMsg={}
-    outputParam=paramUtil.invoke("MGR_GetEccCodeDict", '-1'+LinkConst.SPLIT_COLUMN+'monitorForWindow'+LinkConst.SPLIT_COLUMN+'PATCH', URL)
+    outputParam=paramUtil.invoke("MGR_GetEccCodeDict", '-1'+LinkConst.SPLIT_COLUMN+'PT_MONITOR'+LinkConst.SPLIT_COLUMN+'WINPATCH', URL)
     if outputParam.is_success():
         tables=outputParam.get_tables()
         table=tables.get_first_table()
@@ -158,31 +358,11 @@ def get_version():
         for fileName in patchFileList:
                 log.info('get '+fileName+' save to '+config_dir+os.path.split(fileName)[1])
                 ftp.retrbinary('RETR '+fileName,open(config_dir+os.path.split(fileName)[1],'wb').writelines)
-    log.info( '=========================================================================')
+        os.popen('update.exe')
+        log.info( '程序更新成功，启动update.exe。重启程序')
+
 
     return version
-def monitorDisk(monitorDiskObjectList,saveDbMsgDict):
-    """
-    windows 版本的磁盘空间检查,monitorDiskOjectList [{'hardspace_name':hardspace_name,'hardspace_limit':hardspace_limit}]
-    """
-    warnToPersonList=[]
-    saveToDBList=[]#[(文件系统,总计大小,已用空间,可用空间,已用%,挂载点)]
-    saveDbMsgDict['hardSpace']=saveToDBList
-    for monitorDiskObject in monitorDiskObjectList:
-        try:
-            total,used,free,usedPecent=SystemInfo.getdiskByPath(monitorDiskObject['hardspace_name'])
-            saveToDBList.append((monitorDiskObject['hardspace_name'],total/1024,used/1024,free/1024,usedPecent,''))
-            limitPercent=float(monitorDiskObject['hardspace_limit'])
-            if usedPecent>=limitPercent:
-                log.info("磁盘空间告警: hardspace_name:%s,limit_used_percent:%s,real_used_percent:%s",monitorDiskObject['hardspace_name'],monitorDiskObject['hardspace_limit'],str(round(usedPecent,2)))
-                warnStr=MONITOR_NAME+' 磁盘空间告警:hardspace_name:'+monitorDiskObject['hardspace_name']+' limit_used_percent:'+monitorDiskObject['hardspace_limit']+' real_used_percent:'+str(round(usedPecent,2))
-                warnToPersonList.append(warnStr)
-        except Exception:
-            log.exception('获取磁盘空间报错。磁盘为:'+monitorDiskObject['hardspace_name'])
-
-    return warnToPersonList
-
-
 
 
 if __name__ == '__main__':
@@ -193,27 +373,35 @@ if __name__ == '__main__':
         config_dir=tempPath[0]+os.sep
     log = logging.getLogger()
     log.setLevel(logging.DEBUG)
-    h1 = logging.handlers.RotatingFileHandler(config_dir+'monitor.log',maxBytes=2097152,backupCount=5)
+    h1 = logging.handlers.RotatingFileHandler(config_dir+'monitorForWindow.log',maxBytes=2097152,backupCount=5)
     h1.setLevel(logging.INFO)
     f=logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     h1.setFormatter(f)
     log.addHandler(h1)
     getCommonConfig()
 
-    monitorDiskObjectList=[]
-    monitorDiskObjectList.append({'hardspace_name':'c:\\','hardspace_limit':'1'})
-    monitorDiskObjectList.append({'hardspace_name':'d:\\','hardspace_limit':'1'})
+##    monitorDiskObjectList=[]
+##    monitorDiskObjectList.append({'hardspace_name':'c:\\','hardspace_limit':'1'})
+##    monitorDiskObjectList.append({'hardspace_name':'d:\\','hardspace_limit':'1'})
 
     try:
         while IS_START=='1':
-            #get_version()
+            get_version()
             getCommonConfig()
-            monitorDisk(monitorDiskObjectList,{})
-
-            time.sleep(10)
-
-
+            saveDBMsgDict={}
+            sendToAlive()
+            monitorFileList,monitorSystemInfo,monitorProcList,monitorNetstatObjectList=getMonitorService()
+            warnToPersonList=monitorDisk(monitorSystemInfo,saveDBMsgDict)
+            backupFile()
+            saveSystemInfo(saveDBMsgDict)
+            if len(warnToPersonList)==0:
+                log.info( '没有告警信息')
+            else:
+                sendToWarn(warnToPersonList)
+            time.sleep(RECYCLE_TIMES)
         log.info('IS_START value=:'+IS_START+' so exit!')
+        h1.close()
     except Exception:
         log.exception('系统报错')
+        h1.close()
 
