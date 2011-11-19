@@ -192,9 +192,9 @@ def sendToWarn(warnToPersonList):
     global lastmonitorFileSmContent
     paramUtil=ParamUtil()
     inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
-    inputStr=inputStr+'\r\n'.join(warnToPersonList)
-    if lastmonitorFileSmContent==inputStr:
-        log.info('重复告警短信不发送:%s',inputStr)
+    currmonitorFileSmContent='\r\n'.join(warnToPersonList)
+    if lastmonitorFileSmContent==currmonitorFileSmContent:
+        log.info('重复告警短信不发送:%s',currmonitorFileSmContent)
         return True;
 
     outputParam=paramUtil.invoke("Monitor_machine_info", MONITOR_NAME, URL)
@@ -206,10 +206,12 @@ def sendToWarn(warnToPersonList):
         inputStr=planId.encode('GBK')+LinkConst.SPLIT_COLUMN+'A'+LinkConst.SPLIT_COLUMN+'\r\n'.join(warnToPersonList)
         outputParam=paramUtil.invoke("WarnToPerson", inputStr, URL)
     else:
+        inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
+        inputStr=inputStr+'\r\n'.join(warnToPersonList)
         outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
     if outputParam.is_success() :
         flag=outputParam.get_first_column_value()
-    writeCommonConfig('lastmonitorFileSmContent',inputStr)
+    writeCommonConfig('lastmonitorFileSmContent',currmonitorFileSmContent)
     return flag=='0'
 def monitorCoreFile(monitorList):
     """
@@ -492,13 +494,13 @@ def saveSystemInfo(saveDbMsgDict):
 
 
 def get_version():
-    version ='1.2.0.0'
+    version ='1.2.0.1'
     """
      获取版本信息.
     """
     log.info( '=========================================================================')
     log.info('  pt_monitor.py current version is %s               '%(version))
-    log.info('  author:Condy create time:2011.01.17 modify time:2011.08.10')
+    log.info('  author:Condy create time:2011.01.17 modify time:2011.11.18')
     log.info(' 功能点1.监控平台日志')
     log.info('      2.监控CPU，内存、线程、硬盘告警信息')
     log.info('      3.收集CPU，内存、线程、硬盘资源信息')
@@ -506,6 +508,7 @@ def get_version():
     log.info('      5.备份平台的配置及程序')
     log.info('      6.监控平台的指定的线程是否有存在')
     log.info('      7.监控平台增加netstat命令的监控')
+    log.info('      8.增加系统是否死机的检测')
     paramUtil=ParamUtil()
     versionMsg={}
     outputParam=paramUtil.invoke("MGR_GetEccCodeDict", '-1'+LinkConst.SPLIT_COLUMN+'PT_MONITOR'+LinkConst.SPLIT_COLUMN+'PATCH', URL)
