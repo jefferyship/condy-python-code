@@ -19,9 +19,10 @@ import time
 from ServiceUtil import ParamUtil
 from ServiceUtil import LinkConst
 import SystemInfo
-import time
 import datetime
 import zipfile
+import win32api
+import thread
 
 def convertUnicodeToStr(unicodeMap):
     for key in unicodeMap.keys():
@@ -37,6 +38,7 @@ def getCommonConfig():
     global MONITOR_NAME
     global IS_START
     global RECYCLE_TIMES
+    global lastmonitorFileSmContent
     config=ConfigParser.ConfigParser()
     ivrtrackFileObject=open(config_dir+'monitorForWindow.ini')
     config.readfp(ivrtrackFileObject)
@@ -47,22 +49,22 @@ def getCommonConfig():
         RECYCLE_TIMES=float(config.get('common', 'RECYCLE_TIMES'))
     except TypeError:
         RECYCLE_TIMES=10
+    if config.has_option('common', 'lastmonitorFileSmContent'):
+        lastmonitorFileSmContent=config.get('common', 'lastmonitorFileSmContent')
+    else:lastmonitorFileSmContent=''
 
     if len(URL)==0:
         URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
-def sendToWarn(warnToPersonList):
+def writeCommonConfig(option,value):
     """
-    发送告警信息跟相应的联系人员
+     设置值到monitor.ini的common，section中.
     """
-    paramUtil=ParamUtil()
-    inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
-    inputStr=inputStr+'\r\n'.join(warnToPersonList)
-    log.info('告警发送短信:%s',inputStr)
-    outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
-    flag=''
-    if outputParam.is_success() :
-        flag=outputParam.get_first_column_value()
-    return flag=='0'
+    config=ConfigParser.ConfigParser()
+    config.read(config_dir+'monitorForWindow.ini')
+    config.set('common',option,value)
+    ivrtrackFileObject=open(config_dir+'monitorForWindow.ini',"r+")
+    config.write(ivrtrackFileObject)
+    ivrtrackFileObject.close()
 
 def getMonitorService():
     """
@@ -309,14 +311,29 @@ def sendToWarn(warnToPersonList):
     """
     发送告警信息跟相应的联系人员
     """
+    global lastmonitorFileSmContent
     paramUtil=ParamUtil()
     inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
-    inputStr=inputStr+'\r\n'.join(warnToPersonList)
-    log.info('告警发送短信:%s',inputStr)
-    outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
+    currmonitorFileSmContent='\r\n'.join(warnToPersonList)
+    if lastmonitorFileSmContent==currmonitorFileSmContent:
+        log.info('重复告警短信不发送:%s',currmonitorFileSmContent)
+        return True;
+
+    outputParam=paramUtil.invoke("Monitor_machine_info", MONITOR_NAME, URL)
+    planId=''
+    if outputParam.is_success() :
+       planId=outputParam.get_column_value(0,0,4)
     flag=''
+    if planId!='':#调用10000号和外包都通用的服务，外包可以发送邮件。
+        inputStr=planId.encode('GBK')+LinkConst.SPLIT_COLUMN+'A'+LinkConst.SPLIT_COLUMN+'\r\n'.join(warnToPersonList)
+        outputParam=paramUtil.invoke("WarnToPerson", inputStr, URL)
+    else:
+        inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
+        inputStr=inputStr+'\r\n'.join(warnToPersonList)
+        outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
     if outputParam.is_success() :
         flag=outputParam.get_first_column_value()
+    writeCommonConfig('lastmonitorFileSmContent',currmonitorFileSmContent)
     return flag=='0'
 
 def sendToAlive():
@@ -328,15 +345,16 @@ def sendToAlive():
     outputParam=paramUtil.invoke("Monitor_alive", MONITOR_NAME, URL)
 
 def get_version():
-    version ='1.1.0.1'
+    version ='1.1.0.2'
     """
      获取版本信息.
     """
     log.info( '=========================================================================')
     log.info('  monitorForWindow.py current version is %s               '%(version))
-    log.info('  author:Condy create time:2011.08.12 modify time:2011.08.05')
+    log.info('  author:Condy create time:2011.08.12 modify time:2011.11.27')
     log.info(' 功能点1.监控windows的磁盘空间')
     log.info(' 功能点2.对指定的目录进行备份')
+    log.info(' 功能点3.增加系统是否死机的检测,及程序自动更新')
     paramUtil=ParamUtil()
     versionMsg={}
     outputParam=paramUtil.invoke("MGR_GetEccCodeDict", '-1'+LinkConst.SPLIT_COLUMN+'PT_MONITOR'+LinkConst.SPLIT_COLUMN+'WINPATCH', URL)
@@ -347,6 +365,7 @@ def get_version():
             versionMsg[row.get_one_column(0).get_value()]=row.get_one_column(1).get_value()
     convertUnicodeToStr(versionMsg)
     log.info('数据库的版本配置:'+str(versionMsg))
+    needReloadProgram=False;
     if versionMsg.has_key('version') and version<>versionMsg['version']:
         log.info(' 发现程序版本有最新的，版本号为%s,开始更新程序',versionMsg['version'])
         ftp=FTP(versionMsg['ip'],versionMsg['user'],versionMsg['password'])
@@ -358,11 +377,25 @@ def get_version():
         for fileName in patchFileList:
                 log.info('get '+fileName+' save to '+config_dir+os.path.split(fileName)[1])
                 ftp.retrbinary('RETR '+fileName,open(config_dir+os.path.split(fileName)[1],'wb').writelines)
-        os.popen('update.exe')
-        log.info( '程序更新成功，启动update.exe。重启程序')
+        needReloadProgram=True
 
+    return (version,needReloadProgram)
 
-    return version
+def reloadProgram(path):
+    """
+      自动重启本程序
+    """
+    try:
+        global isAleadyReload
+        isAleadyReload=False
+        log.info( '程序最新版本更新完毕，程序自动重启中.........')
+        time.sleep(2)#等待2s中
+        win32api.ShellExecute(0,'open',path,'','',1)#重启程序.
+        log.info( '......................程序自动重启完成.......')
+        h1.close()
+    except Exception:
+        log.exception('系统报错')
+        h1.close()
 
 
 if __name__ == '__main__':
@@ -385,8 +418,13 @@ if __name__ == '__main__':
 ##    monitorDiskObjectList.append({'hardspace_name':'d:\\','hardspace_limit':'1'})
 
     try:
+        global isAleadyReload
+        isAleadyReload=False
         while IS_START=='1':
-            get_version()
+            (version,needReloadProgram)=get_version()
+            if needReloadProgram:#重新有更新，需要重启本程序.
+                thread.start_new_thread(reloadProgram,(sys.argv[0]))#tempPath需要修改成本程序的程序名.
+                break
             getCommonConfig()
             saveDBMsgDict={}
             sendToAlive()
@@ -400,7 +438,13 @@ if __name__ == '__main__':
                 sendToWarn(warnToPersonList)
             time.sleep(RECYCLE_TIMES)
         log.info('IS_START value=:'+IS_START+' so exit!')
-        h1.close()
+        if needReloadProgram==False: h1.close()# 如果needReloadProgram==True的话，就在reloadProgram()中关闭程序。
+        else:
+            for i in range(4):
+                print '等待5s,程序尝试结束'
+                time.sleep(5)#等待5s中,等待程序重启后关闭。
+                if isAleadyReload==True:break
+
     except Exception:
         log.exception('系统报错')
         h1.close()
