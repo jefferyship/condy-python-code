@@ -21,8 +21,10 @@ from ServiceUtil import LinkConst
 import SystemInfo
 import datetime
 import zipfile
-import win32api
+import subprocess
 import thread
+import win32api
+import re
 
 def convertUnicodeToStr(unicodeMap):
     for key in unicodeMap.keys():
@@ -142,6 +144,87 @@ def getMonitorService():
                 else:
                     monitorNetstatObjectList.append(monitorNetstatObject)
     return (monitorFileList,monitorSystemObject,monitorProcObjectList,monitorNetstatObjectList)
+
+def tailFile(lineLen,tailFileObject):
+    POS_BUF_SIZE=100*1024 #50k的位置大小.
+    BUF_SIZE=100*1024 #50k的内容.
+    try:
+        filePos=-1 #行数所在的位置
+        tailcurrLine=lineLen#从后面往前的目前行数的位置
+        tailFileObject.seek(0,2)#到达文件的末尾
+        itertimes=0 #最多做100个循环，防止进入死循环.
+        while itertimes<10 and filePos<>0:
+            itertimes=itertimes+1
+            currPosition=tailFileObject.tell()
+            log.debug('currPosition:'+str(currPosition))
+            if (currPosition-BUF_SIZE)<0:#从文件头开始循环
+                filePos=0
+                tailFileObject.seek(0) #从头开始
+            else:
+                tailFileObject.seek(-BUF_SIZE,1)#相对移动到BUF_SIZE的位置
+                currPosition=tailFileObject.tell()
+                filePos=currPosition
+            log.debug('filePos:'+str(filePos))
+            strData=tailFileObject.read(BUF_SIZE)
+            enterCount=strData.count('\n')
+            log.debug('len(strDataList):'+str(enterCount))
+            if (enterCount-tailcurrLine)>=0:#已经到了需要的行数
+                matchCount=enterCount-tailcurrLine
+                findposition=len(strData)
+                log.debug('len(strData):'+str(findposition))
+                for i in range(tailcurrLine):
+                    findTempPosition=strData.rfind('\n',0,findposition)
+                    log.debug('findTempPosition:'+str(findTempPosition))
+                    if findTempPosition==-1: break
+                    else:findposition=findTempPosition
+
+    ##            tempList=strDataList[0:-tailcurrLine]
+    ##            print ';'.join(tempList)
+    ##            tempStr='\r\n'.join(tempList)
+                filePos=filePos+findposition
+                log.debug('filePos:'+str(filePos))
+                break
+            else:
+                tailcurrLine=tailcurrLine-enterCount #还没有到需要的行数，继续循环
+                tailFileObject.seek(-len(strData),1)
+        tailFileObject.seek(filePos)
+        return True
+    except Exception:
+        log.exception('定位日志文件的位置报错')
+        return False
+
+def monitorFile(monitorList):
+    """
+     监控日志文件.返回需要告警的日志表。
+    """
+    warnToPersonList=[]
+    for monitorObject in monitorList:
+        #相关参数初始化
+        appearCountOfKeyMap={}
+        keyList=[]
+        if isinstance(monitorObject['keys'],unicode):#遇到中文关键字，要把unicode类型转换为str类型.
+            keyList=monitorObject['keys'].encode('GBK').split('||')
+        else:
+            keyList=monitorObject['keys'].split('||')
+        for key in keyList:
+            appearCountOfKeyMap[key]=0
+            log.info('search key:'+key)
+        lineLen=int(monitorObject['tailRowNum'])
+        tailFileObject=open(monitorObject['monitorFile'],'rb')
+        if len(keyList)>0:
+            if tailFile(lineLen,tailFileObject):
+                for lineLog in tailFileObject.readlines():#是否有关键字内容
+                    for key in keyList:
+                        if re.search(key,lineLog):appearCountOfKeyMap[key]=appearCountOfKeyMap[key]+1
+        for key in keyList:
+            log.info( 'key:%s,realLimit:%d,warnLimit:%s'%(key,appearCountOfKeyMap[key],monitorObject['countMonitor']))
+            if  appearCountOfKeyMap[key]>=int(monitorObject['countMonitor']):#到达告警条件，写告警内容
+                warnStr=MONITOR_NAME+' 告警,日志文件:'+monitorObject['monitorFile']+' 关键字:'+key+' 出现次数:'+str(appearCountOfKeyMap[key])
+                lastmonitorFileSmContent=warnStr
+                log.info(warnStr)
+                warnToPersonList.append(warnStr)
+        tailFileObject.close()
+    return warnToPersonList
 
 def saveSystemInfo(saveDbMsgDict):
     """
@@ -314,7 +397,7 @@ def sendToWarn(warnToPersonList):
     global lastmonitorFileSmContent
     paramUtil=ParamUtil()
     inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
-    currmonitorFileSmContent='\r\n'.join(warnToPersonList)
+    currmonitorFileSmContent='.'.join(warnToPersonList)
     if lastmonitorFileSmContent==currmonitorFileSmContent:
         log.info('重复告警短信不发送:%s',currmonitorFileSmContent)
         return True;
@@ -326,10 +409,12 @@ def sendToWarn(warnToPersonList):
     flag=''
     if planId!='':#调用10000号和外包都通用的服务，外包可以发送邮件。
         inputStr=planId.encode('GBK')+LinkConst.SPLIT_COLUMN+'A'+LinkConst.SPLIT_COLUMN+'\r\n'.join(warnToPersonList)
+        log.info('发送告警短信,服务：%s,输入参数:%s','WarnToPerson',inputStr)
         outputParam=paramUtil.invoke("WarnToPerson", inputStr, URL)
     else:
         inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
         inputStr=inputStr+'\r\n'.join(warnToPersonList)
+        log.info('发送告警短信,服务：%s,输入参数:%s','Monitor_Warn_To_Person',inputStr)
         outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
     if outputParam.is_success() :
         flag=outputParam.get_first_column_value()
@@ -344,8 +429,16 @@ def sendToAlive():
     paramUtil=ParamUtil()
     outputParam=paramUtil.invoke("Monitor_alive", MONITOR_NAME, URL)
 
+def print_node():
+    version ='1.1.0.5'
+    print '  monitorForWindow.py current version is %s               '%(version)
+    print '  author:Condy create time:2011.08.12 modify time:2011.11.27'
+    print ' 功能点1.监控windows的磁盘空间'
+    print ' 功能点2.对指定的目录进行备份'
+    print ' 功能点3.增加系统是否死机的检测,及程序自动更新'
+
 def get_version():
-    version ='1.1.0.2'
+    version ='1.1.0.5'
     """
      获取版本信息.
     """
@@ -367,16 +460,16 @@ def get_version():
     log.info('数据库的版本配置:'+str(versionMsg))
     needReloadProgram=False;
     if versionMsg.has_key('version') and version<>versionMsg['version']:
-        log.info(' 发现程序版本有最新的，版本号为%s,开始更新程序',versionMsg['version'])
-        ftp=FTP(versionMsg['ip'],versionMsg['user'],versionMsg['password'])
-        patchFileList=[]
-        patchPwd=''
-        if versionMsg['dict'][-1]==os.sep:patchPwd=versionMsg['dict']+versionMsg['version']
-        else:patchPwd=versionMsg['dict']+os.sep+versionMsg['version']
-        patchFileList=ftp.nlst(patchPwd)
-        for fileName in patchFileList:
-                log.info('get '+fileName+' save to '+config_dir+os.path.split(fileName)[1])
-                ftp.retrbinary('RETR '+fileName,open(config_dir+os.path.split(fileName)[1],'wb').writelines)
+        log.info(' 发现程序版本有最新的，版本号为%s,需要调用update程序进行程序',versionMsg['version'])
+##        ftp=FTP(versionMsg['ip'],versionMsg['user'],versionMsg['password'])
+##        patchFileList=[]
+##        patchPwd=''
+##        if versionMsg['dict'][-1]=='/':patchPwd=versionMsg['dict']+versionMsg['version']
+##        else:patchPwd=versionMsg['dict']+'/'+versionMsg['version']
+##        patchFileList=ftp.nlst(patchPwd)
+##        for fileName in patchFileList:
+##                log.info('get '+fileName+' save to '+config_dir+os.path.split(fileName)[1])
+##                ftp.retrbinary('RETR '+fileName,open(config_dir+os.path.split(fileName)[1],'wb').writelines)
         needReloadProgram=True
 
     return (version,needReloadProgram)
@@ -389,9 +482,10 @@ def reloadProgram(path):
         global isAleadyReload
         isAleadyReload=False
         log.info( '程序最新版本更新完毕，程序自动重启中.........')
-        time.sleep(2)#等待2s中
+        #time.sleep(2)#等待2s中
         win32api.ShellExecute(0,'open',path,'','',1)#重启程序.
         log.info( '......................程序自动重启完成.......')
+        isAleadyReload=True
         h1.close()
     except Exception:
         log.exception('系统报错')
@@ -417,19 +511,26 @@ if __name__ == '__main__':
 ##    monitorDiskObjectList.append({'hardspace_name':'c:\\','hardspace_limit':'1'})
 ##    monitorDiskObjectList.append({'hardspace_name':'d:\\','hardspace_limit':'1'})
 
-    try:
-        global isAleadyReload
-        isAleadyReload=False
-        while IS_START=='1':
+
+    global isAleadyReload
+    isAleadyReload=False
+    print_node()
+    log.info('监控程序间隔：%ds进行自动监控',RECYCLE_TIMES)
+    print ('监控程序间隔：%ds进行自动监控')%(RECYCLE_TIMES)
+    needReloadProgram=False
+    while IS_START=='1':
+        try:
             (version,needReloadProgram)=get_version()
             if needReloadProgram:#重新有更新，需要重启本程序.
-                thread.start_new_thread(reloadProgram,(sys.argv[0]))#tempPath需要修改成本程序的程序名.
+                thread.start_new_thread(reloadProgram,('update.exe',))#tempPath需要修改成本程序的程序名.
                 break
             getCommonConfig()
             saveDBMsgDict={}
             sendToAlive()
             monitorFileList,monitorSystemInfo,monitorProcList,monitorNetstatObjectList=getMonitorService()
-            warnToPersonList=monitorDisk(monitorSystemInfo,saveDBMsgDict)
+            warnToPersonList=monitorFile(monitorFileList)
+            warnToPersonList=warnToPersonList+monitorDisk(monitorSystemInfo,saveDBMsgDict)
+
             backupFile()
             saveSystemInfo(saveDBMsgDict)
             if len(warnToPersonList)==0:
@@ -437,15 +538,13 @@ if __name__ == '__main__':
             else:
                 sendToWarn(warnToPersonList)
             time.sleep(RECYCLE_TIMES)
+        except Exception:
+            log.exception('系统报错')
+    if needReloadProgram :
+        for i in range(4):
+            if isAleadyReload:break
+            else:time.sleep(3)
+    else:
         log.info('IS_START value=:'+IS_START+' so exit!')
-        if needReloadProgram==False: h1.close()# 如果needReloadProgram==True的话，就在reloadProgram()中关闭程序。
-        else:
-            for i in range(4):
-                print '等待5s,程序尝试结束'
-                time.sleep(5)#等待5s中,等待程序重启后关闭。
-                if isAleadyReload==True:break
-
-    except Exception:
-        log.exception('系统报错')
         h1.close()
 

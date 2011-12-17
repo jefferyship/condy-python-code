@@ -35,7 +35,7 @@ def getCommonConfig():
     global URL
     global MONITOR_NAME
     global lastmonitorFileSmContent
-    config=ConfigParser.ConfigParser()
+    config=ConfigParser.SafeConfigParser()
     ivrtrackFileObject=open(config_dir+'monitor.ini')
     config.readfp(ivrtrackFileObject)
     URL=config.get('common', 'URL')
@@ -51,7 +51,7 @@ def writeCommonConfig(option,value):
     """
      设置值到monitor.ini的common，section中.
     """
-    config=ConfigParser.ConfigParser()
+    config=ConfigParser.SafeConfigParser()
     config.read(config_dir+'monitor.ini')
     config.set('common',option,value)
     ivrtrackFileObject=open(config_dir+'monitor.ini',"r+")
@@ -192,7 +192,7 @@ def sendToWarn(warnToPersonList):
     global lastmonitorFileSmContent
     paramUtil=ParamUtil()
     inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
-    currmonitorFileSmContent='\r\n'.join(warnToPersonList)
+    currmonitorFileSmContent='.'.join(warnToPersonList)
     if lastmonitorFileSmContent==currmonitorFileSmContent:
         log.info('重复告警短信不发送:%s',currmonitorFileSmContent)
         return True;
@@ -204,10 +204,12 @@ def sendToWarn(warnToPersonList):
     flag=''
     if planId!='':#调用10000号和外包都通用的服务，外包可以发送邮件。
         inputStr=planId.encode('GBK')+LinkConst.SPLIT_COLUMN+'A'+LinkConst.SPLIT_COLUMN+'\r\n'.join(warnToPersonList)
+        log.info('发送短信:调用服务WarnToPerson,输入参数:%s',inputStr)
         outputParam=paramUtil.invoke("WarnToPerson", inputStr, URL)
     else:
         inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
         inputStr=inputStr+'\r\n'.join(warnToPersonList)
+        log.info('发送短信:调用服务Monitor_Warn_To_Person,输入参数:%s',inputStr)
         outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
     if outputParam.is_success() :
         flag=outputParam.get_first_column_value()
@@ -494,7 +496,7 @@ def saveSystemInfo(saveDbMsgDict):
 
 
 def get_version():
-    version ='1.2.0.1'
+    version ='1.2.0.3'
     """
      获取版本信息.
     """
