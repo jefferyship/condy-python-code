@@ -54,7 +54,7 @@ def writeCommonConfig(option,value):
     config=ConfigParser.SafeConfigParser()
     config.read(config_dir+'monitor.ini')
     config.set('common',option,value)
-    ivrtrackFileObject=open(config_dir+'monitor.ini',"r+")
+    ivrtrackFileObject=open(config_dir+'monitor.ini',"rb+")
     config.write(ivrtrackFileObject)
     ivrtrackFileObject.close()
 
