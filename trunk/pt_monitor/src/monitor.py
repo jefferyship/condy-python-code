@@ -34,7 +34,6 @@ def getCommonConfig():
     #global URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
     global URL
     global MONITOR_NAME
-    global lastmonitorFileSmContent
     config=ConfigParser.SafeConfigParser()
     ivrtrackFileObject=open(config_dir+'monitor.ini')
     config.readfp(ivrtrackFileObject)
@@ -42,11 +41,7 @@ def getCommonConfig():
     MONITOR_NAME=config.get('common', 'MONITOR_NAME')
     if len(URL)==0:
         URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
-    if config.has_option('common', 'lastmonitorFileSmContent'):
-        lastmonitorFileSmContent=config.get('common', 'lastmonitorFileSmContent')
-    else:lastmonitorFileSmContent=''
     ivrtrackFileObject.close()
-
 def writeCommonConfig(option,value):
     """
      设置值到monitor.ini的common，section中.
@@ -57,6 +52,25 @@ def writeCommonConfig(option,value):
     ivrtrackFileObject=open(config_dir+'monitor.ini',"rb+")
     config.write(ivrtrackFileObject)
     ivrtrackFileObject.close()
+def readLastmonitorFileSmContent():
+    global lastmonitorFileSmContent
+    try:
+        lastmonitorFileSmContentFileObject=open(config_dir+'lastmonitorFileSmContent.log','rb+')
+        lastmonitorFileSmContent=lastmonitorFileSmContentFileObject.read(2048)
+        lastmonitorFileSmContentFileObject.close()
+    except:
+        lastmonitorFileSmContent=''
+
+def writeLastmonitorFileSmContent(value):
+    """
+      写上次短信的记录到文件中.
+    """
+    try:
+        lastmonitorFileSmContentFileObject=open(config_dir+'lastmonitorFileSmContent.log','wb+')
+        lastmonitorFileSmContentFileObject.write(value)
+        lastmonitorFileSmContentFileObject.close()
+    except:
+        log.exception('写短信发送内容到,%s文件中失败',config_dir+'lastmonitorFileSmContent.log')
 
 def getMonitorService():
     """
@@ -213,7 +227,7 @@ def sendToWarn(warnToPersonList):
         outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
     if outputParam.is_success() :
         flag=outputParam.get_first_column_value()
-    writeCommonConfig('lastmonitorFileSmContent',currmonitorFileSmContent)
+    writeLastmonitorFileSmContent(currmonitorFileSmContent)
     return flag=='0'
 def monitorCoreFile(monitorList):
     """
@@ -335,12 +349,27 @@ def monitorHardSpace(monitorSystemObject,saveDbMsgDict):
     hardSpaceList=SystemInfo.getHardSpace()#[(文件系统,总计大小,已用空间,可用空间,已用%,挂载点)]
     saveDbMsgDict['hardSpace']=hardSpaceList
     warnToPersonList=[]
-    if monitorSystemObject.has_key('hardspace_name') and monitorSystemObject['hardspace_limit'].isdigit():
-        for hardSpace in hardSpaceList:#(文件系统,已用空间,可用空间,已用%,挂载点)
-            if monitorSystemObject['hardspace_name']==hardSpace[0] and float(hardSpace[4])>=float(monitorSystemObject['hardspace_limit']):
-                log.info("磁盘空间告警: hardspace_name:%s,limit_used_percent:%s,real_used_percent:%s",monitorSystemObject['hardspace_name'],monitorSystemObject['hardspace_limit'],hardSpace[4])
-                warnStr=MONITOR_NAME+' 磁盘空间告警:hardspace_name:'+monitorSystemObject['hardspace_name']+' limit_used_percent:'+monitorSystemObject['hardspace_limit']+' real_used_percent:'+hardSpace[4]
-                warnToPersonList.append(warnStr)
+    monitorDiskObjectList=[]
+    if monitorSystemObject.has_key('hardspace_name')==False or monitorSystemObject.has_key('hardspace_limit')==False:
+        return warnToPersonList
+    elif len(monitorSystemObject['hardspace_name'].split('||'))<>len(monitorSystemObject['hardspace_limit'].split('||')):
+        log.info('磁盘监控:monitor_pt_system_info表的hardspace_name值与hardspace_limit值配置的不完全匹配')
+        return warnToPersonList
+    for i in range(len(monitorSystemObject['hardspace_name'].split('||'))):
+        monitorDiskObjectList.append({'hardspace_name':monitorSystemObject['hardspace_name'].split('||')[i],'hardspace_limit':monitorSystemObject['hardspace_limit'].split('||')[i]})
+    for monitorDiskObject in monitorDiskObjectList:
+        try:
+            if monitorDiskObject.has_key('hardspace_name') and monitorDiskObject['hardspace_limit'].isdigit():
+                for hardSpace in hardSpaceList:#(文件系统,已用空间,可用空间,已用%,挂载点)
+                    if monitorDiskObject['hardspace_name']==hardSpace[0] and float(hardSpace[4])>=float(monitorDiskObject['hardspace_limit']):
+                        log.info("磁盘空间告警: hardspace_name:%s,limit_used_percent:%s,real_used_percent:%s",monitorDiskObject['hardspace_name'],monitorDiskObject['hardspace_limit'],hardSpace[4])
+                        warnStr=MONITOR_NAME+' 磁盘空间告警:hardspace_name:'+monitorDiskObject['hardspace_name']+' limit_used_percent:'+monitorDiskObject['hardspace_limit']+' real_used_percent:'+hardSpace[4]
+                        warnToPersonList.append(warnStr)
+                    elif monitorDiskObject['hardspace_name']==hardSpace[0]:
+                        log.info("磁盘空间:达不到告警阀值 hardspace_name:%s,limit_used_percent:%s,real_used_percent:%s",monitorDiskObject['hardspace_name'],monitorDiskObject['hardspace_limit'],hardSpace[4])
+        except Exception:
+            log.exception('磁盘监控报错:%s,告警阀值为:%s',monitorDiskObject['hardspace_name'],monitorDiskObject['hardspace_limit'])
+
     return warnToPersonList
 
 def monitorNetstat(monitorNetstatObjectList):
@@ -496,13 +525,13 @@ def saveSystemInfo(saveDbMsgDict):
 
 
 def get_version():
-    version ='1.2.0.3'
+    version ='1.2.0.5'
     """
      获取版本信息.
     """
     log.info( '=========================================================================')
     log.info('  pt_monitor.py current version is %s               '%(version))
-    log.info('  author:Condy create time:2011.01.17 modify time:2011.11.18')
+    log.info('  author:Condy create time:2011.01.17 modify time:2012.02.06')
     log.info(' 功能点1.监控平台日志')
     log.info('      2.监控CPU，内存、线程、硬盘告警信息')
     log.info('      3.收集CPU，内存、线程、硬盘资源信息')
@@ -544,6 +573,7 @@ if __name__ == '__main__':
         config_dir=tempPath[0]+os.sep
     ##文件监控的短信告警，由于websphere的日志报警的时，日志跳动不频繁，造成同一的短信一直告警。
     lastmonitorFileSmContent='' #文件监控的短信告警
+    readLastmonitorFileSmContent()
     # set Logger Config
     log = logging.getLogger()
     log.setLevel(logging.DEBUG)
