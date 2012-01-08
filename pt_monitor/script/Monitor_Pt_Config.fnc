@@ -22,8 +22,8 @@ create or replace function Monitor_Pt_Config(monitorName in varchar2) return var
   v_first_loop integer:=0;
   v_cpu_idle_limit varchar2(64);
   v_memory_avi_limit varchar2(64);
-  v_hardspace_name varchar2(64);
-  v_hardspace_limit varchar2(64);      
+  v_hardspace_name varchar2(512);
+  v_hardspace_limit varchar2(512);      
 begin
   --日志监控(多行输出).
    for c in (select monitor_name,file_path,keys,warn_limit,monitor_lines,time_pattern,log_type from monitor_pt_file_info where monitor_name=monitorName order by order_num)
@@ -35,7 +35,7 @@ begin
     if c.time_pattern ='mmddhh24mi' then 
       v_time:=to_char(sysdate,'mmddhh24');
       v_mi:=to_char(sysdate,'mi');
-      if c.log_type='resmgr' then --resgmgr的日志是30分钟，生成一次.
+      if c.log_type in ('resmgr','rcmain') then --resgmgr的日志是30分钟，生成一次.
         if v_mi>='00' and v_mi<'30' then
           v_mi:='00';
         else
