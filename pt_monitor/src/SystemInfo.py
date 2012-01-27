@@ -35,7 +35,7 @@ tmpfs                  8202300         0   8202300   0% /dev/shm
         #               1099538656 757823808 284960416  73% /data15guazai
         if len(lastHarsSpaceLine.split())==1 and len(hardSpaceLineList)==5:
             hardSpaceList.append((lastHarsSpaceLine.split()[0],hardSpaceLineList[0],hardSpaceLineList[1],hardSpaceLineList[2],hardSpaceLineList[3][:-1],hardSpaceLineList[4]))
-        elif len(hardSpaceLineList)==6:#文件系统,总计大小,已用空间,可用空间,已用%,挂载点
+        elif len(hardSpaceLineList)>=6:#文件系统,总计大小,已用空间,可用空间,已用%,挂载点
             hardSpaceList.append((hardSpaceLineList[0],hardSpaceLineList[1],hardSpaceLineList[2],hardSpaceLineList[3],hardSpaceLineList[4][:-1],hardSpaceLineList[5]))
         lastHarsSpaceLine=hardSpaceLine
     if len(hardSpaceList)>0: #删除第一行是标题，不使用

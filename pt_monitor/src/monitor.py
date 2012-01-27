@@ -525,13 +525,13 @@ def saveSystemInfo(saveDbMsgDict):
 
 
 def get_version():
-    version ='1.2.0.5'
+    version ='1.2.0.6'
     """
      获取版本信息.
     """
     log.info( '=========================================================================')
     log.info('  pt_monitor.py current version is %s               '%(version))
-    log.info('  author:Condy create time:2011.01.17 modify time:2012.02.06')
+    log.info('  author:Condy create time:2011.01.17 modify time:2012.01.27')
     log.info(' 功能点1.监控平台日志')
     log.info('      2.监控CPU，内存、线程、硬盘告警信息')
     log.info('      3.收集CPU，内存、线程、硬盘资源信息')
