@@ -213,8 +213,11 @@ def sendToWarn(warnToPersonList):
 
     outputParam=paramUtil.invoke("Monitor_machine_info", MONITOR_NAME, URL)
     planId=''
-    if outputParam.is_success() :
+    if outputParam.is_success() and outputParam.get_tables().get_first_table().has_row():
        planId=outputParam.get_column_value(0,0,4)
+    else:
+        log.error('调用Monitor_machine_info失败，或者是%s机器名没有在monitor_pt_machine_name表中配置',MONITOR_NAME)
+        return False
     flag=''
     if planId!='':#调用10000号和外包都通用的服务，外包可以发送邮件。
         inputStr=planId.encode('GBK')+LinkConst.SPLIT_COLUMN+'A'+LinkConst.SPLIT_COLUMN+'\r\n'.join(warnToPersonList)
@@ -523,9 +526,88 @@ def saveSystemInfo(saveDbMsgDict):
     else:
         log.info('调用savePtResourceInfo服务失败.输入参数:%s',inputStr)
 
+def getNohupVersion(monitorList):
+    """
+     将写在nohup.out文件中程序的版本，提取出来写到数据库中。nohup.out中的文件格式一般为:
+******************************************************
+*       SVCSMGR           2.4.3                      *
+*       SVCSMGR_LIB     Version=2.0                  *
+******************************************************
+******************************************************
+*       SVCSMGR           2.4.3                      *
+*       SVCSMGR_LIB     Version=2.0                  *
+******************************************************
+******************************************************
+*       SVCSMGR           2.4.3                      *
+*       SVCSMGR_LIB     Version=2.0                  *
+******************************************************
+或者为:virmgr
+        ******************************************************
+        *         VRI MANAGER     Release V1.4.0             *
+        ******************************************************
+[TMLIB_RUN]: In 10 second process 1471 times.
+[TMLIB_RUN]: In 10 second process 1534 times.
+[TMLIB_RUN]: In 10 second process 1523 times.
+[TMLIB_RUN]: In 10 second process 1682 times.
+[TMLIB_RUN]: In 10 second process 1617 times.
+[TMLIB_RUN]: In 10 second process 1731 times.
+[TMLIB_RUN]: In 10 second process 1778 times.
+[TMLIB_RUN]: In 10 second process 1720 times.
+[TMLIB_RUN]: In 10 second process 1636 times.
+[TMLIB_RUN]: In 10 second process 1642 times.
+[TMLIB_RUN]: In 10 second process 1684 times.
+[TMLIB_RUN]: In 10 second process 1446 times.
+[TMLIB_RUN]: In 10 second process 1582 times.
+[TMLIB_RUN]: In 10 second process 1683 times.
+[TMLIB_RUN]: In 10 second process 1582 times.
+[TMLIB_RUN]: In 10 second process 1537 times.
+[TMLIB_RUN]: In 10 second process 1721 times.
+[TMLIB_RUN]: In 10 second process 1727 times.
+    """
+    try:
+        #ctserver,websphere,不要获取版本
+        if len(monitorList)<>0 and monitorList[0]['log_type'] in ['websphere','ctserver']:
+            return
+        if len(monitorList)>0:
+            nohupFilePath=os.path.split(monitorList[0]['monitorFile'])[0]
+            nohupFilePath=nohupFilePath+'/../../bin'+os.sep+'nohup.out'
+        else:
+            nohupFilePath=config_dir+'../bin/nohup.out'
+
+        if os.path.isfile(nohupFilePath)==False:
+            log.info('从nohup中获取程序版本:找不到:%s文件',nohupFilePath)
+            return
+        if len(monitorList)>0 and monitorList[0]['log_type']=='vrimgr':
+            commondStr='tail -30 '+nohupFilePath
+            searchLogStd=os.popen(commondStr)
+            lineLogList=searchLogStd.readlines()
+            lineLogLength=len(lineLogList)
+            versionCountPointor=-1
+            for i in range(lineLogLength):
+                versionCountPointor=lineLogLength-(i+1)
+                lineLog=lineLogList[versionCountPointor]
+                if lineLog.find('***************')<>-1:
+                    break;
+            if versionCountPointor<0:
+                return
+            versionMsg=lineLogList[versionCountPointor-1].replace('*','').strip()
+        else:
+            commondStr='tail -4 '+nohupFilePath
+            searchLogStd=os.popen(commondStr)
+            lineLogList=searchLogStd.readlines()
+            #没有值，或者不是**********开头的.
+            if len(lineLogList)==0 or len(lineLogList)<>4 or lineLogList[0].find('**********')==-1 :
+                return
+            versionMsg=lineLogList[1].replace('*','').strip()+' '+lineLogList[2].replace('*','').strip()
+
+        log.info('程序的版本号为:%s',versionMsg)
+        paramUtil=ParamUtil()
+        outputParam=paramUtil.invoke("Monitor_nohupVersion", MONITOR_NAME+LinkConst.SPLIT_COLUMN+versionMsg, URL)
+    except Exception:
+        log.exception('getNohupVersion办法执行异常')
 
 def get_version():
-    version ='1.2.0.6'
+    version ='1.2.0.8'
     """
      获取版本信息.
     """
@@ -618,6 +700,8 @@ if __name__ == '__main__':
 
     #备份程序
     backupFile()
+    #程序的版本信息收集
+    getNohupVersion(monitorFileList)
 
     saveSystemInfo(saveDBMsgDict)
     if len(warnToPersonList)==0:
