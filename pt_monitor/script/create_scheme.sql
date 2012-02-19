@@ -2165,3 +2165,124 @@ commit;
 end;
 /
 set define on;
+
+-- Create table
+create table MONITOR_PT_NOHUP_VERSION
+(
+  MONITOR_NAME VARCHAR2(32),
+  VERSION_MSG  VARCHAR2(512),
+  UPDATE_TIME  DATE
+)
+tablespace TCCS_TELIS
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 4M
+    next 4M
+    minextents 1
+    maxextents unlimited
+    pctincrease 0
+  );
+-- Add comments to the table 
+comment on table MONITOR_PT_NOHUP_VERSION
+  is '平台监控-获取程序的版本号';
+-- Add comments to the columns 
+comment on column MONITOR_PT_NOHUP_VERSION.MONITOR_NAME
+  is '机器名';
+comment on column MONITOR_PT_NOHUP_VERSION.VERSION_MSG
+  is '版本信息';
+comment on column MONITOR_PT_NOHUP_VERSION.UPDATE_TIME
+  is '更新时间';
+
+set define off;
+declare
+V_APP_SOA_INTERFACE_ID_4322 Varchar2(10);
+V_APP_SOA_INPUT_ID_20394 Varchar2(10);
+V_APP_SOA_INPUT_ID_20395 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_20108 Varchar2(10);
+V_APP_SOA_SERVICE_ID_4270 Varchar2(10);
+V_APP_SOA_INPUT_ID_20396 Varchar2(10);
+V_APP_SOA_INPUT_ID_20397 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_20109 Varchar2(10);
+begin
+select SEQ_SOA_INTERFACE.nextval into V_APP_SOA_INTERFACE_ID_4322 from dual;
+select SEQ_SOA_INPUT.nextval into V_APP_SOA_INPUT_ID_20394 from dual;
+select SEQ_SOA_INPUT.nextval into V_APP_SOA_INPUT_ID_20395 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_20108 from dual;
+select SEQ_SOA_SERVICE.nextval into V_APP_SOA_SERVICE_ID_4270 from dual;
+select SEQ_SOA_INPUT.nextval into V_APP_SOA_INPUT_ID_20396 from dual;
+select SEQ_SOA_INPUT.nextval into V_APP_SOA_INPUT_ID_20397 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_20109 from dual;
+--插入接口信息
+insert into SOA_INTERFACE_INFO (INTERFACE_ID, INTERFACE_NAME, DESCRIPTION,IS_USED, IS_LOG, TYPE, MODULE_NAME, CALL_TYPE)
+values (V_APP_SOA_INTERFACE_ID_4322,'Monitor_nohupVersion','从监控程序的nohup.out文件中读取程序的版本号，写入数据库中.','Y','','0','平台监控','0');
+
+
+--插入接口输入信息
+insert into SOA_INTERFACE_INPUT (COLUMN_INDEX, I_INPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('1',V_APP_SOA_INPUT_ID_20394,'monitor_name','string','100','N','','N','','Y','机器名','','',V_APP_SOA_INTERFACE_ID_4322);
+
+
+--插入接口输入信息
+insert into SOA_INTERFACE_INPUT (COLUMN_INDEX, I_INPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('2',V_APP_SOA_INPUT_ID_20395,'version_msg','string','1000','N','','N','','Y','版本信息','','',V_APP_SOA_INTERFACE_ID_4322);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_20108,'result','string','100','N','','N','','Y','成功,失败标志','','',V_APP_SOA_INTERFACE_ID_4322);
+
+
+--插入服务信息
+insert into SOA_SERVICE_INFO (SERVICE_ID, COMPANY_ID, SERVICE_NAME,SERVICE_ATTACH, SERVICE_CLASS, DATASOURCE,MODIFY_STAFF_ID, MODIFY_TIME)
+values (V_APP_SOA_SERVICE_ID_4270,'0','Monitor_nohupVersion','','com.ecc.service.sql.UpdateService','MERGE INTO monitor_pt_nohup_version D
+   USING (SELECT  ? as monitor_name,? as version_msg FROM dual ) S
+   ON (D.monitor_name = S.monitor_name)
+   WHEN MATCHED THEN UPDATE SET D.update_time = sysdate,D.version_msg=S.version_msg
+   WHEN NOT MATCHED THEN INSERT (D.monitor_name, D.update_time,version_msg)
+   VALUES (S.monitor_name, sysdate,S.version_msg)','','');
+
+
+--插入服务输入信息
+insert into SOA_SERVICE_INPUT (COLUMN_INDEX, S_INPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('1',V_APP_SOA_INPUT_ID_20396,'monitor_name','string','100','N','','N','','Y','机器名','','',V_APP_SOA_SERVICE_ID_4270);
+
+
+--插入服务输入信息
+insert into SOA_SERVICE_INPUT (COLUMN_INDEX, S_INPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('2',V_APP_SOA_INPUT_ID_20397,'version_msg','string','1000','N','','N','','Y','版本信息','','',V_APP_SOA_SERVICE_ID_4270);
+
+
+--插入输入映射信息
+insert into SOA_INPUT_MAPPING (I_INPUT_ID,S_INPUT_ID)
+values (V_APP_SOA_INPUT_ID_20394,V_APP_SOA_INPUT_ID_20396);
+
+
+--插入输入映射信息
+insert into SOA_INPUT_MAPPING (I_INPUT_ID,S_INPUT_ID)
+values (V_APP_SOA_INPUT_ID_20395,V_APP_SOA_INPUT_ID_20397);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_20109,'result','string','100','N','','N','','Y','成功,失败标志','','',V_APP_SOA_SERVICE_ID_4270);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_20108,V_APP_SOA_OUTPUT_ID_20109);
+
+
+--插入服务组合信息
+insert into SOA_INTERFACE_SERVICE (ORDER_NO, INTERFACE_ID, SERVICE_ID)
+values ('',V_APP_SOA_INTERFACE_ID_4322,V_APP_SOA_SERVICE_ID_4270);
+
+
+commit;
+end;
+/
+set define on;
+alter table MONITOR_PT_NOHUP_VERSION
+  add constraint pri_PT_NOHUP_VERSION primary key (MONITOR_NAME);
