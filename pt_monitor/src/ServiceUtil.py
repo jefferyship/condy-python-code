@@ -621,7 +621,7 @@ class Tables:
     def get_first_column(self):
         return self.get_column(0,0,0)
     def get_first_row(self):
-        return self.t
+        return self.get_row(0,0)
 
 class ServiceInfo:
     '''
@@ -1330,11 +1330,16 @@ class ParamUtil:
         tables=self.strToTables(inputStr)
         inputParam.set_tables(tables)
         inputXML=self.input_param_to_xml(inputParam)
-        f=urllib2.urlopen(serviceUrl,urllib.urlencode({'xmldata':inputXML}))
-        outputXML=f.read()
-        outputXML=outputXML.lstrip()
-        #print outputXML
-        outputParam=self.xml_to_ouput_param(outputXML)
+        outputParam=None
+        try:
+            f=urllib2.urlopen(serviceUrl,urllib.urlencode({'xmldata':inputXML}))
+            outputXML=f.read()
+            outputXML=outputXML.lstrip()
+            #print outputXML
+            outputParam=self.xml_to_ouput_param(outputXML)
+        except Exception:
+            outputParam=OutputParam()
+            outputParam.set_result_code('-1')
+            outputParam.set_result_message('调用服务地址:'+serviceUrl+"失败")
+            outputParam.set_service_name(serviceName)
         return outputParam
-
-
