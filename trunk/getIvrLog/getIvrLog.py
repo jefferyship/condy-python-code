@@ -24,6 +24,8 @@ import telnetlib
 import re
 import ConfigParser
 import datetime
+import paramiko
+from paramiko import AuthenticationException
 from ftplib import FTP
 
 #----------------------------------------------------------------------
@@ -34,7 +36,7 @@ gbsDescription = u"""\
 
 class TestFrame(wx.Frame):
     def __init__(self):
-        self._version='1.0.2'
+        self._version='1.0.3'
         tempPath=os.path.split(sys.argv[0])#取文件名的路径。
         if tempPath[0]=='':#文件名采用绝对路径，而是采用相对路径时，取工作目录下的路径
             self.config_dir=os.getcwd()+os.sep
@@ -50,7 +52,7 @@ class TestFrame(wx.Frame):
                      )
         p.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
 
-        gbs = self.gbs = wx.GridBagSizer(5, 5)
+        gbs = self.gbs = wx.GridBagSizer(6, 6)
 
         gbs.Add( wx.StaticText(p, -1, gbsDescription),
                  (0,0), (1,7), wx.ALIGN_LEFT | wx.ALL, 5)
@@ -68,6 +70,8 @@ class TestFrame(wx.Frame):
         ctiPassword=wx.TextCtrl(p, -1, "")
         searchKey=wx.TextCtrl(p, -1, "")
         ctiType=wx.TextCtrl(p, -1, "")
+        connectType = wx.ComboBox(p, -1, u"连接方式", wx.DefaultPosition, (100, -1), ['telnet','ssh'], wx.CB_DROPDOWN)
+        #connectType=wx.TextCtrl(p, -1, "")
         searchDay= wx.GenericDatePickerCtrl(p, size=(120,-1),
                                 style = wx.DP_DROPDOWN
                                       | wx.DP_SHOWCENTURY
@@ -86,6 +90,7 @@ class TestFrame(wx.Frame):
         self.searchDay=searchDay
         self.searchTime=searchTime
         self.ctiType=ctiType
+        self.connectType=connectType
         daytimeBox = wx.BoxSizer( wx.HORIZONTAL )
         daytimeBox.Add( searchDay, 0, wx.ALIGN_CENTRE )
         daytimeBox.Add( searchTime, 0, wx.ALIGN_CENTRE )
@@ -110,7 +115,9 @@ class TestFrame(wx.Frame):
         gbs.Add( searchKey, (3,4) )
         gbs.Add( wx.StaticText(p, -1, u'CTI类型:'), (4,0) )
         gbs.Add( ctiType, (4,1) )
-        gbs.Add( searchButton, (4,2) )
+        gbs.Add( wx.StaticText(p, -1, u'连接方式:'), (4,3) )
+        gbs.Add( connectType, (4,4) )
+        gbs.Add( searchButton, (5,2) )
 
         listCtrl = wx.ListCtrl(p, -1, style=wx.LC_REPORT)
         listCtrl.InsertColumn(0, u'呼叫时间', width=60)
@@ -122,7 +129,7 @@ class TestFrame(wx.Frame):
         listCtrl.InsertColumn(6, u'日志时间', width=100)
         self.listCtrl=listCtrl
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.listCtrl)
-        gbs.Add( listCtrl, (5,0),(6,6),flag=wx.EXPAND )
+        gbs.Add( listCtrl, (6,0),(5,6),flag=wx.EXPAND )
 
 
         self.sessionNo=wx.TextCtrl(p, -1, "")
@@ -131,6 +138,8 @@ class TestFrame(wx.Frame):
         self.ivrPassword=wx.TextCtrl(p, -1, u"")
         self.ivrPort=wx.TextCtrl(p, -1, '')
         self.ivrLogTime=wx.TextCtrl(p, -1, u"")
+        self.ivrConnectType=wx.ComboBox(p, -1, u"连接方式", wx.DefaultPosition, (100, -1), ['telnet','ssh'], wx.CB_DROPDOWN)
+        #self.ivrConnectType=wx.TextCtrl(p, -1, u"")
         getIvrLogButton=wx.Button(p, -1, u"获取日志")
         self.Bind(wx.EVT_BUTTON, self.getIvrLog, getIvrLogButton)
 
@@ -146,7 +155,9 @@ class TestFrame(wx.Frame):
         gbs.Add( self.ivrPort, (13,1) )
         gbs.Add( wx.StaticText(p, -1, u'日志时间:'), (13,3) )
         gbs.Add( self.ivrLogTime, (13,4) )
-        gbs.Add( getIvrLogButton, (14,2) )
+        gbs.Add( wx.StaticText(p, -1, u'连接方式:'), (14,0) )
+        gbs.Add( self.ivrConnectType, (14,1) )
+        gbs.Add( getIvrLogButton, (14,3) )
 
         outputStr=wx.TextCtrl(p, -1, u'ivr地址:',style=wx.TE_MULTILINE)
         #gbs.Add( ivrPassword, (2,7),(2,3),flag=wx.EXPAND )
@@ -171,8 +182,8 @@ class TestFrame(wx.Frame):
         self.version()
 
     def version(self):
-        self.outputStr.SetValue('  getIvrLog.py current version is'+self._version+'\n')
-        self.outputStr.AppendText('  author:Condy create time:2011.03.15 modify time:2011.04.26 ')
+        self.outputStr.SetValue('  getIvrLog.py current version is:'+self._version+'\n')
+        self.outputStr.AppendText('  author:Condy create time:2011.03.15 modify time:2012.04.26 ')
 
     def convertUnicodeToStr(self,unicodeMap):
         for key in unicodeMap.keys():
@@ -192,6 +203,8 @@ class TestFrame(wx.Frame):
             self.ctiPassword.SetValue(configData['password'])
             if configData.has_key('cti_type'):self.ctiType.SetValue(configData['cti_type'])
             else:self.ctiType.SetValue('ctserver')
+            if configData.has_key('connect_type'):self.connectType.SetValue(configData['connect_type'])
+            else:self.connectType.SetValue('telnet')
         except KeyError:
             self.ctiIp.SetValue('')
             self.ctiUser.SetValue('')
@@ -214,9 +227,14 @@ class TestFrame(wx.Frame):
             print configData
             self.ivrUser.SetValue(configData['user'])
             self.ivrPassword.SetValue(configData['password'])
+            if configData.has_key('connect_type'):
+                self.ivrConnectType.SetValue(configData['connect_type'])
+            else:
+                self.ivrConnectType.SetValue('telnet')
         except KeyError:
             self.ivrUser.SetValue('')
             self.ivrPassword.SetValue('')
+            self.ivrConnectType.SetValue('telnet')
         event.Skip()
     def getIvrLog(self,evt):
         callObject={}
@@ -226,6 +244,7 @@ class TestFrame(wx.Frame):
         callObject['ivr_password']=self.ivrPassword.GetValue()
         callObject['log_time']=self.ivrLogTime.GetValue()
         callObject['sessionNo']=self.sessionNo.GetValue()
+        callObject['connectType']=self.ivrConnectType.GetValue()
         self.convertUnicodeToStr(callObject)
         print callObject
         bResult=self.connectIVR(callObject)
@@ -269,17 +288,58 @@ class TestFrame(wx.Frame):
         return nextLogTimeStr
 
 
-    def connectIVR(self,callObject):
+    def connectIVRssh(self,callObject):
         """
-        根据呼叫记录，获取IVR上的日志文件。
+         ssh方式连接IVR.
          callObject['ivr_ip'] :ivr的IP地址
          callObject['ivr_port']:端口
          callObject['ivr_user']:用户名
          callObject['ivr_password']：密码
          callObject['log_time']:日志文件时间
          callObject['sessionNo']:sessionNo
+         callobject['connectType']:连接方式 ssh/telnet
+        """
+        client = paramiko.SSHClient()
+        logPath='/home/'+callObject['ivr_user']+'/LOG/svcsmgr/'
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            client.connect(callObject['ivr_ip'], username=callObject['ivr_user'], password=callObject['ivr_password'], timeout=4)
+        except AuthenticationException:
+            self.outputStr.SetValue(u'连接服务器:%s失败，确认用户:%s,密码:%s,是否正确.'%(callObject['ivr_ip'],callObject['ivr_user'],callObject['ivr_password']))
+            return False
 
+        commandsList=['cd '+logPath,"grep '>"+callObject['ivr_port']+"<' svcsmgr"+callObject['log_time']+".log >"+callObject['sessionNo']+'.log']
+        commands=';'.join(commandsList)
+        print commands
+        stdin, stdout, stderr = client.exec_command(commands)
+        errMsgList=stderr.readlines()
+        if len(errMsgList)==0:
+            self.outputStr.SetValue('generate orinial file in server.')
+            for st in stdout.readlines():
+                self.outputStr.AppendText(st+'\n')
+            ftp = client.open_sftp()
+            ftp.chdir(logPath)
+            #         remotePath,localPath
+            ftp.get(callObject['sessionNo']+'.log',callObject['sessionNo']+'.log')
+            ftp.remove(logPath+callObject['sessionNo']+'.log')
+            ftp.close()
+            self.outputStr.AppendText('save file to:'+self.config_dir+callObject['sessionNo']+'.log')
+        else:
+            for st in errMsgList:
+                self.listCtrl.append(st)
+        client.close()
+        return True
 
+    def connectIVRtelnet(self,callObject):
+        """
+         telnet方式连接ivr
+          callObject['ivr_ip'] :ivr的IP地址
+         callObject['ivr_port']:端口
+         callObject['ivr_user']:用户名
+         callObject['ivr_password']：密码
+         callObject['log_time']:日志文件时间
+         callObject['sessionNo']:sessionNo
+         callobject['connectType']:连接方式 ssh/telnet
         """
         logPath='/home/'+callObject['ivr_user']+'/LOG/svcsmgr/'
         tn = telnetlib.Telnet(callObject['ivr_ip'])
@@ -306,6 +366,22 @@ class TestFrame(wx.Frame):
         ftp.delete(fileName)
         ftp.quit()
         return True
+    def connectIVR(self,callObject):
+        """
+        根据呼叫记录，获取IVR上的日志文件。
+         callObject['ivr_ip'] :ivr的IP地址
+         callObject['ivr_port']:端口
+         callObject['ivr_user']:用户名
+         callObject['ivr_password']：密码
+         callObject['log_time']:日志文件时间
+         callObject['sessionNo']:sessionNo
+         callobject['connectType']:连接方式 ssh/telnet
+        """
+        if callObject.has_key('connectType') and callObject['connectType']=='ssh':
+            return self.connectIVRssh(callObject)
+        else:
+            return self.connectIVRtelnet(callObject)
+
     def readConfig(self,configDataMap):
         """
          从getIvrLog.ini中获取配置信息
@@ -320,11 +396,36 @@ class TestFrame(wx.Frame):
             configDataMap[section]=configData
 
 
-    def connectCTI(self,host):
+    def connectCTIssh(self,host):
         """
-         从CTI获取IVR的地址，及呼叫的记录
+          采用ssh方式连接到服务器。
         """
-        callObjectList=[]
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            client.connect(host['ip'], 22, username=host['user'], password=host['password'], timeout=4)
+        except paramiko.AuthenticationException:
+            self.outputStr.SetValue(u'连接CTI服务错误，确认用户名/密码是否正确')
+        stdoutStrList=[]
+        tempStr='-1'
+        stdout=None
+        stderr=None
+        commands=';'.join(host['commands'])
+        stdin, stdout, stderr = client.exec_command(commands)
+        errMsgList=stderr.readlines()
+        if len(errMsgList)==0:
+            for st in stdout.readlines():
+                stdoutStrList.append(st)
+        else:
+            for st in errMsgList:
+                self.listCtrl.append(st)
+        ctiStr='\r\n'.join(stdoutStrList)
+        client.close()
+        return ctiStr
+    def connectCTItelnet(self,host):
+        """
+         采用telnet方式连接CTI.
+        """
         tn = telnetlib.Telnet(host['ip'])
         tn.set_debuglevel(0)
 
@@ -343,6 +444,17 @@ class TestFrame(wx.Frame):
 
         tn.write("exit\n")
         ctiStr= tn.read_all()
+        return ctiStr
+    def connectCTI(self,host):
+        """
+         从CTI获取IVR的地址，及呼叫的记录
+        """
+        callObjectList=[]
+        ctiStr=''
+        if host.has_key('connecttype') and host['connecttype']=='ssh':#ssh
+            ctiStr=self.connectCTIssh(host)
+        else:# telnet
+            ctiStr=self.connectCTItelnet(host)
         #将连接的过程写到输出结果框去.
         self.outputStr.SetValue(ctiStr)
         for ctiString in ctiStr.split('\r'):
@@ -374,6 +486,7 @@ class TestFrame(wx.Frame):
         host['ip']=self.ctiIp.GetValue()
         host['user']=self.ctiUser.GetValue()
         host['password']=self.ctiPassword.GetValue()
+        host['connecttype']=self.connectType.GetValue()
         keyValue=self.searchKey.GetValue()
         if self.searchKey.IsEmpty():
             self.outputStr.SetValue(u"输入查询的号码或流水号.")
