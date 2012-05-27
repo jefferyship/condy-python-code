@@ -68,12 +68,13 @@ def checkSMGateBlock():
     if outputParam.is_success():
         smBlockCount=outputParam.get_first_column_value()
         if int(smBlockCount)>200:
+            connectNbrList=['18959130026','18959130031','18959130058']
             smContent=MONITOR_NAME+':告警短信网关出现阻塞，目前已经阻塞了'+str(smBlockCount)+'短信'
             log.info('短信网关告警，发送短信到18959130026:%s',smContent)
-            serailNo=MONITOR_NAME+'_'+str(random.randint(1,100))+str(time.time())
-            outputParam=paramUtil.invoke("SendZongHengWebService",
-             '18959130026'+LinkConst.SPLIT_COLUMN+'3'+LinkConst.SPLIT_COLUMN+smContent+LinkConst.SPLIT_COLUMN+serailNo, URL)
-
+            for connectNbr in connectNbrList:
+               serailNo=MONITOR_NAME+'_'+str(random.randint(1,100))+str(time.time())
+               outputParam=paramUtil.invoke("SendZongHengWebService",
+                connectNbr+LinkConst.SPLIT_COLUMN+'3'+LinkConst.SPLIT_COLUMN+smContent+LinkConst.SPLIT_COLUMN+serailNo, URL) 
 def getWebServerByService():
     asServerList=[]
     paramUtil=ParamUtil()
@@ -144,41 +145,44 @@ def sendToWarn(warnToPersonList):
     """
     global lastmonitorFileSmContent
     paramUtil=ParamUtil()
-    inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
-    currmonitorFileSmContent='.'.join(warnToPersonList)
-    if lastmonitorFileSmContent==currmonitorFileSmContent:
-        log.info('重复告警短信不发送:%s',currmonitorFileSmContent)
-        return True;
-
-    outputParam=paramUtil.invoke("Monitor_machine_info", MONITOR_NAME, URL)
-    planId=''
-    if outputParam.is_success() and outputParam.get_tables().get_first_table().has_row():
-       planId=outputParam.get_column_value(0,0,4)
-    else:
-        log.error('调用Monitor_machine_info失败，或者是%s机器名没有在monitor_pt_machine_name表中配置',MONITOR_NAME)
-        return False
-    flag=''
-    if planId!='':#调用10000号和外包都通用的服务，外包可以发送邮件。
-        inputStr=planId.encode('GBK')+LinkConst.SPLIT_COLUMN+'A'+LinkConst.SPLIT_COLUMN+'\r\n'.join(warnToPersonList)
-        log.info('发送短信:调用服务WarnToPerson,输入参数:%s',inputStr)
-        outputParam=paramUtil.invoke("WarnToPerson", inputStr, URL)
-    else:
+    try:
         inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
-        inputStr=inputStr+'\r\n'.join(warnToPersonList)
-        log.info('发送短信:调用服务Monitor_Warn_To_Person,输入参数:%s',inputStr)
-        outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
-    if outputParam.is_success() :
-        flag=outputParam.get_first_column_value()
-    writeLastmonitorFileSmContent(currmonitorFileSmContent)
+        currmonitorFileSmContent='.'.join(warnToPersonList)
+        if lastmonitorFileSmContent==currmonitorFileSmContent:
+            log.info('重复告警短信不发送:%s',currmonitorFileSmContent)
+            return True;
+
+        outputParam=paramUtil.invoke("Monitor_machine_info", MONITOR_NAME, URL)
+        planId=''
+        if outputParam.is_success() and outputParam.get_tables().get_first_table().has_row():
+           planId=outputParam.get_column_value(0,0,4)
+        else:
+            log.error('调用Monitor_machine_info失败，或者是%s机器名没有在monitor_pt_machine_name表中配置',MONITOR_NAME)
+            return False
+        flag=''
+        if planId!='':#调用10000号和外包都通用的服务，外包可以发送邮件。
+            inputStr=planId.encode('GBK')+LinkConst.SPLIT_COLUMN+'A'+LinkConst.SPLIT_COLUMN+'\r\n'.join(warnToPersonList)
+            log.info('发送短信:调用服务WarnToPerson,输入参数:%s',inputStr)
+            outputParam=paramUtil.invoke("WarnToPerson", inputStr, URL)
+        else:
+            inputStr=MONITOR_NAME+LinkConst.SPLIT_COLUMN
+            inputStr=inputStr+'\r\n'.join(warnToPersonList)
+            log.info('发送短信:调用服务Monitor_Warn_To_Person,输入参数:%s',inputStr)
+            outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
+        if outputParam.is_success() :
+            flag=outputParam.get_first_column_value()
+        writeLastmonitorFileSmContent(currmonitorFileSmContent)
+    except Exception:
+        log.exception('短信发送报错:')
     return flag=='0'
 def get_version():
-    version ='1.0'
+    version ='1.0.2'
     """
      获取版本信息.
     """
     log.info( '=========================================================================')
     log.info('  webserver_monitor.py current version is %s               '%(version))
-    log.info('  author:Condy create time:2012.02.11')
+    log.info('  author:Condy create time:2012.03.13 modify time: 2012.05.25')
     log.info('  使用方法:启动方法1.确认webserver_monitor.ini中的IS_START=1.启动 nohup ./webserver_monitor.py &  ')
     log.info('           关闭:修改webserver_monitor.ini中的IS_START参数更改为0.就会自动停止')
     log.info(' 功能点：监控应用服务器服务调用情况')
