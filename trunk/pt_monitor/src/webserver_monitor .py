@@ -65,11 +65,21 @@ def checkSMGateBlock():
     paramUtil=ParamUtil()
     log.info('短信阻塞监控')
     outputParam=paramUtil.invoke("Monitor_webserver_sm_block", MONITOR_NAME, URL)
+    connectNbrList=['18959130026','18959130031','18959130042']
     if outputParam.is_success():
         smBlockCount=outputParam.get_first_column_value()
         if int(smBlockCount)>200:
-            connectNbrList=['18959130026','18959130031','18959130058']
             smContent=MONITOR_NAME+':告警短信网关出现阻塞，目前已经阻塞了'+str(smBlockCount)+'短信'
+            log.info('短信网关告警，发送短信到18959130026:%s',smContent)
+            for connectNbr in connectNbrList:
+               serailNo=MONITOR_NAME+'_'+str(random.randint(1,100))+str(time.time())
+               outputParam=paramUtil.invoke("SendZongHengWebService",
+                connectNbr+LinkConst.SPLIT_COLUMN+'3'+LinkConst.SPLIT_COLUMN+smContent+LinkConst.SPLIT_COLUMN+serailNo, URL) 
+    outputParam=paramUtil.invoke("Monitor_cj_sm_blck", MONITOR_NAME, URL)
+    if outputParam.is_success():
+        smBlockCount=outputParam.get_first_column_value()
+        if int(smBlockCount)>200:
+            smContent=MONITOR_NAME+':urge_object的催缴短信网关出现阻塞，目前已经阻塞了'+str(smBlockCount)+'短信'
             log.info('短信网关告警，发送短信到18959130026:%s',smContent)
             for connectNbr in connectNbrList:
                serailNo=MONITOR_NAME+'_'+str(random.randint(1,100))+str(time.time())
@@ -182,7 +192,7 @@ def get_version():
     """
     log.info( '=========================================================================')
     log.info('  webserver_monitor.py current version is %s               '%(version))
-    log.info('  author:Condy create time:2012.03.13 modify time: 2012.05.25')
+    log.info('  author:Condy create time:2012.03.13 modify time: 2012.08.16')
     log.info('  使用方法:启动方法1.确认webserver_monitor.ini中的IS_START=1.启动 nohup ./webserver_monitor.py &  ')
     log.info('           关闭:修改webserver_monitor.ini中的IS_START参数更改为0.就会自动停止')
     log.info(' 功能点：监控应用服务器服务调用情况')
