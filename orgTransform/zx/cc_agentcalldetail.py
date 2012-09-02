@@ -1,0 +1,73 @@
+# -*- coding:utf-8-*-
+#========================================================================
+#   FileName: cc_agentcalldetail.py
+#     Author: linh
+#      Email: linh@ecallcen.com
+#   HomePage: 中兴的cc_agentcalldetail表对应的类
+# LastChange: 2012-08-20 18:57:33
+#========================================================================
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import MetaData, Table, Column,\
+                        Integer, String, create_engine,DateTime
+Base = declarative_base()
+class cc_agentcalldetail(Base):
+    __tablename__ = 'cc_agentcalldetail'
+    connectionid=Column(String(40),primary_key=True)
+    agentid=Column(String(10))
+    agentphone=Column(String(32))
+    vcid=Column(Integer)
+    calltype=Column(Integer)
+    callid=Column(Integer)
+    begincalltime=Column(DateTime)
+    ringingstarttime=Column(DateTime)
+    answertime=Column(DateTime)
+    callendtime=Column(DateTime)
+    callingnumber=Column(String(32))
+    callednumber=Column(String(32))
+    servicekey=Column(Integer)
+    subservicekey=Column(Integer)
+    skillid=Column(Integer)
+    queuebegintime=Column(DateTime)
+    queueendtime=Column(DateTime)
+    queuetime=Column(Integer)
+    holdcount=Column(Integer)
+    totalholdtime=Column(Integer)
+    playtonetimes=Column(Integer)
+    threeconftimes=Column(Integer)
+    stepconflength=Column(Integer)
+    remoteconsutationtimes=Column(Integer)
+    totalremoteconsutationtimes=Column(Integer)
+    consutationtimes=Column(Integer)
+    totalconsutationtimes=Column(Integer)
+    callendtype=Column(Integer)
+    acwtime=Column(Integer)
+    transfernumber=Column(String(32))
+    recordpath=Column(String(255))
+    updatetime=Column(DateTime)
+    nfsdevid=Column(Integer)
+    nfsinitpath=Column(String(32))
+    operlocalid=Column(Integer)
+    calllocalid=Column(Integer)
+    reportworkflag=Column(Integer)
+    reportworkend=Column(DateTime)
+    groupid=Column(Integer)
+    reckeystr=Column(String(30))
+    siteid=Column(Integer)
+    accesscode=Column(String(32))
+    dimid1=Column(String(40))
+    dimid2=Column(String(40))
+    dimid3=Column(String(40))
+    dimid4=Column(String(40))
+    dimid5=Column(String(40))
+    dimid6=Column(String(40))
+    dimid7=Column(String(40))
+    dimid8=Column(String(40))
+    dimid9=Column(String(40))
+    dimid10=Column(String(40))
+    dimid11=Column(String(40))
+    mainservicekey=Column(Integer)
+    keystr=Column(String(40))
+    threeconfcount=Column(Integer)
+    stepconfcount=Column(Integer)
+    backtosvcflag=Column(Integer)
+    oriconnectionid=Column(String(40))
