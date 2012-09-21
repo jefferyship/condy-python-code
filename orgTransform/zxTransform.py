@@ -33,14 +33,16 @@ def getCommonConfig():
     global RECYCLE_TIMES
     global ECCUC_DB_USER_PWD
     global NGCC_DB_USER_PWD
-    global sNGCCzxStaffPassword
+    global DEFAULT_AGENT_PWD
+    global ENHANCECC_URL
     config=ConfigParser.ConfigParser()
     ivrtrackFileObject=open(config_dir+'zxTransform.ini')
     config.readfp(ivrtrackFileObject)
     URL=config.get('common', 'URL')
     MONITOR_NAME=config.get('common', 'MONITOR_NAME')
     IS_START=config.get('common', 'IS_START')
-    sNGCCzxStaffPassword=config.get('common', 'sNGCCzxStaffPassword')
+    DEFAULT_AGENT_PWD=config.get('common', 'DEFAULT_AGENT_PWD')
+    ENHANCECC_URL=config.get('common', 'ENHANCECC_URL')
     try:
         RECYCLE_TIMES=float(config.get('common', 'RECYCLE_TIMES'))
     except TypeError:
@@ -75,7 +77,7 @@ if __name__ == '__main__':
     else:
         config_dir=tempPath[0]+os.sep
     log = logging.getLogger()
-    log.setLevel(logging.DEBUG)
+    log.setLevel(logging.INFO)
     h1 = logging.handlers.RotatingFileHandler(config_dir+'zxTransform.log',maxBytes=2097152,backupCount=5)
     f=logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     h1.setFormatter(f)
@@ -97,6 +99,8 @@ if __name__ == '__main__':
                     zx_organization.ORG_IS_START=IS_START
                     zx_organization.ORG_ECCUC_DB_USER_PWD=ECCUC_DB_USER_PWD
                     zx_organization.ORG_NGCC_DB_USER_PWD=NGCC_DB_USER_PWD
+                    zx_organization.DEFAULT_AGENT_PWD=DEFAULT_AGENT_PWD
+                    zx_organization.ENHANCECC_URL=ENHANCECC_URL
                     if zx_organization_thread==None:
                         zx_organization_thread=threading.Thread(target=zx_organization.syn,args=('',))#Æô¶¯Ïß³Ì.
                         zx_organization_thread.start()

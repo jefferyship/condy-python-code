@@ -19,10 +19,17 @@ import ConfigParser
 import time
 import dm.dm_call_log
 import dm.dm_term_call_log
+import dm.dm_queue_log
+import dm.dm_staff_action_log
+import dm.staff_on_duty_info
 from zx.cc_calldetail import cc_calldetail
 from zx.cc_agentcalldetail import cc_agentcalldetail
+from zx.cc_queuedetail import cc_queuedetail 
+from zx.cc_logonoffdetail import cc_logonoffdetail
+from zx.cc_agentonbusystat import cc_agentonbusystat
 from sqlalchemy import MetaData, Table, Column, create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 def getCommonConfig():
     """
       读取ivrtrack.ini的配置文件信息
@@ -103,6 +110,7 @@ def synDmCallLog():
     """
     updatetime=getLastTime('DM_CALL_LOG')
     orialupdatetime=updatetime
+    index=0
     try:
         cc_calldetailList=__zxdbkf.query(cc_calldetail).filter(cc_calldetail.callendtime>orialupdatetime).order_by(cc_calldetail.callendtime)[:1000]
         calldetail=None
@@ -128,42 +136,115 @@ def synDmCallLog():
         log.exception('执行SQL语句错误')
     if orialupdatetime<>updatetime:
         setLastTime('DM_CALL_LOG',updatetime)
+    log.info('结束dm_call_log。上次更新时间点为:%s,本次时间点为:%s,总共更新:%s记录',str(orialupdatetime),str(updatetime),str(index))
 def synDmQueueLog():
     """
     更新dm_queue_merge,dm_queue_log表 
     """
     updatetime=getLastTime('DM_QUEUE_LOG')
     orialupdatetime=updatetime
+    index=0
     try:
-        cc_agentcalldetailList=__zxdbkf.query(cc_agentcalldetail).filter(cc_agentcalldetail.updatetime>orialupdatetime).order_by(cc_agentcalldetail.updatetime)[:1000]
-        agentcalldetail=None
-        for index,agentcalldetail in enumerate(cc_agentcalldetailList):
+        cc_queuedetailList=__zxdbkf.query(cc_queuedetail,cc_calldetail)\
+                .outerjoin(cc_calldetail,cc_calldetail.connectionid==cc_queuedetail.connectionid)\
+                .filter(cc_queuedetail.updatetime>orialupdatetime).order_by(cc_queuedetail.updatetime)[:1000]
+        queuedetail=None
+        for index,(queuedetail,calldetail) in enumerate(cc_queuedetailList):
             try:
-               term_call_log=dm.dm_term_call_log.get_dm_term_call_log(agentcalldetail)
-               __eccdm.add(term_call_log)
+               dm_call_log=None
+               if calldetail<>None:
+                   dm_call_log=dm.dm_call_log.get_dm_call_log(calldetail)
+               queue_log=dm.dm_queue_log.get_dm_queue_log(queuedetail,dm_call_log)
+               __eccdm.add(queue_log)
                __eccdm.flush()
                if(index%20==0):
                    __eccdm.commit()
             except:
                __eccdm.rollback()
-               agentcalldetail=None#置成None可以保证，如果更新失败updatetime不会被更新.
+               queuedetail=None#置成None可以保证，如果更新失败updatetime不会被更新.
                log.exception('执行SQL语句错误')
         __eccdm.flush()
         __eccdm.commit()
-        if (agentcalldetail<>None):
-          updatetime=agentcalldetail.updatetime
+        if (queuedetail<>None):
+          updatetime=queuedetail.updatetime
     except:
         __eccdm.rollback()
-        agentcalldetail=None#置成None可以保证，如果更新失败updatetime不会被更新.
+        queuedetail=None#置成None可以保证，如果更新失败updatetime不会被更新.
         log.exception('执行SQL语句错误')
     if orialupdatetime<>updatetime:
-        setLastTime('DM_TERM_CALL_LOG',updatetime)
+        setLastTime('DM_QUEUE_LOG',updatetime)
+    log.info('结束dm_queue_log。上次更新时间点为:%s,本次时间点为:%s,总共更新:%s记录',str(orialupdatetime),str(updatetime),str(index))
+def synStaffOnDutyInfo():
+    """
+    更新staff_on_duty_info表 
+    """
+    updatetime=getLastTime('STAFF_ON_DUTY_INFO')
+    orialupdatetime=updatetime
+    index=0
+    try:
+        cc_logonoffdetailList=__zxdbkf.query(cc_logonoffdetail).filter(cc_logonoffdetail.endtime>orialupdatetime).order_by(cc_logonoffdetail.endtime)[:1000]
+        logonoffdetail=None
+        for index,logonoffdetail in enumerate(cc_logonoffdetailList):
+            try:
+               on_duty_info=dm.staff_on_duty_info.get_staff_on_duty_info(logonoffdetail)
+               __eccdm.add(on_duty_info)
+               __eccdm.flush()
+               if(index%20==0):
+                   __eccdm.commit()
+            except:
+               __eccdm.rollback()
+               logonoffdetail=None#置成None可以保证，如果更新失败updatetime不会被更新.
+               log.exception('执行SQL语句错误')
+        __eccdm.flush()
+        __eccdm.commit()
+        if (logonoffdetail<>None):
+          updatetime=logonoffdetail.endtime
+    except:
+        __eccdm.rollback()
+        logonoffdetail=None#置成None可以保证，如果更新失败updatetime不会被更新.
+        log.exception('执行SQL语句错误')
+    if orialupdatetime<>updatetime:
+        setLastTime('STAFF_ON_DUTY_INFO',updatetime)
+    log.info('结束staff_on_duty_info。上次更新时间点为:%s,本次时间点为:%s,总共更新:%s记录',str(orialupdatetime),str(updatetime),str(index))
+def synDmStaffActionLog():
+    """
+    更新dm_staff_action_Log表 
+    """
+    updatetime=getLastTime('DM_STAFF_ACTION_LOG')
+    orialupdatetime=updatetime
+    index=0
+    try:
+        cc_agentonbusystatList=__zxdbkf.query(cc_agentonbusystat).filter(cc_agentonbusystat.end_time>orialupdatetime).order_by(cc_agentonbusystat.end_time)[:1000]
+        agentonbusystat=None
+        for index,agentonbusystat in enumerate(cc_agentonbusystatList):
+            try:
+               staff_action_log=dm.dm_staff_action_log.get_dm_staff_action_log(agentonbusystat)
+               __eccdm.add(staff_action_log)
+               __eccdm.flush()
+               if(index%20==0):
+                   __eccdm.commit()
+            except:
+               __eccdm.rollback()
+               agentonbusystat=None#置成None可以保证，如果更新失败updatetime不会被更新.
+               log.exception('执行SQL语句错误')
+        __eccdm.flush()
+        __eccdm.commit()
+        if (agentonbusystat<>None):
+          updatetime=agentonbusystat.end_time
+    except:
+        __eccdm.rollback()
+        agentonbusystat=None#置成None可以保证，如果更新失败updatetime不会被更新.
+        log.exception('执行SQL语句错误')
+    if orialupdatetime<>updatetime:
+        setLastTime('DM_STAFF_ACTION_LOG',updatetime)
+    log.info('结束dm_staff_action_log。上次更新时间点为:%s,本次时间点为:%s,总共更新:%s记录',str(orialupdatetime),str(updatetime),str(index))
 def synDmTermCallLog():
     """
     更新dm_term_call_Log表 
     """
     updatetime=getLastTime('DM_TERM_CALL_LOG')
     orialupdatetime=updatetime
+    index=0
     try:
         cc_agentcalldetailList=__zxdbkf.query(cc_agentcalldetail).filter(cc_agentcalldetail.updatetime>orialupdatetime).order_by(cc_agentcalldetail.updatetime)[:1000]
         agentcalldetail=None
@@ -188,12 +269,13 @@ def synDmTermCallLog():
         log.exception('执行SQL语句错误')
     if orialupdatetime<>updatetime:
         setLastTime('DM_TERM_CALL_LOG',updatetime)
+    log.info('结束dm_term_call_log。上次更新时间点为:%s,本次时间点为:%s,总共更新:%s记录',str(orialupdatetime),str(updatetime),str(index))
 def syn(notUsed):
     try:
          log.info('zx_dm  线程已启动')
-         while REC_IS_START=='1':
+         while IS_START=='1':
             try:
-                global __eccdm,__zxdbkf,REC_RECYCLE_TIMES
+                global __eccdm,__zxdbkf
                 eccdmengine = create_engine('oracle+cx_oracle://eccdm:eccdm@ecc10000')
                 ECCDMSession= sessionmaker(bind=eccdmengine)
                 __eccdm= ECCDMSession()
@@ -201,8 +283,8 @@ def syn(notUsed):
                 ZXDBKFSession= sessionmaker(bind=zxdbkfdmengine)
                 __zxdbkf= ZXDBKFSession()
                 syndm()
-                time.sleep(REC_RECYCLE_TIMES)
-                if REC_IS_START=='0':
+                time.sleep(RECYCLE_TIMES)
+                if IS_START=='0':
                     log.info('IS_START value=:'+REC_IS_START+' so zx_dm exit!')
             except Exception:
                 log.exception('系统错误')
@@ -229,10 +311,10 @@ def syn(notUsed):
 def __closeDB():
    if __eccdm<>None:
         __eccdm.close()
-        log.info('zx_record eccucDB oracle connect success close()')
+        log.info('eccucDB oracle connect success close()')
    if __zxdbkf<>None:
         __zxdbkf.close()
-        log.info('zx_record zxDB oracle connect success close()')
+        log.info('zxDB oracle connect success close()')
 if __name__ == '__main__':
     tempPath=os.path.split(sys.argv[0])#取文件名的路径。
     if tempPath[0]=='':#文件名采用绝对路径，而是采用相对路径时，取工作目录下的路径
@@ -240,27 +322,34 @@ if __name__ == '__main__':
     else:
         config_dir=tempPath[0]+os.sep
     log = logging.getLogger()
-    log.setLevel(logging.DEBUG)
+    log.setLevel(logging.INFO)
     h1 = logging.handlers.RotatingFileHandler(config_dir+'zx_dm.log',maxBytes=2097152,backupCount=5)
     f=logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     h1.setFormatter(f)
     log.addHandler(h1)
     get_version()
     getCommonConfig()
-    try:
-        eccdmengine = create_engine('oracle+cx_oracle://eccdm:eccdm@ecc10000',echo=True)
-        ECCDMSession= sessionmaker(bind=eccdmengine)
-        global __eccdm,__zxdbkf
-        __eccdm= ECCDMSession()
-        zxdbkfdmengine = create_engine('oracle+cx_oracle://zxdb_kf:zxdb_kf@zxngccdb',echo=True)
-        ZXDBKFSession= sessionmaker(bind=zxdbkfdmengine)
-        __zxdbkf= ZXDBKFSession()
-        synDmCallLog()
-        synDmTermCallLog()
-        #time.sleep(REC_RECYCLE_TIMES)
-        if RECYCLE_TIMES=='0':
-            log.info('IS_START value=:'+RECYCLE_TIMES+' so zx_dm exit!')
-    except Exception:
-        log.exception('系统错误')
-    finally:
-        __closeDB()
+    while IS_START=='1':
+       try:
+           getCommonConfig()
+           #eccdmengine = create_engine('oracle+cx_oracle://eccdm:eccdm@ecc10000',echo=True)
+           eccdmengine = create_engine('oracle+cx_oracle://'+ECCUC_DB_USER_PWD,echo=False,poolclass=NullPool)#不要连接池，默认是启用5个连接的连接池
+           ECCDMSession= sessionmaker(bind=eccdmengine)
+           zxdbkfdmengine = create_engine('oracle+cx_oracle://'+NGCC_DB_USER_PWD,echo=False,poolclass=NullPool)
+           ZXDBKFSession= sessionmaker(bind=zxdbkfdmengine)
+           global __eccdm,__zxdbkf
+           __eccdm= ECCDMSession()
+           __zxdbkf= ZXDBKFSession()
+           synDmCallLog()
+           synDmQueueLog()
+           synDmTermCallLog()
+           synDmStaffActionLog()
+           synStaffOnDutyInfo()
+           if IS_START=='0':
+               log.info('IS_START value=:'+IS_START+' so zx_dm exit!')
+       except Exception:
+           log.exception('系统错误')
+       finally:
+           __closeDB()
+       time.sleep(RECYCLE_TIMES)
+    h1.close()
