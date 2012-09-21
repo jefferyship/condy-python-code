@@ -51,8 +51,8 @@ class ZxVoice:
         paramList.append(self.cti_node_id)
         paramList.append(self.cti_terminal_id)
         paramList.append(self.call_type)
-        paramList.append(self.caller_nbr)
-        paramList.append(self.dial_nbr)
+        paramList.append(get_nbr(self.caller_nbr))
+        paramList.append(get_nbr(self.dial_nbr))
         paramList.append(self.duration)
         paramList.append(self.file_path)
         paramList.append(self.file_name)
@@ -76,6 +76,13 @@ class ZxVoice:
             recordErrorlog.info(funcStr)
         finally:
             cursor.close()
+def get_nbr(orial_nbr):
+    """截取号码的判断"""
+    length=len(orial_nbr)
+    resultNbr=orial_nbr
+    if length in (14,15) and orial_nbr.startswith('0') and orial_nbr[-11]=='1':
+        resultNbr=orial_nbr[-11:]
+    return resultNbr
 def getLastRecordTime():
     """获取上次录音的更新时间"""
     sql="select to_date(param_value,'yyyymmddhh24miss') from ecc_parameters t where t.param_code='RECORD_UPDATE_TIME' and param_owner='ZX_CLOUD'"
@@ -142,6 +149,7 @@ def synZxVoice():
             zxVoiceTemp.file_name=os.path.split(row[8])[1]
             if(str(zxVoiceTemp.file_name)):
                 zxVoiceTemp.file_name=zxVoiceTemp.file_name.replace('.wav','') #将后缀是.wav的去掉.
+                zxVoiceTemp.file_name=zxVoiceTemp.file_name.replace('.mp3','') #将后缀是.mp3的去掉.
             try:
                 zxVoiceTemp.duration=int(row[9])
             except:
@@ -166,13 +174,13 @@ def syn(notUsed):
                 __eccucDB=cx_Oracle.connect(REC_ECCUC_DB_USER_PWD)
                 __zxDB=cx_Oracle.connect(REC_NGCC_DB_USER_PWD)
                 synZxVoice()
-                time.sleep(REC_RECYCLE_TIMES)
                 if REC_IS_START=='0':
                     log.info('IS_START value=:'+REC_IS_START+' so zx_record exit!')
             except Exception:
                 log.exception('系统错误')
             finally:
                 __closeDB()
+            time.sleep(REC_RECYCLE_TIMES)
     except Exception:
         log.exception('系统报错')
 ##    try:

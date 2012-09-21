@@ -108,6 +108,13 @@ class dm_call_log_11(dm_call_log,Base):
     __tablename__ = 'dm_call_log_11'
 class dm_call_log_12(dm_call_log,Base):
     __tablename__ = 'dm_call_log_12'
+def get_nbr(orial_nbr):
+    """截取号码的判断"""
+    length=len(orial_nbr)
+    resultNbr=orial_nbr
+    if length in (14,15) and orial_nbr.startswith('0') and orial_nbr[-11]=='1':
+        resultNbr=orial_nbr[-11:]
+    return resultNbr
 def get_dm_call_log(cc_calldetail):
     callday=cc_calldetail.strcallday#2012.01.02
     month=callday[5:7]#01
@@ -137,11 +144,9 @@ def get_dm_call_log(cc_calldetail):
             call_log.primary_caller=cc_calldetail.callingnumber
         else:
             call_log.caller=cc_calldetail.callingnumber
-        if(len(call_log.caller)==15 and call_log.caller.startswith('059')):
-            call_log.caller=call_log.caller[4:]
+        call_log.caller=get_nbr(call_log.caller)#截号码
         call_log.callee=cc_calldetail.callednumber
-        if(len(call_log.callee)==15 and call_log.callee.startswith('059')):
-            call_log.callee=call_log.callee[4:]
+        call_log.callee=get_nbr(call_log.callee)#截号码
         call_log.start_time=cc_calldetail.callstarttime
         call_log.dial_time=cc_calldetail.ringingstarttime
         call_log.answer_time=cc_calldetail.answertime

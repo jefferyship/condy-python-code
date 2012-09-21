@@ -131,6 +131,13 @@ class dm_term_call_log_11(dm_term_call_log,Base):
     __tablename__ = 'dm_term_call_log_11'
 class dm_term_call_log_12(dm_term_call_log,Base):
     __tablename__ = 'dm_term_call_log_12'
+def get_nbr(orial_nbr):
+    """截取号码的判断"""
+    length=len(orial_nbr)
+    resultNbr=orial_nbr
+    if length in (14,15) and orial_nbr.startswith('0') and orial_nbr[-11]=='1':
+        resultNbr=orial_nbr[-11:]
+    return resultNbr
 def get_dm_term_call_log(cc_agentcalldetail):
     month=cc_agentcalldetail.begincalltime.strftime('%m')# 08
     term_call_log=None
@@ -178,10 +185,8 @@ def get_dm_term_call_log(cc_agentcalldetail):
         term_call_log.primary_callee=None #cc_agentcalldetail找不到原始主叫和被叫，TODO 估计要到cc_calldetail表中寻找
         term_call_log.caller=cc_agentcalldetail.callingnumber
         term_call_log.callee=cc_agentcalldetail.callednumber
-        if(len(term_call_log.caller)==15 and term_call_log.caller.startswith('059')):
-            term_call_log.caller=term_call_log.caller[4:]
-        if(len(term_call_log.callee)==15 and term_call_log.callee.startswith('059')):
-            term_call_log.callee=term_call_log.callee[4:]
+        term_call_log.caller=get_nbr(term_call_log.caller)#对于11位移动号码的区号做分隔
+        term_call_log.callee=get_nbr(term_call_log.callee)#对于11位移动号码的区号做分隔
         term_call_log.set_finish_reason(cc_agentcalldetail)
         term_call_log.queue_start_time=cc_agentcalldetail.queuebegintime
         term_call_log.queue_finish_time=cc_agentcalldetail.queueendtime

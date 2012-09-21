@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 import datetime 
 Base = declarative_base()
 defaulttime=datetime.datetime.strptime('1970-01-01 08:00:00','%Y-%m-%d %H:%M:%S')#默认的日期格式
-class dm_queue_merge(object):
+class dm_queue_merge(Base):
     __tablename__ = 'dm_queue_merge'
     queue_id=Column(String(32),primary_key=True)
     call_id=Column(String(32))#呼叫流水号
