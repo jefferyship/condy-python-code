@@ -512,9 +512,12 @@ def syn(notUsed):
 ##    except Exception:
 ##        log.exception('系统报错')
 def __closeDB():
-   if __eccucDB<>None:
-        __eccucDB.close()
-        log.info('zx_organization eccucDB oracle connect success close()')
+   try:
+     if __eccucDB<>None:
+          __eccucDB.close()
+          log.info('zx_organization eccucDB oracle connect success close()')
+   except Exception:
+       log.error('关闭数据库连接报错:')
 #def init_db():
     #global __eccucDB
     #__eccucDB=cx_Oracle.connect(ORG_ECCUC_DB_USER_PWD)

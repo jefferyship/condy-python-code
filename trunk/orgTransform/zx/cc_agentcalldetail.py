@@ -17,7 +17,7 @@ class cc_agentcalldetail(Base):
     agentphone=Column(String(32))
     vcid=Column(Integer)
     calltype=Column(Integer)
-    callid=Column(Integer)
+    callid=Column(Integer,primary_key=True)
     begincalltime=Column(DateTime)
     ringingstarttime=Column(DateTime)
     answertime=Column(DateTime)

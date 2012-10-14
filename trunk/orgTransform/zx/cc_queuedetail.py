@@ -21,7 +21,7 @@ class cc_queuedetail(Base):
     callingnumber=Column(String(32))
     nettype=Column(Integer)
     strcallday=Column(String(10))
-    queuestarttime=Column(DateTime)
+    queuestarttime=Column(DateTime,primary_key=True)
     queueendtime=Column(DateTime)
     tqresult=Column(Integer)
     tqresultagentid=Column(String(10))
@@ -57,3 +57,5 @@ class cc_queuedetail(Base):
     setagentid=Column(String(40))
     setagentflag=Column(String(40))
     isagtselcall=Column(String(40))
+    def __repr__(self):
+        return 'vcid:'+self.vicd+',connectionid:'+self.connectionid+',callingnumber'+self.callingnumber+',callednumber'+self.callednumber

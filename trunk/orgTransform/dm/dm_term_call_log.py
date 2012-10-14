@@ -15,7 +15,7 @@ Base = declarative_base()
 defaulttime=datetime.datetime.strptime('1970-01-01 08:00:00','%Y-%m-%d %H:%M:%S')#默认的日期格式
 class dm_term_call_log(object):
     call_id=Column(String(32),primary_key=True)#呼叫流水号
-    call_seq=Column(Integer)#呼叫子序号
+    call_seq=Column(Integer,primary_key=True)#呼叫子序号
     node_id=Column(String(32))#CTI节点号
     term_id=Column(Float)#终端编号
     term_type=Column(Float)#终端类型
@@ -138,7 +138,7 @@ def get_nbr(orial_nbr):
     if length in (14,15) and orial_nbr.startswith('0') and orial_nbr[-11]=='1':
         resultNbr=orial_nbr[-11:]
     return resultNbr
-def get_dm_term_call_log(cc_agentcalldetail):
+def get_dm_term_call_log(cc_agentcalldetail,call_log):
     month=cc_agentcalldetail.begincalltime.strftime('%m')# 08
     term_call_log=None
     if(month=='01'): term_call_log=dm_term_call_log_01()
@@ -155,8 +155,8 @@ def get_dm_term_call_log(cc_agentcalldetail):
     elif(month=='12'): term_call_log=dm_term_call_log_12()
     if(term_call_log<>None):
         term_call_log.call_id=cc_agentcalldetail.connectionid
-        term_call_log.call_seq=cc_agentcalldetail.callid
-        term_call_log.node_id='1'
+        term_call_log.call_seq=2
+        term_call_log.node_id=str(cc_agentcalldetail.vcid)
         term_call_log.term_id=1
         term_call_log.term_type=1
         term_call_log.staff_id=cc_agentcalldetail.agentid
@@ -181,10 +181,10 @@ def get_dm_term_call_log(cc_agentcalldetail):
         if(term_call_log.ans_time==None):term_call_log.ans_time=defaulttime
         if(term_call_log.clr_time==None):term_call_log.clr_time=defaulttime
 
-        term_call_log.primary_caller=None #cc_agentcalldetail找不到原始主叫和被叫，TODO 估计要到cc_calldetail表中寻找
-        term_call_log.primary_callee=None #cc_agentcalldetail找不到原始主叫和被叫，TODO 估计要到cc_calldetail表中寻找
-        term_call_log.caller=cc_agentcalldetail.callingnumber
-        term_call_log.callee=cc_agentcalldetail.callednumber
+        term_call_log.primary_caller=call_log.primary_caller
+        term_call_log.primary_callee=call_log.primary_callee
+        term_call_log.caller=call_log.caller
+        term_call_log.callee=call_log.callee
         term_call_log.caller=get_nbr(term_call_log.caller)#对于11位移动号码的区号做分隔
         term_call_log.callee=get_nbr(term_call_log.callee)#对于11位移动号码的区号做分隔
         term_call_log.set_finish_reason(cc_agentcalldetail)

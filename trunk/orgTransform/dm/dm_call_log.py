@@ -133,7 +133,7 @@ def get_dm_call_log(cc_calldetail):
     elif(month=='12'): call_log=dm_call_log_12()
     if(call_log<>None):
         call_log.call_id=cc_calldetail.connectionid
-        call_log.node_id='1'
+        call_log.node_id=str(cc_calldetail.vcid)
         call_log.set_call_type(cc_calldetail)
         call_log.set_finish_reason(cc_calldetail)
         call_log.charge_flag='2'

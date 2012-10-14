@@ -1,9 +1,9 @@
-# -*- coding:utf-8-*-
+# -*- coding:GBK-*-
 #========================================================================
 #   FileName: dm_queue_log.py
 #     Author: linh
 #      Email: linh@ecallcen.com
-#   HomePage:  dm_queue_log.pyç›¸å…³è¡¨
+#   HomePage:  dm_queue_log.pyÏà¹Ø±í
 # LastChange: 2012-08-18 21:02:57
 #========================================================================
 from sqlalchemy.ext.declarative import declarative_base
@@ -11,12 +11,14 @@ from sqlalchemy import MetaData, Table, Column,\
                         Float, String ,DateTime,create_engine,Integer
 from sqlalchemy.orm import sessionmaker
 import datetime 
+import copy
 Base = declarative_base()
-defaulttime=datetime.datetime.strptime('1970-01-01 08:00:00','%Y-%m-%d %H:%M:%S')#é»˜è®¤çš„æ—¥æœŸæ ¼å¼
+defaulttime=datetime.datetime.strptime('1970-01-01 08:00:00','%Y-%m-%d %H:%M:%S')#Ä¬ÈÏµÄÈÕÆÚ¸ñÊ½
+defaultqueuetimedel=datetime.timedelta(seconds=2)
 class dm_queue_log(Base):
     __tablename__ = 'dm_queue_log'
     queue_id=Column(String(32),primary_key=True)
-    call_id=Column(String(32))#å‘¼å«æµæ°´å·
+    call_id=Column(String(32))#ºô½ĞÁ÷Ë®ºÅ
     call_time=Column(DateTime)
     node_id=Column(String(32))
     acd_no=Column(Float)
@@ -34,37 +36,37 @@ class dm_queue_log(Base):
     call_seq=Column(Float)
     dst_term_id=Column(Float)
     dst_term_type=Column(Float)
-    dst_staff_id=Column(Float)
+    dst_staff_id=Column(String(32))
     skilldomain=Column(Float)
     def set_finish_reason(self,cc_queuedetail,dm_call_log):
         """
-        #0:æˆåŠŸ 1:ç”¨æˆ·æŒ‚æœº 2:ç³»ç»ŸæŒ‚æœº 4:æ’é˜Ÿè¶…æ—¶ 3:æº¢å‡ºåˆ°æŠ€èƒ½ç»„ 8:æº¢å‡ºåˆ°å…¶ä»–å‘¼å«ä¸­å¿ƒ 6:å¼‚å¸¸
+        #0:³É¹¦ 1:ÓÃ»§¹Ò»ú 2:ÏµÍ³¹Ò»ú 4:ÅÅ¶Ó³¬Ê± 3:Òç³öµ½¼¼ÄÜ×é 8:Òç³öµ½ÆäËûºô½ĞÖĞĞÄ 6:Òì³£
         """
-        if cc_queuedetail.tqresult in (1,2):# 1:è·¯ç”±æˆåŠŸ 2:æ’é˜ŸæˆåŠŸ
-            self.finish_reason='0'
-        elif cc_queuedetail.tqresult==3:#3:æ’é˜Ÿè¶…æ—¶
-            self.finish_reason='4'
-        elif cc_queuedetail.tqresult==4:#4:æ’é˜Ÿå–æ¶ˆ
+        if cc_queuedetail.tqresult in (1,2):# 1:Â·ÓÉ³É¹¦ 2:ÅÅ¶Ó³É¹¦
+            self.finish_reason=0
+        elif cc_queuedetail.tqresult==3:#3:ÅÅ¶Ó³¬Ê±
+            self.finish_reason=4
+        elif cc_queuedetail.tqresult==4:#4:ÅÅ¶ÓÈ¡Ïû
             if dm_call_log<>None and dm_call_log.finish_reason==0:
-                self.finish_reason='1'
+                self.finish_reason=1
             else:
-                self.finish_reason='2'
-        elif cc_queuedetail.tqresult in (5,6,7,14):#5:æº¢å‡ºåˆ°æŠ€èƒ½ç»„ 6:æº¢å‡ºåˆ°å­ä¸šåŠ¡ 7:æº¢å‡ºåˆ°è¯­éŸ³ä¿¡ç®± 14:æº¢å‡ºåˆ°å…¶ä»–å‘¼å«ä¸­å¿ƒå¹³å°
-            self.finish_reason='3'
-        elif cc_queuedetail.tqresult==14:#5:æº¢å‡ºåˆ°æŠ€èƒ½ç»„ 6:æº¢å‡ºåˆ°å­ä¸šåŠ¡ 7:æº¢å‡ºåˆ°è¯­éŸ³ä¿¡ç®± 
-            self.finish_reason='8'
+                self.finish_reason=2
+        elif cc_queuedetail.tqresult in (5,6,7,14):#5:Òç³öµ½¼¼ÄÜ×é 6:Òç³öµ½×ÓÒµÎñ 7:Òç³öµ½ÓïÒôĞÅÏä 14:Òç³öµ½ÆäËûºô½ĞÖĞĞÄÆ½Ì¨
+            self.finish_reason=3
+        elif cc_queuedetail.tqresult==14:#5:Òç³öµ½¼¼ÄÜ×é 6:Òç³öµ½×ÓÒµÎñ 7:Òç³öµ½ÓïÒôĞÅÏä 
+            self.finish_reason=8
         else:
-            self.finish_reason='6'
+            self.finish_reason=6
 def get_dm_queue_log(cc_queuedetail,dm_call_log):
      queue_log=dm_queue_log()
-     queue_log.queue_id=cc_queuedetail.connectionid
+     queue_log.queue_id=cc_queuedetail.connectionid+cc_queuedetail.queuestarttime.strftime('%M%S')
      queue_log.call_id=cc_queuedetail.connectionid
-     queue_log.node_id='1'
+     queue_log.node_id=str(cc_queuedetail.vcid)
      queue_log.acd_no=cc_queuedetail.skillid
      queue_log.wait_time=cc_queuedetail.timelength
      queue_log.start_time=cc_queuedetail.queuestarttime
      queue_log.finish_time=cc_queuedetail.queueendtime
-     #0:æˆåŠŸ 1:ç”¨æˆ·æŒ‚æœº 2:ç³»ç»ŸæŒ‚æœº
+     #0:³É¹¦ 1:ÓÃ»§¹Ò»ú 2:ÏµÍ³¹Ò»ú
      queue_log.set_finish_reason(cc_queuedetail,dm_call_log)
      if dm_call_log<>None:
         queue_log.primary_caller=dm_call_log.primary_caller
@@ -82,5 +84,38 @@ def get_dm_queue_log(cc_queuedetail,dm_call_log):
      queue_log.dst_term_type=0
      queue_log.dst_staff_id=cc_queuedetail.tqresultagentid
      queue_log.skilldomain=cc_queuedetail.vcid
-     queue_log.call_seq=0
+     queue_log.call_seq=1
      return queue_log
+def merge_queue_log(orial_cc_queuedetailList,call_log):
+     """½«ÏàÍ¬ÅÅ¶Ó¼ÇÂ¼½øĞĞ¹é²¢"""
+     queue_logList=[]
+     cc_queuedetailList=copy.deepcopy(orial_cc_queuedetailList)
+     queue_len=len(cc_queuedetailList)
+     index=0
+     queuedetail=None
+     for temp_queuedetail in cc_queuedetailList:
+         if not queuedetail:#µÚÒ»´ÎÑ­»·£¬queuedetailµÄ¸³Öµ£¬ºóÃæ¿Ï¶¨²»ÊÇNone
+             #print 'connectionid:'+str(call_log.call_id)+'len:'+str(len(cc_queuedetailList))
+             queuedetail=temp_queuedetail
+             continue
+         # ÏàÍ¬¶ÓÁĞµÄ¹é²¢Ìõ¼ş:ÅĞ¶Ï¼¼ÄÜ×éÊÇÏàÍ¬µÄ£¬Í¬Ê±ÉÏ´ÎµÄÅÅ¶ÓµÄ½áÊøÊ±¼äÓëÏÂÒ»´ÎÅÅ¶ÓµÄ¿ªÊ¼Ê±¼äµÄÊ±¼ä¼ä¸ôĞ¡ÓÚ2s£¬
+         if queuedetail.skillid==temp_queuedetail.skillid and queuedetail.queueendtime+defaultqueuetimedel>temp_queuedetail.queuestarttime:
+             #print ('merge:connectionid:%s,skillid:%s,queuestarttime:%s,quesendtime:%s')%(str(queuedetail.connectionid),str(queuedetail.skillid),str(queuedetail.queuestarttime),str(temp_queuedetail.queueendtime))
+             temp_queuedetail.queuestarttime=queuedetail.queuestarttime
+             #temp_queuedetail.timelength=temp_queuedetail.timelength+queuedetail.timelength
+             queuedetail=temp_queuedetail
+         else:
+             #print ('not merge,connectionid:%s,skillid:%s,queuestarttime:%s,quesendtime:%s')%(str(queuedetail.connectionid),str(queuedetail.skillid),str(queuedetail.queuestarttime),str(temp_queuedetail.queueendtime))
+             queue_log=get_dm_queue_log(queuedetail,call_log)
+             queue_logList.append(queue_log)
+             queuedetail=temp_queuedetail
+     if queuedetail:
+          queue_log=get_dm_queue_log(queuedetail,call_log)
+          queue_logList.append(queue_log)
+          queuedetail=None
+     for index,queue_log in enumerate(queue_logList):
+         queue_log.call_seq=queue_log.call_seq+(index*2)# call_seqÆæÊıµİÔö
+         queue_log.wait_time=(queue_log.finish_time-queue_log.start_time).seconds
+     del cc_queuedetailList
+     del queuedetail
+     return queue_logList
