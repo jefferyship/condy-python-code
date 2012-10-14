@@ -50,7 +50,7 @@ class cc_calldetail(Base):
     endringingstarttime=Column(DateTime)
     endagentanswertime=Column(DateTime)
     endagentabandoned=Column(Integer)
-    endagentendtime=Column(Integer)
+    endagentendtime=Column(DateTime)
     iscustomrelease=Column(Integer)
     totalqueuecount=Column(Integer)
     totalqueuetime=Column(Integer)
