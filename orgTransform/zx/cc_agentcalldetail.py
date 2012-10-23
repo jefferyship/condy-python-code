@@ -1,9 +1,9 @@
-# -*- coding:utf-8-*-
+# -*- coding:GBK-*-
 #========================================================================
 #   FileName: cc_agentcalldetail.py
 #     Author: linh
 #      Email: linh@ecallcen.com
-#   HomePage: ä¸­å…´çš„cc_agentcalldetailè¡¨å¯¹åº”çš„ç±»
+#   HomePage: ÖÐÐËµÄcc_agentcalldetail±í¶ÔÓ¦µÄÀà
 # LastChange: 2012-08-20 18:57:33
 #========================================================================
 from sqlalchemy.ext.declarative import declarative_base

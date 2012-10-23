@@ -222,6 +222,10 @@ def synDmCallLog(vcIdList):
                         #term_call_log=dm.dm_term_call_log.get_dm_term_call_log(agentcalldetail,call_log)
                         #insertIntoDmTermCallLog(term_call_log)
 
+               if call_log.call_type in (7,8,9,10) and company_tf_map.has_key(call_log.callee):# 7,8,9,10 表示呼入
+                   call_log.company_id=company_tf_map[call_log.callee]
+               elif  company_caller_nbr_map.has_key(call_log.caller):
+                   call_log.company_id=company_caller_nbr_map[call_log.caller]
                __eccdm.add(call_log)
                __eccdm.flush()
                if calldetail.firstqueuesstarttime:#排队时间不为空说明有排队，获取排队的相关信息.
@@ -253,10 +257,21 @@ def updateDmQueue(call_log):
         for queuedetail in cc_queuedetailProxy:
             cc_queuedetailList.append(queuedetail)
         queue_logList=dm.dm_queue_log.merge_queue_log(cc_queuedetailList,call_log)
+        for queue_log in queue_logList:#设置公司ID
+            if company_tf_map.has_key(queue_log.callee):
+                queue_log.company_id=company_tf_map[queue_log.callee]
+            if skill_no_domain_map.has_key(str(queue_log.acd_no)+','+str(queue_log.node_id)):
+                queue_log.skilldomain=skill_no_domain_map[str(queue_log.acd_no)+','+str(queue_log.node_id)]
         if len(queue_logList)>0:
             __eccdm.add_all(queue_logList)
             __eccdm.flush()
         queue_mergeList=dm.dm_queue_merge.merge_queue_merge(cc_queuedetailList,call_log)
+        for queue_merge in queue_mergeList:#设置公司ID
+            if company_tf_map.has_key(queue_merge.callee):
+                queue_merge.company_id=company_tf_map[queue_merge.callee]
+            if skill_no_domain_map.has_key(str(queue_merge.last_acd_no)+','+str(queue_merge.node_id)):
+                queue_merge.skilldomain=skill_no_domain_map[str(queue_merge.last_acd_no)+','+str(queue_merge.node_id)]
+
         if len(queue_mergeList)>0:
             __eccdm.add_all(queue_mergeList)
             __eccdm.flush()
@@ -308,7 +323,7 @@ def update_record(recorddetail,dm_call_log):
         """更新录音表的记录"""
         paramList=[]
         paramList.append(recorddetail.connectionid)#call_seq
-        paramList.append('2')#sub_seq,TODO 这里暂时还不知道怎么关联填写，暂时填写1
+        paramList.append('2')#sub_seq,在函数里会判断，如果call_seq重复，会自动加上2
         paramList.append(recorddetail.agentid)#staff_id
         paramList.append(recorddetail.vcid)#cti_node_id
         paramList.append(recorddetail.agentphone)#cti_terminal_info
@@ -490,10 +505,94 @@ def synDmTermCallLog(vcIdList):
     if orialupdatetime<>updatetime:
         setLastTime('DM_TERM_CALL_LOG',updatetime)
     log.info('结束dm_term_call_log。上次更新时间点为:%s,本次时间点为:%s,总共更新:%s记录',str(orialupdatetime),str(updatetime),str(index))
+def get_skill_no_domain_map(skill_no_domain_map):
+    """获取技能组与技能域的对应关系"""
+    sql="select skill_group_no,skill_domain_code,node_id from eccuc.company_skill_group aa  join eccuc.company_skill_domain bb on (aa.skill_domain_id=bb.skill_domain_id) where aa.sts='A'"
+    try:
+        countskillgroupResult=__eccdm.execute('select count(*) from ( '+sql+' )').first()
+        if len(skill_no_domain_map)<>int(countskillgroupResult[0]):
+           log.info('获取技能域与技能组的对应关系表的数据:%s',sql)
+           skillgroupResult=__eccdm.execute(sql)
+           for temp_skill_group_no,temp_skill_domain_code,temp_node_id in skillgroupResult:
+               try:
+                 skill_no_domain_map[temp_skill_group_no+','+temp_node_id]=int(temp_skill_domain_code)
+               except:
+                   log.exception('转换技能域成为int类型失败.技能域的值为:%s',str(temp_skill_domain_code))
+    except:
+        log.exception('执行SQL语句错误:%s',sql)
+def get_company_staff(company_staff_map):
+    """从ecc_staff_manager表中获取数据"""
+    sql='select staff_id,company_id from eccuc.ecc_staff_manager'
+    if len(company_staff_map)==0:
+       try:
+           log.info('获取ecc_staff_manager表的数据:%s',sql)
+           staffResult=__eccdm.execute(sql)
+           for temp_staff_id,temp_company_id in staffResult:
+               company_staff_map[temp_staff_id]=temp_company_id
+       except:
+           log.exception('执行SQL语句错误:%s',sql)
+    else:
+        count_company_staff=len(company_staff_map)
+        try:
+            staff_count=__eccdm.execute('select count(*) from eccuc.ecc_staff_manager').first()
+            if count_company_staff<>int(staff_count[0]):
+                log.info('获取ecc_staff_manager表的数据:%s',sql)
+                staffResult=__eccdm.execute(sql)
+                for temp_staff_id,temp_company_id in staffResult:
+                    company_staff_map[temp_staff_id]=temp_company_id
+        except:
+            log.exception('执行SQL语句错误:%s',sql)
+def get_company_tf_nbr(company_tf_map,company_caller_nbr_map):
+    """从eccuc.company_tf_nbr,eccuc.company_caller_nbr表中读取特服号码与公司ID的对应关系"""
+    ###################################获取company_tf_map表的数据
+    sql="select tf_nbr,company_id from eccuc.company_tf_nbr"
+    if len(company_tf_map)==0:
+       try:
+           log.info('获取company_tf_nbr表的数据:%s',sql)
+           tfnbrResult=__eccdm.execute(sql)
+           for temp_tf_nbr,temp_company_id in tfnbrResult:
+               company_tf_map[temp_tf_nbr]=temp_company_id
+       except:
+           log.exception('get_company_tf_nbr:全量执行SQL语句错误:%s',sql)
+    else:
+        count_company_tf=len(company_tf_map)
+        try:
+            tfnbr_count=__eccdm.execute('select count(*) from eccuc.company_tf_nbr ').first()
+            if count_company_tf<>int(tfnbr_count[0]):
+                tfnbrResult=__eccdm.execute(sql)
+                for temp_tf_nbr,temp_company_id in tfnbrResult:
+                    company_tf_map[temp_tf_nbr]=temp_company_id
+        except:
+            log.exception('get_company_tf_nbr:增量执行SQL语句错误:%s',sql)
+    sql='select caller_nbr,company_id from eccuc.company_caller_nbr'
+    if len(company_caller_nbr_map)==0:
+        try:
+            log.info('获取company_caller_nbr表的数据:%s',sql)
+            caller_nbrResult=__eccdm.execute(sql)
+            for temp_caller_nbr,temp_company_id in caller_nbrResult:
+                company_caller_nbr_map[temp_caller_nbr]=temp_company_id
+        except:
+            log.exception('get_company_tf_nbr:全量执行SQL语句错误:%s',sql)
+    else:
+        count_company_caller=len(company_caller_nbr_map)
+        try:
+            caller_count=__eccdm.execute('select count(*) from eccuc.company_caller_nbr').first()
+            if count_company_caller<>int(caller_count[0]):
+                log.info('获取company_caller_nbr表的数据:%s',sql)
+                caller_nbrResult=__eccdm.execute(sql)
+                for temp_caller_nbr,temp_company_id in caller_nbrResult:
+                    company_caller_nbr_map[temp_caller_nbr]=temp_company_id
+        except:
+            log.exception('get_company_tf_nbr:增量执行SQL语句错误:%s',sql)
+
 def insertIntoDmTermCallLog(term_call_log):
     """将数据插入到dm_term_call_log表中"""
     bResult=True
     try:
+       if company_staff_map.has_key(term_call_log.staff_id):
+            term_call_log.company_id=company_staff_map[term_call_log.staff_id]
+       if skill_no_domain_map.has_key(str(term_call_log.acd_no)+','+str(term_call_log.node_id)):
+           term_call_log.skilldomain=skill_no_domain_map[str(term_call_log.acd_no)+','+str(term_call_log.node_id)]
        __eccdm.add(term_call_log)
        __eccdm.flush()
        __eccdm.commit()
@@ -536,6 +635,13 @@ if __name__ == '__main__':
     log.addHandler(h1)
     get_version()
     getCommonConfig()
+    global company_tf_map,company_caller_nbr_map,company_staff_map,skill_no_domain_map
+    company_tf_map={}
+    company_caller_nbr_map={}
+    company_staff_map={}
+    skill_no_domain_map={}
+    if IS_START=='0':
+       log.info('IS_START value=:'+IS_START+' so zx_dm exit!')
     while IS_START=='1':
        try:
            getCommonConfig()
@@ -549,6 +655,9 @@ if __name__ == '__main__':
            __zxdbkf= ZXDBKFSession()
            vcIdList=getvcIdList()
            if len(vcIdList)>0:
+              get_company_tf_nbr(company_tf_map,company_caller_nbr_map)
+              get_company_staff(company_staff_map)
+              get_skill_no_domain_map(skill_no_domain_map)
               synDmCallLog(vcIdList)
               #synDmQueueLog(vcIdList)#已经被updateDmQueue方法代替
               synDmTermCallLog(vcIdList)

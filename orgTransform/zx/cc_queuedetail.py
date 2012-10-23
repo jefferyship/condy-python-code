@@ -1,9 +1,9 @@
-# -*- coding:utf-8-*-
+# -*- coding:GBK-*-
 #========================================================================
 #   FileName: cc_queuedetail.py
 #     Author: linh
 #      Email: linh@ecallcen.com
-#   HomePage: ä¸­å…´çš„cc_queuedetailè¡¨å¯¹åº”çš„ç±»
+#   HomePage: ÖÐÐËµÄcc_queuedetail±í¶ÔÓ¦µÄÀà
 # LastChange: 2012-08-18 20:08:03
 #========================================================================
 from sqlalchemy.ext.declarative import declarative_base

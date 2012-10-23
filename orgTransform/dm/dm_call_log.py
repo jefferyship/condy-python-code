@@ -1,9 +1,9 @@
-# -*- coding:utf-8-*-
+# -*- coding:GBK-*-
 #========================================================================
 #   FileName: dm_call_log.py
 #     Author: linh
 #      Email: linh@ecallcen.com
-#   HomePage:  dm_call_log_xxç›¸å…³è¡¨
+#   HomePage:  dm_call_log_xxÏà¹Ø±í
 # LastChange: 2012-08-18 21:02:57
 #========================================================================
 from sqlalchemy.ext.declarative import declarative_base
@@ -12,13 +12,13 @@ from sqlalchemy import MetaData, Table, Column,\
 from sqlalchemy.orm import sessionmaker
 import datetime 
 Base = declarative_base()
-defaulttime=datetime.datetime.strptime('1970-01-01 08:00:00','%Y-%m-%d %H:%M:%S')#é»˜è®¤çš„æ—¥æœŸæ ¼å¼
+defaulttime=datetime.datetime.strptime('1970-01-01 08:00:00','%Y-%m-%d %H:%M:%S')#Ä¬ÈÏµÄÈÕÆÚ¸ñÊ½
 class dm_call_log(object):
     call_id=Column(String(32),primary_key=True)
     node_id=Column(String(32))
     call_type=Column(Float)
     charge_flag=Column(Float)
-    #å‘¼å«ç»“æŸåŸå› :
+    #ºô½Ğ½áÊøÔ­Òò:
     finish_reason=Column(Float)
     primary_caller=Column(String(32))
     primary_callee=Column(String(32))
@@ -31,53 +31,54 @@ class dm_call_log(object):
     hangup_time=Column(DateTime)
     finish_time=Column(DateTime)
     caller_user_type=Column(Float)
+    company_id=Column(String(32))
     def set_call_type(self,cc_calldetail):
-        """è®¾ç½®å¤–å‘¼ç±»å‹
-    #å‘¼å«ç±»å‹:
-    # 1:äººå·¥è¯åŠ¡åº§å¸­å‘¼å«å¤–çº¿
-    # 2:äººå·¥è¯åŠ¡åº§å¸­å‘¼å«IVR
-    # 3:äººå·¥è¯åŠ¡åº§å¸­å‘¼å«äººå·¥è¯åŠ¡åº§å¸­
-    # 4:IVRå‘¼å«å¤–çº¿
-    # 5:IVRå‘¼å«IVR
-    # 6:IVRå‘¼å«äººå·¥è¯åŠ¡åº§å¸­
-    # 7:å¤–çº¿å‘¼å«IVR
-    # 8:å¤–çº¿å‘¼å«äººå·¥è¯åŠ¡å°å¸­
-    # 9:å¤–çº¿å‘¼å…¥è½¬å‘¼å‡º
-    # 10:å…¶å®ƒ
+        """ÉèÖÃÍâºôÀàĞÍ
+    #ºô½ĞÀàĞÍ:
+    # 1:ÈË¹¤»°Îñ×ùÏ¯ºô½ĞÍâÏß
+    # 2:ÈË¹¤»°Îñ×ùÏ¯ºô½ĞIVR
+    # 3:ÈË¹¤»°Îñ×ùÏ¯ºô½ĞÈË¹¤»°Îñ×ùÏ¯
+    # 4:IVRºô½ĞÍâÏß
+    # 5:IVRºô½ĞIVR
+    # 6:IVRºô½ĞÈË¹¤»°Îñ×ùÏ¯
+    # 7:ÍâÏßºô½ĞIVR
+    # 8:ÍâÏßºô½ĞÈË¹¤»°ÎñÌ¨Ï¯
+    # 9:ÍâÏßºôÈë×ªºô³ö
+    # 10:ÆäËü
         """
-        if(cc_calldetail.calltype==1):self.call_type=7#å‘¼å…¥
-        if(cc_calldetail.calltype==2):self.call_type=3#å†…éƒ¨å‘¼å«
-        if(cc_calldetail.calltype==3):self.call_type=1#äººå·¥å¤–å‘¼
-        if(cc_calldetail.calltype==4):self.call_type=4#è‡ªåŠ¨å¤–å‘¼
-        if(cc_calldetail.calltype==5):self.call_type=4#è‡ªåŠ¨å¤–å‘¼è½¬äººå·¥,TODO æš‚æ—¶ä¸æ¸…æ¥šå¯¹äºå…³ç³»ï¼Œå…ˆè®¤ä¸ºæ˜¯è‡ªåŠ¨å¤–å‘¼
-        if(cc_calldetail.calltype==6):self.call_type=10#webcallå‘¼å…¥
-        if(cc_calldetail.calltype==7):self.call_type=7#å…¶ä»–å‘¼å«ä¸­å…´æº¢å…¥å‘¼å«
+        if(cc_calldetail.calltype==1):self.call_type=7#ºôÈë
+        if(cc_calldetail.calltype==2):self.call_type=3#ÄÚ²¿ºô½Ğ
+        if(cc_calldetail.calltype==3):self.call_type=1#ÈË¹¤Íâºô
+        if(cc_calldetail.calltype==4):self.call_type=4#×Ô¶¯Íâºô
+        if(cc_calldetail.calltype==5):self.call_type=4#×Ô¶¯Íâºô×ªÈË¹¤,TODO ÔİÊ±²»Çå³ş¶ÔÓÚ¹ØÏµ£¬ÏÈÈÏÎªÊÇ×Ô¶¯Íâºô
+        if(cc_calldetail.calltype==6):self.call_type=10#webcallºôÈë
+        if(cc_calldetail.calltype==7):self.call_type=7#ÆäËûºô½ĞÖĞĞËÒçÈëºô½Ğ
     def set_finish_reason(self,cc_calldetail):
-        """è®¾ç½®å‘¼å«ç»“æŸåŸå› éœ€è¦åšè½¬ä¹‰
-    #1:å‘¼å«è¿›å…¥é€šè¯åä¸»å«æ–¹æŒ‚æœº
-    #2:å‘¼å«è¿›å…¥é€šè¯åè¢«å«æ–¹æŒ‚æœº
-    #10:è¢«å«å¿™ åŸå§‹æ¥å£outcallfailcode:3
-    #12:æ— åº”ç­”  åŸå§‹æ¥å£outcallfailcode:10
-    #13:ç”¨æˆ·ä¸å¯è¾¾ åŸå§‹æ¥å£outcallfailcode:13
-    #14:ç”¨æˆ·ä¸å­˜åœ¨ åŸå§‹æ¥å£outcallfailcode:14
-    #26:ä¸»å«æ”¾å¼ƒ  åŸå§‹æ¥å£outcallfailcode:26
-    #99:æœªçŸ¥é”™è¯¯  åŸå§‹æ¥å£outcallfailcode:70
+        """ÉèÖÃºô½Ğ½áÊøÔ­ÒòĞèÒª×ö×ªÒå
+    #1:ºô½Ğ½øÈëÍ¨»°ºóÖ÷½Ğ·½¹Ò»ú
+    #2:ºô½Ğ½øÈëÍ¨»°ºó±»½Ğ·½¹Ò»ú
+    #10:±»½ĞÃ¦ Ô­Ê¼½Ó¿Úoutcallfailcode:3
+    #12:ÎŞÓ¦´ğ  Ô­Ê¼½Ó¿Úoutcallfailcode:10
+    #13:ÓÃ»§²»¿É´ï Ô­Ê¼½Ó¿Úoutcallfailcode:13
+    #14:ÓÃ»§²»´æÔÚ Ô­Ê¼½Ó¿Úoutcallfailcode:14
+    #26:Ö÷½Ğ·ÅÆú  Ô­Ê¼½Ó¿Úoutcallfailcode:26
+    #99:Î´Öª´íÎó  Ô­Ê¼½Ó¿Úoutcallfailcode:70
         """
-        #@TODO æœªè¿›å…¥é€šè¯çŠ¶æ€ï¼Œä¸»å«æ–¹æŒ‚æœºï¼Œè¢«å«æ–¹æŒ‚æœºï¼Œè¿›å…¥é€šè¯çŠ¶æ€ï¼Œä¸»å«æ–¹æŒ‚æœºï¼Œè¢«å«æ–¹æŒ‚æœºæ€ä¹ˆåˆ¤æ–­
-        #å‘¼å«æˆåŠŸï¼Œå¹¶ä¸”å¤–å‘¼ç±»å‹æ˜¯:
-        # 0: æœªçŸ¥å¤–å‘¼ç±»å‹
-        # 1: å‘¼å…¥
-        # 2:å†…éƒ¨å‘¼å«
-        # 6:webcallå‘¼å…¥
-        # 7:å…¶ä»–å‘¼å…¥ä¸­å¿ƒæº¢å…¥ çš„iscustomrelease=1è¡¨ç¤ºæ˜¯ç”¨æˆ·ä¸»å«æŒ‚æœº,iscustomrelease=0è¡¨ç¤ºè¢«å«æŒ‚æœº
+        #@TODO Î´½øÈëÍ¨»°×´Ì¬£¬Ö÷½Ğ·½¹Ò»ú£¬±»½Ğ·½¹Ò»ú£¬½øÈëÍ¨»°×´Ì¬£¬Ö÷½Ğ·½¹Ò»ú£¬±»½Ğ·½¹Ò»úÔõÃ´ÅĞ¶Ï
+        #ºô½Ğ³É¹¦£¬²¢ÇÒÍâºôÀàĞÍÊÇ:
+        # 0: Î´ÖªÍâºôÀàĞÍ
+        # 1: ºôÈë
+        # 2:ÄÚ²¿ºô½Ğ
+        # 6:webcallºôÈë
+        # 7:ÆäËûºôÈëÖĞĞÄÒçÈë µÄiscustomrelease=1±íÊ¾ÊÇÓÃ»§Ö÷½Ğ¹Ò»ú,iscustomrelease=0±íÊ¾±»½Ğ¹Ò»ú
         if(cc_calldetail.callresult==1 and cc_calldetail.calltype in (0,1,2,6,7)):
             if(cc_calldetail.iscustomrelease==1):self.finish_reason=1
             else:self.finish_reason=2
-        elif(cc_calldetail.callresult==1):#å‘¼å«æˆåŠŸï¼Œä½†å¯èƒ½æ˜¯å¤–å‘¼
+        elif(cc_calldetail.callresult==1):#ºô½Ğ³É¹¦£¬µ«¿ÉÄÜÊÇÍâºô
             if(cc_calldetail.iscustomrelease==1):self.finish_reason=2
             else:self.finish_reason=1
-        #å¤–å‘¼å¤±è´¥ï¼Œåˆ¤æ–­å¤–å‘¼å¤±è´¥çš„åŸå› 
-        elif(cc_calldetail.callresult==0):#å‘¼å«å¤±è´¥ï¼Œ
+        #ÍâºôÊ§°Ü£¬ÅĞ¶ÏÍâºôÊ§°ÜµÄÔ­Òò
+        elif(cc_calldetail.callresult==0):#ºô½ĞÊ§°Ü£¬
             if(cc_calldetail.outcallfailcode==3):self.finish_reason=10
             elif(cc_calldetail.outcallfailcode==10):self.finish_reason=12
             elif(cc_calldetail.outcallfailcode==70):self.finish_reason=99
@@ -109,7 +110,7 @@ class dm_call_log_11(dm_call_log,Base):
 class dm_call_log_12(dm_call_log,Base):
     __tablename__ = 'dm_call_log_12'
 def get_nbr(orial_nbr):
-    """æˆªå–å·ç çš„åˆ¤æ–­"""
+    """½ØÈ¡ºÅÂëµÄÅĞ¶Ï"""
     length=len(orial_nbr)
     resultNbr=orial_nbr
     if length in (14,15) and orial_nbr.startswith('0') and orial_nbr[-11]=='1':
@@ -139,14 +140,14 @@ def get_dm_call_log(cc_calldetail):
         call_log.charge_flag='2'
         call_log.primary_caller=cc_calldetail.fakecalling
         call_log.primary_callee=cc_calldetail.oricallednumber
-        if(cc_calldetail.calltype==3):#äººå·¥åå¸­å¤–å‘¼ï¼Œä¼ªä¸»å«æ˜¯å†™ä¸ºä¸»å«
+        if(cc_calldetail.calltype==3):#ÈË¹¤×øÏ¯Íâºô£¬Î±Ö÷½ĞÊÇĞ´ÎªÖ÷½Ğ
             call_log.caller=cc_calldetail.fakecalling
             call_log.primary_caller=cc_calldetail.callingnumber
         else:
             call_log.caller=cc_calldetail.callingnumber
-        call_log.caller=get_nbr(call_log.caller)#æˆªå·ç 
+        call_log.caller=get_nbr(call_log.caller)#½ØºÅÂë
         call_log.callee=cc_calldetail.callednumber
-        call_log.callee=get_nbr(call_log.callee)#æˆªå·ç 
+        call_log.callee=get_nbr(call_log.callee)#½ØºÅÂë
         call_log.start_time=cc_calldetail.callstarttime
         call_log.dial_time=cc_calldetail.ringingstarttime
         call_log.answer_time=cc_calldetail.answertime
@@ -154,7 +155,7 @@ def get_dm_call_log(cc_calldetail):
         call_log.hangup_time=cc_calldetail.callendtime
         call_log.finish_time=cc_calldetail.callendtime
         call_log.caller_user_type=cc_calldetail.customtype
-        #æ—¶é—´ä¸ºç©ºçš„ï¼Œé»˜è®¤é…ç½®æˆ1970-01-01 08:00:00
+        #Ê±¼äÎª¿ÕµÄ£¬Ä¬ÈÏÅäÖÃ³É1970-01-01 08:00:00
         if(call_log.finish_time==None): call_log.finish_time=defaulttime
         if(call_log.start_time==None): call_log.start_time=defaulttime
         if(call_log.dial_time==None): call_log.dial_time=defaulttime
