@@ -1,9 +1,9 @@
-# -*- coding:utf-8-*-
+# -*- coding:GBK-*-
 #========================================================================
 #   FileName: dm_term_call_log.py
 #     Author: linh
 #      Email: linh@ecallcen.com
-#   HomePage:  dm_term_call_log_xxç›¸å…³è¡¨
+#   HomePage:  dm_term_call_log_xxÏà¹Ø±í
 # LastChange: 2012-08-18 21:02:57
 #========================================================================
 from sqlalchemy.ext.declarative import declarative_base
@@ -12,98 +12,105 @@ from sqlalchemy import MetaData, Table, Column,\
 from sqlalchemy.orm import sessionmaker
 import datetime 
 Base = declarative_base()
-defaulttime=datetime.datetime.strptime('1970-01-01 08:00:00','%Y-%m-%d %H:%M:%S')#é»˜è®¤çš„æ—¥æœŸæ ¼å¼
+defaulttime=datetime.datetime.strptime('1970-01-01 08:00:00','%Y-%m-%d %H:%M:%S')#Ä¬ÈÏµÄÈÕÆÚ¸ñÊ½
 class dm_term_call_log(object):
-    call_id=Column(String(32),primary_key=True)#å‘¼å«æµæ°´å·
-    call_seq=Column(Integer,primary_key=True)#å‘¼å«å­åºå·
-    node_id=Column(String(32))#CTIèŠ‚ç‚¹å·
-    term_id=Column(Float)#ç»ˆç«¯ç¼–å·
-    term_type=Column(Float)#ç»ˆç«¯ç±»å‹
-    staff_id=Column(String(32))#å‘˜å·¥ç¼–å·
-    call_time=Column(DateTime)#å‘¼å«æ—¶é—´
-    direction=Column(Float)#å‘¼å«æ–¹å‘ 0:å‘¼å…¥ï¼Œ1ï¼šå‘¼å‡º
-    join_mode=Column(Float)#æ¥å…¥æ–¹å¼
-    prelink_time=Column(DateTime)#å ç”¨èµ·å§‹æ—¶é—´
-    release_time=Column(DateTime)#å ç”¨ç»“æŸæ—¶é—´
-    iai_time=Column(DateTime)#é€šè¯èµ·å§‹æ—¶é—´
-    acm_time=Column(DateTime)#é€šè¯åº”ç­”æ—¶é—´
-    ans_time=Column(DateTime)#é€šè¯æ‘˜æœºæ—¶é—´
-    clr_time=Column(DateTime)#é€šè¯ç»“æŸæ—¶é—´
-    primary_caller=Column(String(32))#åŸå§‹ä¸»å«å·ç 
-    primary_callee=Column(String(32))#åŸå§‹è¢«å«å·ç 
-    caller=Column(String(32))#ä¸»å«å·ç 
-    callee=Column(String(32))#è¢«å«å·ç 
-    finish_reason=Column(Float)#ç»“æŸåŸå› 
-    call_type=Column(Float)#å‘¼å«ç±»å‹
-    queue_start_time=Column(DateTime)#æ’é˜Ÿå¼€å§‹æ—¶é—´
-    queue_finish_time=Column(DateTime)#æ’é˜Ÿç»“æŸæ—¶é—´
-    acd_no=Column(Float)#æŠ€èƒ½ç»„ç¼–å·
-    associate_merge_id=Column(String(32))#ç›¸å…³åˆå¹¶é˜Ÿåˆ—æµæ°´å·
-    caller_user_type=Column(Float)#ä¸»å«ç”¨æˆ·ç±»å‹
-    skilldomain=Column(Float)#æŠ€èƒ½åŸŸ
-    #affair_type=Column(String(32))#ä¸šåŠ¡ç±»å‹ï¼ˆ10000å·æŒ‰é”®å€¼ï¼‰
-    #customer_brand=Column(String(32))#å®¢æˆ·å“ç‰Œ
-    #customer_group=Column(String(32))#å®¢æˆ·æˆ˜ç•¥åˆ†ç¾¤
-    #tel_type=Column(String(32))#ç”µè¯ç±»å‹
-    #collect_flag=Column(Float)#æ˜¯å¦é‡‡é›†æ ‡å¿—ã€‚0æœªé‡‡è¿‡ï¼Œ1æ­£åœ¨é‡‡ï¼Œ2å·²é‡‡
+    call_id=Column(String(32),primary_key=True)#ºô½ĞÁ÷Ë®ºÅ
+    call_seq=Column(Integer,primary_key=True)#ºô½Ğ×ÓĞòºÅ
+    node_id=Column(String(32))#CTI½ÚµãºÅ
+    term_id=Column(Float)#ÖÕ¶Ë±àºÅ
+    term_type=Column(Float)#ÖÕ¶ËÀàĞÍ
+    staff_id=Column(String(32))#Ô±¹¤±àºÅ
+    call_time=Column(DateTime)#ºô½ĞÊ±¼ä
+    direction=Column(Float)#ºô½Ğ·½Ïò 0:ºôÈë£¬1£ººô³ö
+    join_mode=Column(Float)#½ÓÈë·½Ê½
+    prelink_time=Column(DateTime)#Õ¼ÓÃÆğÊ¼Ê±¼ä
+    release_time=Column(DateTime)#Õ¼ÓÃ½áÊøÊ±¼ä
+    iai_time=Column(DateTime)#Í¨»°ÆğÊ¼Ê±¼ä
+    acm_time=Column(DateTime)#Í¨»°Ó¦´ğÊ±¼ä
+    ans_time=Column(DateTime)#Í¨»°Õª»úÊ±¼ä
+    clr_time=Column(DateTime)#Í¨»°½áÊøÊ±¼ä
+    primary_caller=Column(String(32))#Ô­Ê¼Ö÷½ĞºÅÂë
+    primary_callee=Column(String(32))#Ô­Ê¼±»½ĞºÅÂë
+    caller=Column(String(32))#Ö÷½ĞºÅÂë
+    callee=Column(String(32))#±»½ĞºÅÂë
+    finish_reason=Column(Float)#½áÊøÔ­Òò
+    call_type=Column(Float)#ºô½ĞÀàĞÍ
+    queue_start_time=Column(DateTime)#ÅÅ¶Ó¿ªÊ¼Ê±¼ä
+    queue_finish_time=Column(DateTime)#ÅÅ¶Ó½áÊøÊ±¼ä
+    acd_no=Column(Float)#¼¼ÄÜ×é±àºÅ
+    associate_merge_id=Column(String(32))#Ïà¹ØºÏ²¢¶ÓÁĞÁ÷Ë®ºÅ
+    caller_user_type=Column(Float)#Ö÷½ĞÓÃ»§ÀàĞÍ
+    skilldomain=Column(Float)#¼¼ÄÜÓò
+    company_id=Column(String(32))
+    #affair_type=Column(String(32))#ÒµÎñÀàĞÍ£¨10000ºÅ°´¼üÖµ£©
+    #customer_brand=Column(String(32))#¿Í»§Æ·ÅÆ
+    #customer_group=Column(String(32))#¿Í»§Õ½ÂÔ·ÖÈº
+    #tel_type=Column(String(32))#µç»°ÀàĞÍ
+    #collect_flag=Column(Float)#ÊÇ·ñ²É¼¯±êÖ¾¡£0Î´²É¹ı£¬1ÕıÔÚ²É£¬2ÒÑ²É
     def set_call_type(self,cc_agentcalldetail):
-        """å‘¼å«ç±»å‹çš„è½¬æ¢
-        1 äººå·¥è¯åŠ¡åº§å¸­å‘¼å‡ºï¼ˆå‡ºï¼‰
-        2 å‘¼å…¥äººå·¥è¯åŠ¡åº§å¸­å¼•èµ·çš„äººå·¥è¯åŠ¡ï¼ˆå…¥ï¼‰
-        3 åº§å¸­äº’åŠ©è½¬å…¥çš„äººå·¥è¯åŠ¡ï¼ˆå…¥ï¼‰
-        4 è‡ªåŠ¨è½¬å…¥çš„äººå·¥è¯åŠ¡ï¼ˆå…¥ï¼‰ï¼Œç¦å·è¯åŠ¡åªç®—å¤–çº¿é‡ã€‚
-        5 ä¼šè®®è½¬å…¥çš„äººå·¥è¯åŠ¡ï¼ˆå…¥ï¼‰
-        6 ç›‘å¬å¼•èµ·çš„äººå·¥è¯åŠ¡ï¼ˆå…¥ï¼‰
-        7 å¼ºæ’å¼•èµ·çš„äººå·¥è¯åŠ¡ï¼ˆå…¥ï¼‰
-        8 è¾…åŠ©å¼•èµ·çš„äººå·¥è¯åŠ¡ï¼ˆå…¥ï¼‰
-        9 äººå·¥è½¬å…¥å¼•èµ·çš„äººå·¥è¯åŠ¡(å…¥)
-        98 å…¶ä»–åŸå› å¼•èµ·çš„å‘¼å…¥äººå·¥è¯åŠ¡ï¼ˆå…¥ï¼‰
-        99 å…¶ä»–åŸå› å¼•èµ·çš„å‘¼å‡ºäººå·¥è¯åŠ¡ï¼ˆå‡ºï¼‰
+        """ºô½ĞÀàĞÍµÄ×ª»»
+        1 ÈË¹¤»°Îñ×ùÏ¯ºô³ö£¨³ö£©
+        2 ºôÈëÈË¹¤»°Îñ×ùÏ¯ÒıÆğµÄÈË¹¤»°Îñ£¨Èë£©
+        3 ×ùÏ¯»¥Öú×ªÈëµÄÈË¹¤»°Îñ£¨Èë£©
+        4 ×Ô¶¯×ªÈëµÄÈË¹¤»°Îñ£¨Èë£©£¬¸£Öİ»°ÎñÖ»ËãÍâÏßÁ¿¡£
+        5 »áÒé×ªÈëµÄÈË¹¤»°Îñ£¨Èë£©
+        6 ¼àÌıÒıÆğµÄÈË¹¤»°Îñ£¨Èë£©
+        7 Ç¿²åÒıÆğµÄÈË¹¤»°Îñ£¨Èë£©
+        8 ¸¨ÖúÒıÆğµÄÈË¹¤»°Îñ£¨Èë£©
+        9 ÈË¹¤×ªÈëÒıÆğµÄÈË¹¤»°Îñ(Èë)
+        98 ÆäËûÔ­ÒòÒıÆğµÄºôÈëÈË¹¤»°Îñ£¨Èë£©
+        99 ÆäËûÔ­ÒòÒıÆğµÄºô³öÈË¹¤»°Îñ£¨³ö£©
         """
-        if(cc_agentcalldetail.calltype==1):self.call_type=4#1ä¸ºç”¨æˆ·å‘¼å…¥ï¼ˆå‘¼å…¥ï¼‰
-        elif(cc_agentcalldetail.calltype==2):self.call_type=3#ä¸ºè½¬ç§»è¯åŠ¡ï¼ˆå‘¼å…¥ï¼‰
-        elif(cc_agentcalldetail.calltype==3):self.call_type=9#ä¸ºå†…éƒ¨å‘¼å…¥ï¼ˆå‘¼å…¥ï¼‰
-        elif(cc_agentcalldetail.calltype==4):self.call_type=6#ä¸ºæ‹¦æˆªè¯åŠ¡
-        elif(cc_agentcalldetail.calltype==5):self.call_type=7#ä¸ºä»£ç­”ï¼ˆç›®å‰å®é™…æ²¡æœ‰è¿™ä¸ªç±»å‹ï¼‰
-        elif(cc_agentcalldetail.calltype==6):self.call_type=1#ä¸ºå¤–éƒ¨å‘¼å‡ºï¼ˆå‘¼å‡ºï¼‰
-        elif(cc_agentcalldetail.calltype==7):self.call_type=99#ä¸ºå†…éƒ¨å‘¼å‡ºï¼ˆå‘¼å‡ºï¼‰
-        elif(cc_agentcalldetail.calltype==8):self.call_type=6#ä¸ºç›‘å¬
-        elif(cc_agentcalldetail.calltype==9):self.call_type=7#ä¸ºæ’è¯
-        else:self.call_type=97#ä¸æ¸…æ¥šçš„å‘¼å«ç±»å‹
+        if(cc_agentcalldetail.calltype==1):self.call_type=4#1ÎªÓÃ»§ºôÈë£¨ºôÈë£©
+        elif(cc_agentcalldetail.calltype==2):self.call_type=3#Îª×ªÒÆ»°Îñ£¨ºôÈë£©
+        elif(cc_agentcalldetail.calltype==3):self.call_type=9#ÎªÄÚ²¿ºôÈë£¨ºôÈë£©
+        elif(cc_agentcalldetail.calltype==4):self.call_type=6#ÎªÀ¹½Ø»°Îñ
+        elif(cc_agentcalldetail.calltype==5):self.call_type=7#Îª´ú´ğ£¨Ä¿Ç°Êµ¼ÊÃ»ÓĞÕâ¸öÀàĞÍ£©
+        elif(cc_agentcalldetail.calltype==6):self.call_type=1#ÎªÍâ²¿ºô³ö£¨ºô³ö£©
+        elif(cc_agentcalldetail.calltype==7):self.call_type=99#ÎªÄÚ²¿ºô³ö£¨ºô³ö£©
+        elif(cc_agentcalldetail.calltype==8):self.call_type=6#Îª¼àÌı
+        elif(cc_agentcalldetail.calltype==9):self.call_type=7#Îª²å»°
+        else:self.call_type=97#²»Çå³şµÄºô½ĞÀàĞÍ
     def set_finish_reason(self,cc_agentcalldetail):
-        """ç»“æŸåŸå› 
-        1 å‘¼å«è¿›å…¥é€šè¯åæœ¬ç«¯æŒ‚æœº(æŒ¯é“ƒå)
-        2 å‘¼å«è¿›å…¥é€šè¯åå¯¹ç«¯æŒ‚æœº(æŒ¯é“ƒå)
-        3 é€šè¯ä¸­å¼‚å¸¸ç»“æŸï¼ˆç³»ç»Ÿæ£€æµ‹åˆ°é”™è¯¯åå¼•èµ·çš„æŒ‚æœºï¼‰
-        4 å‘¼å«é€šè¯å»ºç«‹è¿‡ç¨‹ä¸­æœ¬ç«¯ä¸»åŠ¨æŒ‚æœº(å·²ç»åˆ°è¾¾å¯¹ç«¯ï¼Œä½†è¿˜æœªè¿›å…¥é€šè¯)
-        5 å‘¼å«é€šè¯å»ºç«‹è¿‡ç¨‹ä¸­å¯¹ç«¯æ‹’ç»åº”ç­”(å·²ç»åˆ°è¾¾å¯¹ç«¯ï¼Œä½†è¿˜æœªè¿›å…¥é€šè¯)
-        6 å‘¼å«é€šè¯å»ºç«‹è¿‡ç¨‹ä¸­å¯¹æ–¹è¶…æ—¶æœªåº”ç­”ï¼ˆä¸ç³»ç»Ÿè®¾ç½®çš„è¶…æ—¶æ—¶é™ç›¸å…³ï¼Œè¶…æ—¶çš„æƒ…å†µä¸‹æŒ‚æœºçš„ä¸€æ–¹å¯èƒ½æ˜¯æœ¬ç«¯ä¹Ÿå¯èƒ½æ˜¯è¢«å«[äº¤æ¢æœºä»£æŒ‚æœº]ï¼‰
-        7 å‘¼å«é€šè¯å»ºç«‹è¿‡ç¨‹ä¸­å¼‚å¸¸ç»“æŸ(ç³»ç»Ÿæ£€æµ‹åˆ°é”™è¯¯åå¼•èµ·çš„æŒ‚æœº)
-        8 å¯¹ç«¯ä¸ºç©ºå·(æ²¡æœ‰åˆ°è¾¾å¯¹æ–¹)
-        9 è·¯ç”±å¤±è´¥(æ²¡æœ‰åˆ°è¾¾å¯¹æ–¹)
-        10 å¯¹ç«¯å¿™(æ²¡æœ‰è¾¾åˆ°å¯¹æ–¹)
-        11 ç”¨æˆ·å¿™(å‘¼å«å¤–çº¿æ—¶)
-        99 å…¶ä»–åŸå› 
+        """½áÊøÔ­Òò
+        1 ºô½Ğ½øÈëÍ¨»°ºó±¾¶Ë¹Ò»ú(ÕñÁåºó)
+        2 ºô½Ğ½øÈëÍ¨»°ºó¶Ô¶Ë¹Ò»ú(ÕñÁåºó)
+        3 Í¨»°ÖĞÒì³£½áÊø£¨ÏµÍ³¼ì²âµ½´íÎóºóÒıÆğµÄ¹Ò»ú£©
+        4 ºô½ĞÍ¨»°½¨Á¢¹ı³ÌÖĞ±¾¶ËÖ÷¶¯¹Ò»ú(ÒÑ¾­µ½´ï¶Ô¶Ë£¬µ«»¹Î´½øÈëÍ¨»°)
+        5 ºô½ĞÍ¨»°½¨Á¢¹ı³ÌÖĞ¶Ô¶Ë¾Ü¾øÓ¦´ğ(ÒÑ¾­µ½´ï¶Ô¶Ë£¬µ«»¹Î´½øÈëÍ¨»°)
+        6 ºô½ĞÍ¨»°½¨Á¢¹ı³ÌÖĞ¶Ô·½³¬Ê±Î´Ó¦´ğ£¨ÓëÏµÍ³ÉèÖÃµÄ³¬Ê±Ê±ÏŞÏà¹Ø£¬³¬Ê±µÄÇé¿öÏÂ¹Ò»úµÄÒ»·½¿ÉÄÜÊÇ±¾¶ËÒ²¿ÉÄÜÊÇ±»½Ğ[½»»»»ú´ú¹Ò»ú]£©
+        7 ºô½ĞÍ¨»°½¨Á¢¹ı³ÌÖĞÒì³£½áÊø(ÏµÍ³¼ì²âµ½´íÎóºóÒıÆğµÄ¹Ò»ú)
+        8 ¶Ô¶ËÎª¿ÕºÅ(Ã»ÓĞµ½´ï¶Ô·½)
+        9 Â·ÓÉÊ§°Ü(Ã»ÓĞµ½´ï¶Ô·½)
+        10 ¶Ô¶ËÃ¦(Ã»ÓĞ´ïµ½¶Ô·½)
+        11 ÓÃ»§Ã¦(ºô½ĞÍâÏßÊ±)
+        99 ÆäËûÔ­Òò
         """
-        if(cc_agentcalldetail.callendtype ==1):#æ˜¯ç”¨æˆ·æŒ‚æœº
-            self.finish_reason=2
-        elif(cc_agentcalldetail.callendtype ==2):#å®¢ä»£æŒ‚æœº
+        if cc_agentcalldetail.callendtype ==1:#ÓÃ»§¹Ò»ú
+           if  cc_agentcalldetail.answertime==None:#²¢ÇÒÓ¦´ğÊ±¼ä¿Õ£¬ËµÃ÷Í¨»°»¹Ã»ÓĞ½¨Á¢£¬ÓÃ»§Ö÷¶¯¹Ò»ú
+               self.finish_reason=5
+           else: #²¢ÇÒÓ¦´ğÊ±¼ä²»Îª¿Õ£¬ËµÃ÷ºôÈë³É¹¦
+               self.finish_reason=2
+        elif cc_agentcalldetail.callendtype ==2:#¿Í´ú¹Ò»ú
+           if  cc_agentcalldetail.answertime==None:#²¢ÇÒÓ¦´ğÊ±¼ä¿Õ£¬ËµÃ÷Í¨»°»¹Ã»ÓĞ½¨Á¢£¬¿Í´úÖ÷¶¯¹Ò»ú
+               self.finish_reason=4
+           else: #²¢ÇÒÓ¦´ğÊ±¼ä²»Îª¿Õ£¬ËµÃ÷ºôÈë³É¹¦
+               self.finish_reason=1
+        elif(cc_agentcalldetail.callendtype ==3):#×ªÒÆ»°Îñ
+            self.finish_reason=99
+        elif(cc_agentcalldetail.callendtype ==4):#×ª½ÓÓïÒô
             self.finish_reason=1
-        elif(cc_agentcalldetail.callendtype ==3):#è½¬ç§»è¯åŠ¡
+        elif(cc_agentcalldetail.callendtype ==5):#À¹½Ø»°Îñ
             self.finish_reason=99
-        elif(cc_agentcalldetail.callendtype ==4):#è½¬æ¥è¯­éŸ³
-            self.finish_reason=1
-        elif(cc_agentcalldetail.callendtype ==5):#æ‹¦æˆªè¯åŠ¡
+        elif(cc_agentcalldetail.callendtype ==6):#´ú´ğ
             self.finish_reason=99
-        elif(cc_agentcalldetail.callendtype ==6):#ä»£ç­”
-            self.finish_reason=99
-        elif(cc_agentcalldetail.calltype in (1,2,3) and cc_agentcalldetail.callendtype ==7):#å‘¼å…¥æ—¶çš„è¯åŠ¡å‘˜æ‹’ç»æ¥å¬
+        elif(cc_agentcalldetail.calltype in (1,2,3) and cc_agentcalldetail.callendtype ==7):#ºôÈëÊ±µÄ»°ÎñÔ±¾Ü¾ø½ÓÌı
             self.finish_reason=4
-        elif(cc_agentcalldetail.calltype in (6,7) and cc_agentcalldetail.callendtype ==7):#å‘¼å‡ºæ—¶çš„ç”¨æˆ·æ‹’ç»æ¥å¬
+        elif(cc_agentcalldetail.calltype in (6,7) and cc_agentcalldetail.callendtype ==7):#ºô³öÊ±µÄÓÃ»§¾Ü¾ø½ÓÌı
             self.finish_reason=5
-        elif(cc_agentcalldetail.callendtype ==8):#è¶…æ—¶æœªåº”ç­”
+        elif(cc_agentcalldetail.callendtype ==8):#³¬Ê±Î´Ó¦´ğ
             self.finish_reason=6
-        elif(cc_agentcalldetail.callendtype ==10):#è¶…æ—¶æœªåº”ç­”
+        elif(cc_agentcalldetail.callendtype ==10):#³¬Ê±Î´Ó¦´ğ
             self.finish_reason=1
         else:self.finish_reason=99
 
@@ -132,7 +139,7 @@ class dm_term_call_log_11(dm_term_call_log,Base):
 class dm_term_call_log_12(dm_term_call_log,Base):
     __tablename__ = 'dm_term_call_log_12'
 def get_nbr(orial_nbr):
-    """æˆªå–å·ç çš„åˆ¤æ–­"""
+    """½ØÈ¡ºÅÂëµÄÅĞ¶Ï"""
     length=len(orial_nbr)
     resultNbr=orial_nbr
     if length in (14,15) and orial_nbr.startswith('0') and orial_nbr[-11]=='1':
@@ -162,15 +169,16 @@ def get_dm_term_call_log(cc_agentcalldetail,call_log):
         term_call_log.staff_id=cc_agentcalldetail.agentid
         term_call_log.set_call_type(cc_agentcalldetail)
 
-        if (cc_agentcalldetail.calltype in (1,2,3)): term_call_log.direction=0 #1ä¸ºç”¨æˆ·å‘¼å…¥ï¼ˆå‘¼å…¥ï¼‰2ä¸ºè½¬ç§»è¯åŠ¡ï¼ˆå‘¼å…¥ï¼‰3ä¸ºå†…éƒ¨å‘¼å…¥ï¼ˆå‘¼å…¥ï¼‰
-        elif (cc_agentcalldetail.calltype in (6,7)): term_call_log.direction=1 #ä¸ºå¤–éƒ¨å‘¼å‡ºï¼ˆå‘¼å‡ºï¼‰ä¸ºå†…éƒ¨å‘¼å‡ºï¼ˆå‘¼å‡ºï¼‰
-        else:term_call_log.direction=None #å¦åˆ™å°±é…ç½®ä¸º0
+        if (cc_agentcalldetail.calltype in (1,2,3)): term_call_log.direction=0 #1ÎªÓÃ»§ºôÈë£¨ºôÈë£©2Îª×ªÒÆ»°Îñ£¨ºôÈë£©3ÎªÄÚ²¿ºôÈë£¨ºôÈë£©
+        elif (cc_agentcalldetail.calltype in (6,7)): term_call_log.direction=1 #ÎªÍâ²¿ºô³ö£¨ºô³ö£©ÎªÄÚ²¿ºô³ö£¨ºô³ö£©
+        else:term_call_log.direction=None #·ñÔò¾ÍÅäÖÃÎª0
 
         term_call_log.join_mode=1
         term_call_log.prelink_time=cc_agentcalldetail.ringingstarttime
-        term_call_log.release_time=cc_agentcalldetail.answertime
-        term_call_log.iai_time=cc_agentcalldetail.answertime
-        term_call_log.acm_time=cc_agentcalldetail.answertime
+        if term_call_log.prelink_time==None: term_call_log.prelink_time=cc_agentcalldetail.begincalltime
+        term_call_log.release_time=cc_agentcalldetail.callendtime
+        term_call_log.iai_time=cc_agentcalldetail.ringingstarttime
+        term_call_log.acm_time=cc_agentcalldetail.ringingstarttime
         term_call_log.ans_time=cc_agentcalldetail.answertime
         term_call_log.clr_time=cc_agentcalldetail.callendtime
         term_call_log.call_time=cc_agentcalldetail.begincalltime
@@ -185,15 +193,15 @@ def get_dm_term_call_log(cc_agentcalldetail,call_log):
         term_call_log.primary_callee=call_log.primary_callee
         term_call_log.caller=call_log.caller
         term_call_log.callee=call_log.callee
-        term_call_log.caller=get_nbr(term_call_log.caller)#å¯¹äº11ä½ç§»åŠ¨å·ç çš„åŒºå·åšåˆ†éš”
-        term_call_log.callee=get_nbr(term_call_log.callee)#å¯¹äº11ä½ç§»åŠ¨å·ç çš„åŒºå·åšåˆ†éš”
+        term_call_log.caller=get_nbr(term_call_log.caller)#¶ÔÓÚ11Î»ÒÆ¶¯ºÅÂëµÄÇøºÅ×ö·Ö¸ô
+        term_call_log.callee=get_nbr(term_call_log.callee)#¶ÔÓÚ11Î»ÒÆ¶¯ºÅÂëµÄÇøºÅ×ö·Ö¸ô
         term_call_log.set_finish_reason(cc_agentcalldetail)
         term_call_log.queue_start_time=cc_agentcalldetail.queuebegintime
         term_call_log.queue_finish_time=cc_agentcalldetail.queueendtime
         term_call_log.acd_no=cc_agentcalldetail.skillid
         term_call_log.associate_merge_id=None
         term_call_log.caller_user_type=None
-        term_call_log.skilldomain=cc_agentcalldetail.vcid
+        term_call_log.skilldomain=0
         #term_call_log.affair_type=cc_agentcalldetail.servicekey
         #term_call_log.collect_flag=1
     return term_call_log

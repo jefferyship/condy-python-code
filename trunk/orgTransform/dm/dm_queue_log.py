@@ -38,6 +38,7 @@ class dm_queue_log(Base):
     dst_term_type=Column(Float)
     dst_staff_id=Column(String(32))
     skilldomain=Column(Float)
+    company_id=Column(String(32))
     def set_finish_reason(self,cc_queuedetail,dm_call_log):
         """
         #0:成功 1:用户挂机 2:系统挂机 4:排队超时 3:溢出到技能组 8:溢出到其他呼叫中心 6:异常
@@ -83,7 +84,7 @@ def get_dm_queue_log(cc_queuedetail,dm_call_log):
      queue_log.dst_term_id=0
      queue_log.dst_term_type=0
      queue_log.dst_staff_id=cc_queuedetail.tqresultagentid
-     queue_log.skilldomain=cc_queuedetail.vcid
+     queue_log.skilldomain=0
      queue_log.call_seq=1
      return queue_log
 def merge_queue_log(orial_cc_queuedetailList,call_log):
