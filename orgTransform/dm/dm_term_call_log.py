@@ -193,8 +193,10 @@ def get_dm_term_call_log(cc_agentcalldetail,call_log):
         term_call_log.primary_callee=call_log.primary_callee
         term_call_log.caller=call_log.caller
         term_call_log.callee=call_log.callee
-        term_call_log.caller=get_nbr(term_call_log.caller)#对于11位移动号码的区号做分隔
-        term_call_log.callee=get_nbr(term_call_log.callee)#对于11位移动号码的区号做分隔
+        if term_call_log.caller:
+           term_call_log.caller=get_nbr(term_call_log.caller)#对于11位移动号码的区号做分隔
+        if term_call_log.callee:
+           term_call_log.callee=get_nbr(term_call_log.callee)#对于11位移动号码的区号做分隔
         term_call_log.set_finish_reason(cc_agentcalldetail)
         term_call_log.queue_start_time=cc_agentcalldetail.queuebegintime
         term_call_log.queue_finish_time=cc_agentcalldetail.queueendtime

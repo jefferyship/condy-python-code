@@ -204,23 +204,24 @@ def synDmCallLog(vcIdList):
     try:
         cc_calldetailList=__zxdbkf.query(cc_calldetail).filter(cc_calldetail.callendtime>orialupdatetime,cc_calldetail.vcid.in_(vcIdList)).order_by(cc_calldetail.callendtime)[:1000]
         calldetail=None
-        for index,calldetail in enumerate(cc_calldetailList):
+        for i,calldetail in enumerate(cc_calldetailList):
+            index=i+1
             try:
                call_log=dm.dm_call_log.get_dm_call_log(calldetail)
-               #cache_objectList=dm_cache.has_cache(calldetail)
-               #if cache_objectList:
-                  #for cache_object in cache_objectList:
-                     #if cache_object and isinstance(cache_object,cc_queuedetail):
-                        #log.debug('找到cc_queuedetail的缓存类:%s',str(cache_object))
-                        #queue_log=dm.dm_queue_log.get_dm_queue_log(cache_object,dm_call_log)
-                        #__eccdm.add(queue_log)
-                     #elif cache_object and isinstance(cache_object,cc_recorddetail):
-                        #log.debug('找到cc_recorddetail的缓存类:%s',str(cache_object))
-                        #update_record(cache_object,call_log)
-                     #elif cache_object and isinstance(cache_object,cc_agentcalldetail):
-                        #log.debug('找到cc_agentcalldetail的缓存类:%s',str(cache_object))
-                        #term_call_log=dm.dm_term_call_log.get_dm_term_call_log(agentcalldetail,call_log)
-                        #insertIntoDmTermCallLog(term_call_log)
+               cache_objectList=dm_cache.has_cache(calldetail)
+               if cache_objectList:
+                  for cache_object in cache_objectList:
+                     if cache_object and isinstance(cache_object,cc_queuedetail):
+                        log.debug('找到cc_queuedetail的缓存类:%s',str(cache_object))
+                        queue_log=dm.dm_queue_log.get_dm_queue_log(cache_object,dm_call_log)
+                        __eccdm.add(queue_log)
+                     elif cache_object and isinstance(cache_object,cc_recorddetail):
+                        log.debug('找到cc_recorddetail的缓存类:%s',str(cache_object))
+                        update_record(cache_object,call_log)
+                     elif cache_object and isinstance(cache_object,cc_agentcalldetail):
+                        log.debug('找到cc_agentcalldetail的缓存类:%s',str(cache_object))
+                        term_call_log=dm.dm_term_call_log.get_dm_term_call_log(agentcalldetail,call_log)
+                        insertIntoDmTermCallLog(term_call_log)
 
                if call_log.call_type in (7,8,9,10) and company_tf_map.has_key(call_log.callee):# 7,8,9,10 表示呼入
                    call_log.company_id=company_tf_map[call_log.callee]
@@ -230,7 +231,7 @@ def synDmCallLog(vcIdList):
                __eccdm.flush()
                if calldetail.firstqueuesstarttime:#排队时间不为空说明有排队，获取排队的相关信息.
                    updateDmQueue(call_log)
-               if(index%20==0):
+               if(i%20==0):
                    __eccdm.commit()
                    updatetime=calldetail.callendtime
             except:
@@ -291,7 +292,8 @@ def synDmQueueLog(vcIdList):
                 .join(cc_calldetail,cc_calldetail.connectionid==cc_queuedetail.connectionid)\
                 .filter(cc_queuedetail.updatetime>orialupdatetime,cc_queuedetail.vcid.in_(vcIdList)).order_by(cc_queuedetail.updatetime)[:1001]
         queuedetail=None
-        for index,(queuedetail,calldetail) in enumerate(cc_queuedetailList):
+        for i,(queuedetail,calldetail) in enumerate(cc_queuedetailList):
+            index=i+1
             try:
                if calldetail==None:#先放在缓存中，在SynDmCallLog时更新数据
                    dm_queue_cache.set_cache(queuedetail)
@@ -302,7 +304,7 @@ def synDmQueueLog(vcIdList):
                queue_log=dm.dm_queue_log.get_dm_queue_log(queuedetail,dm_call_log)
                __eccdm.add(queue_log)
                __eccdm.flush()
-               if(index%20==0):
+               if(i%20==0):
                    __eccdm.commit()
             except:
                __eccdm.rollback()
@@ -335,8 +337,12 @@ def update_record(recorddetail,dm_call_log):
            paramList.append(get_nbr(recorddetail.callingnumber))#caller_nbr
            paramList.append(get_nbr(recorddetail.callednumber))#callee_nbr
         paramList.append(recorddetail.durtime)#duration
-        paramList.append(os.path.split(recorddetail.recordpath)[0])#file_path
-        file_name=os.path.split(recorddetail.recordpath)[1]
+        file_name=''
+        if recorddetail.recordpath:
+            paramList.append(os.path.split(recorddetail.recordpath)[0])#file_path
+            file_name=os.path.split(recorddetail.recordpath)[1]
+        else:#recorddetail.recordpath为空
+            paramList.append('')#路径设置成空
         file_name=file_name.replace('.wav','')
         file_name=file_name.replace('.mp3','')
         paramList.append(file_name)#file_name
@@ -392,7 +398,8 @@ def synRecordDetail(vcIdList):
                 .join(cc_calldetail,cc_calldetail.connectionid==cc_recorddetail.connectionid)\
                 .filter(cc_recorddetail.updatetime>orialupdatetime,cc_recorddetail.vcid.in_(vcIdList)).order_by(cc_recorddetail.updatetime)[:1001]
         recorddetail=None
-        for index,(recorddetail,calldetail) in enumerate(cc_recorddetailList):
+        for i,(recorddetail,calldetail) in enumerate(cc_recorddetailList):
+            index=i+1
             try:
                if not calldetail:#先放在缓存中，在SynDmCallLog时更新数据
                    log.info('cc_recorddetail表,connectionid:%s,找不到cc_calldetail的数据，暂时先还在缓存中',recorddetail.connectionid)
@@ -421,12 +428,13 @@ def synStaffOnDutyInfo(vcIdList):
     try:
         cc_logonoffdetailList=__zxdbkf.query(cc_logonoffdetail).filter(cc_logonoffdetail.endtime>orialupdatetime,cc_logonoffdetail.vcid.in_(vcIdList)).order_by(cc_logonoffdetail.endtime)[:1000]
         logonoffdetail=None
-        for index,logonoffdetail in enumerate(cc_logonoffdetailList):
+        for i,logonoffdetail in enumerate(cc_logonoffdetailList):
             try:
+               index=i+1
                on_duty_info=dm.staff_on_duty_info.get_staff_on_duty_info(logonoffdetail)
                __eccdm.add(on_duty_info)
                __eccdm.flush()
-               if(index%20==0):
+               if(i%20==0):
                    __eccdm.commit()
             except:
                __eccdm.rollback()
@@ -453,12 +461,13 @@ def synDmStaffActionLog(vcIdList):
     try:
         cc_agentonbusystatList=__zxdbkf.query(cc_agentonbusystat).filter(cc_agentonbusystat.end_time>orialupdatetime,cc_agentonbusystat.vcid.in_(vcIdList)).order_by(cc_agentonbusystat.end_time)[:1000]
         agentonbusystat=None
-        for index,agentonbusystat in enumerate(cc_agentonbusystatList):
+        for i,agentonbusystat in enumerate(cc_agentonbusystatList):
+            index=i+1
             try:
                staff_action_log=dm.dm_staff_action_log.get_dm_staff_action_log(agentonbusystat)
                __eccdm.add(staff_action_log)
                __eccdm.flush()
-               if(index%20==0):
+               if(i%20==0):
                    __eccdm.commit()
             except:
                __eccdm.rollback()
@@ -488,9 +497,11 @@ def synDmTermCallLog(vcIdList):
                 .filter(cc_agentcalldetail.updatetime>orialupdatetime,cc_agentcalldetail.vcid.in_(vcIdList)).order_by(cc_agentcalldetail.updatetime)[:1000]
         agentcalldetail=None
         term_call_log=None
-        for index,(agentcalldetail,calldetail) in enumerate(cc_agentcalldetailList):
+        for i,(agentcalldetail,calldetail) in enumerate(cc_agentcalldetailList):
+            index=i+1
             call_log=None
             if not calldetail:#先放在缓存中，在SynDmCallLog时更新数据
+                log.info('dm_term_call_log:call_seq=%s 找不到dm_call_log数据放在缓存中',agentcalldetail.connectionid)
                 dm_cache.set_cache(agentcalldetail)
                 continue
             call_log=dm.dm_call_log.get_dm_call_log(calldetail)
@@ -636,6 +647,8 @@ if __name__ == '__main__':
     get_version()
     getCommonConfig()
     global company_tf_map,company_caller_nbr_map,company_staff_map,skill_no_domain_map
+    global is_can_sleep
+    is_can_sleep=True
     company_tf_map={}
     company_caller_nbr_map={}
     company_staff_map={}
