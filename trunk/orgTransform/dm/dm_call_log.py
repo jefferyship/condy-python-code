@@ -140,14 +140,16 @@ def get_dm_call_log(cc_calldetail):
         call_log.charge_flag='2'
         call_log.primary_caller=cc_calldetail.fakecalling
         call_log.primary_callee=cc_calldetail.oricallednumber
-        if(cc_calldetail.calltype==3):#人工坐席外呼，伪主叫是写为主叫
+        if(cc_calldetail.calltype==3 and  cc_calldetail.fakecalling):#人工坐席外呼，伪主叫是写为主叫,并且伪主叫不为空
             call_log.caller=cc_calldetail.fakecalling
             call_log.primary_caller=cc_calldetail.callingnumber
         else:
             call_log.caller=cc_calldetail.callingnumber
-        call_log.caller=get_nbr(call_log.caller)#截号码
+        if call_log.caller:
+           call_log.caller=get_nbr(call_log.caller)#截号码
         call_log.callee=cc_calldetail.callednumber
-        call_log.callee=get_nbr(call_log.callee)#截号码
+        if call_log.callee:
+           call_log.callee=get_nbr(call_log.callee)#截号码
         call_log.start_time=cc_calldetail.callstarttime
         call_log.dial_time=cc_calldetail.ringingstarttime
         call_log.answer_time=cc_calldetail.answertime
