@@ -13,6 +13,7 @@ from sqlalchemy.orm import sessionmaker
 import datetime 
 Base = declarative_base()
 defaulttime=datetime.datetime.strptime('1970-01-01 08:00:00','%Y-%m-%d %H:%M:%S')#默认的日期格式
+sNGCCCallinForeInsertNbrMap={}
 class dm_call_log(object):
     call_id=Column(String(32),primary_key=True)
     node_id=Column(String(32))
@@ -111,10 +112,18 @@ class dm_call_log_12(dm_call_log,Base):
     __tablename__ = 'dm_call_log_12'
 def get_nbr(orial_nbr):
     """截取号码的判断"""
-    length=len(orial_nbr)
     resultNbr=orial_nbr
-    if length in (14,15) and orial_nbr.startswith('0') and orial_nbr[-11]=='1':
-        resultNbr=orial_nbr[-11:]
+    for key in sNGCCCallinForeInsertNbrMap.keys():
+        if orial_nbr.startswith(key):
+            resultNbr=orial_nbr.replace(key,sNGCCCallinForeInsertNbrMap[key],1)#将固定短号做替换，例如：0591201360383569057，替换为059183569057
+            break
+    #遇到:059118959130067,05914008222222
+    length=len(resultNbr)
+    if length in (14,15) and resultNbr.startswith('0') and resultNbr[0:3]=='059':
+        resultNbr=resultNbr[4:]
+    #遇到外省的号码例如:01018959130026等
+    elif length in (14,15) and resultNbr.startswith('0') and resultNbr[-11]=='1':
+        resultNbr=resultNbr[-11:]
     return resultNbr
 def get_dm_call_log(cc_calldetail):
     callday=cc_calldetail.strcallday#2012.01.02

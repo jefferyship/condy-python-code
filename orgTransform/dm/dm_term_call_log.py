@@ -11,6 +11,7 @@ from sqlalchemy import MetaData, Table, Column,\
                         Float, String ,DateTime,create_engine,Integer
 from sqlalchemy.orm import sessionmaker
 import datetime 
+import dm_call_log
 Base = declarative_base()
 defaulttime=datetime.datetime.strptime('1970-01-01 08:00:00','%Y-%m-%d %H:%M:%S')#默认的日期格式
 class dm_term_call_log(object):
@@ -138,13 +139,6 @@ class dm_term_call_log_11(dm_term_call_log,Base):
     __tablename__ = 'dm_term_call_log_11'
 class dm_term_call_log_12(dm_term_call_log,Base):
     __tablename__ = 'dm_term_call_log_12'
-def get_nbr(orial_nbr):
-    """截取号码的判断"""
-    length=len(orial_nbr)
-    resultNbr=orial_nbr
-    if length in (14,15) and orial_nbr.startswith('0') and orial_nbr[-11]=='1':
-        resultNbr=orial_nbr[-11:]
-    return resultNbr
 def get_dm_term_call_log(cc_agentcalldetail,call_log):
     month=cc_agentcalldetail.begincalltime.strftime('%m')# 08
     term_call_log=None
@@ -194,9 +188,9 @@ def get_dm_term_call_log(cc_agentcalldetail,call_log):
         term_call_log.caller=call_log.caller
         term_call_log.callee=call_log.callee
         if term_call_log.caller:
-           term_call_log.caller=get_nbr(term_call_log.caller)#对于11位移动号码的区号做分隔
+           term_call_log.caller=dm_call_log.get_nbr(term_call_log.caller)#对于11位移动号码的区号做分隔
         if term_call_log.callee:
-           term_call_log.callee=get_nbr(term_call_log.callee)#对于11位移动号码的区号做分隔
+           term_call_log.callee=dm_call_log.get_nbr(term_call_log.callee)#对于11位移动号码的区号做分隔
         term_call_log.set_finish_reason(cc_agentcalldetail)
         term_call_log.queue_start_time=cc_agentcalldetail.queuebegintime
         term_call_log.queue_finish_time=cc_agentcalldetail.queueendtime

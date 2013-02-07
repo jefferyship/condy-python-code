@@ -30,10 +30,9 @@ from zx.cc_queuedetail import cc_queuedetail
 from zx.cc_logonoffdetail import cc_logonoffdetail
 from zx.cc_agentonbusystat import cc_agentonbusystat
 from zx.cc_recorddetail import cc_recorddetail
-from sqlalchemy import MetaData, Table, Column, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
-from sqlalchemy.sql.expression import  func
 import sqlalchemy.exc
 
 class dm_queue_cache:
@@ -202,7 +201,9 @@ def synDmCallLog(vcIdList):
     orialupdatetime=updatetime
     index=0
     try:
+        log.info('start---------dm_call_log')
         cc_calldetailList=__zxdbkf.query(cc_calldetail).filter(cc_calldetail.callendtime>orialupdatetime,cc_calldetail.vcid.in_(vcIdList)).order_by(cc_calldetail.callendtime)[:1000]
+        log.info('end-----------dm_call_log')
         calldetail=None
         for i,calldetail in enumerate(cc_calldetailList):
             index=i+1
@@ -213,14 +214,14 @@ def synDmCallLog(vcIdList):
                   for cache_object in cache_objectList:
                      if cache_object and isinstance(cache_object,cc_queuedetail):
                         log.debug('找到cc_queuedetail的缓存类:%s',str(cache_object))
-                        queue_log=dm.dm_queue_log.get_dm_queue_log(cache_object,dm_call_log)
+                        queue_log=dm.dm_queue_log.get_dm_queue_log(cache_object,call_log)
                         __eccdm.add(queue_log)
                      elif cache_object and isinstance(cache_object,cc_recorddetail):
                         log.debug('找到cc_recorddetail的缓存类:%s',str(cache_object))
                         update_record(cache_object,call_log)
                      elif cache_object and isinstance(cache_object,cc_agentcalldetail):
                         log.debug('找到cc_agentcalldetail的缓存类:%s',str(cache_object))
-                        term_call_log=dm.dm_term_call_log.get_dm_term_call_log(agentcalldetail,call_log)
+                        term_call_log=dm.dm_term_call_log.get_dm_term_call_log(cache_object,call_log)
                         insertIntoDmTermCallLog(term_call_log)
 
                if call_log.call_type in (7,8,9,10) and company_tf_map.has_key(call_log.callee):# 7,8,9,10 表示呼入
@@ -288,9 +289,11 @@ def synDmQueueLog(vcIdList):
     orialupdatetime=updatetime
     index=0
     try:
+        log.info('start query---------dm_queue_log')
         cc_queuedetailList=__zxdbkf.query(cc_queuedetail,cc_calldetail)\
                 .join(cc_calldetail,cc_calldetail.connectionid==cc_queuedetail.connectionid)\
                 .filter(cc_queuedetail.updatetime>orialupdatetime,cc_queuedetail.vcid.in_(vcIdList)).order_by(cc_queuedetail.updatetime)[:1001]
+        log.info('end query---------dm_queue_log')
         queuedetail=None
         for i,(queuedetail,calldetail) in enumerate(cc_queuedetailList):
             index=i+1
@@ -357,24 +360,6 @@ def update_record(recorddetail,dm_call_log):
         funcStr='eccuc.PT_RECORD_WRITE_FROM_ZX('+','.join(str(i) for i in paramList)+')'
         cursor=__eccdmConn.cursor()
         try:
-           #call_seq=recorddetail.connectionid
-           #sub_seq=''
-           #staff_id=recorddetail.agentid
-           #cti_node_id=recorddetail.vcid
-           #cti_terminal_info=recorddetail.agentphone
-           #call_type=recorddetail.calltype
-           #caller_nbr=dm_call_log.caller if dm_call_log else get_nbr(recorddetail.callingnumber)
-           #callee_nbr=dm_call_log.callee if dm_call_log else get_nbr(recorddetail.callednumber)
-           #duration=recorddetail.durtime
-           #file_path=os.path.split(recorddetail.recordpath)[0]
-           #file_name=os.path.split(recorddetail.recordpath)[1]
-           #file_name=file_name.replace('.wav','')
-           #file_name=file_name.replace('.mp3','')
-           #begin_time=recorddetail.recordstarttime
-           #vir_node_id='99'
-           #company_id=''
-           #skill_id=recorddetail.skillid
-           #call_time=dm_call_log.start_time if dm_call_log else recorddetail.recordstarttime
            funcResult=cursor.callfunc('eccuc.PT_RECORD_WRITE_FROM_ZX',cx_Oracle.STRING,paramList)
            log.debug(funcStr)
            if funcResult=='0':
@@ -394,9 +379,11 @@ def synRecordDetail(vcIdList):
     orialupdatetime=updatetime
     index=0
     try:
+        log.info('start query---------ecc_voice_record')
         cc_recorddetailList=__zxdbkf.query(cc_recorddetail,cc_calldetail)\
                 .join(cc_calldetail,cc_calldetail.connectionid==cc_recorddetail.connectionid)\
                 .filter(cc_recorddetail.updatetime>orialupdatetime,cc_recorddetail.vcid.in_(vcIdList)).order_by(cc_recorddetail.updatetime)[:1001]
+        log.info('end query---------ecc_voice_record')
         recorddetail=None
         for i,(recorddetail,calldetail) in enumerate(cc_recorddetailList):
             index=i+1
@@ -406,6 +393,7 @@ def synRecordDetail(vcIdList):
                    dm_cache.set_cache(recorddetail)
                    continue
                dm_call_log=dm.dm_call_log.get_dm_call_log(calldetail)
+               log.info('更新录音记录:connectionid:%s',recorddetail.connectionid)
                bResult=update_record(recorddetail,dm_call_log)
             except:
                recorddetail=None#置成None可以保证，如果更新失败updatetime不会被更新.
@@ -426,7 +414,9 @@ def synStaffOnDutyInfo(vcIdList):
     orialupdatetime=updatetime
     index=0
     try:
+        log.info('start query---------staff_on_duty_info')
         cc_logonoffdetailList=__zxdbkf.query(cc_logonoffdetail).filter(cc_logonoffdetail.endtime>orialupdatetime,cc_logonoffdetail.vcid.in_(vcIdList)).order_by(cc_logonoffdetail.endtime)[:1000]
+        log.info('end query---------staff_on_duty_info')
         logonoffdetail=None
         for i,logonoffdetail in enumerate(cc_logonoffdetailList):
             try:
@@ -459,7 +449,9 @@ def synDmStaffActionLog(vcIdList):
     orialupdatetime=updatetime
     index=0
     try:
+        log.info('start query---------dm_staff_action_log')
         cc_agentonbusystatList=__zxdbkf.query(cc_agentonbusystat).filter(cc_agentonbusystat.end_time>orialupdatetime,cc_agentonbusystat.vcid.in_(vcIdList)).order_by(cc_agentonbusystat.end_time)[:1000]
+        log.info('end query---------dm_staff_action_log')
         agentonbusystat=None
         for i,agentonbusystat in enumerate(cc_agentonbusystatList):
             index=i+1
@@ -492,9 +484,11 @@ def synDmTermCallLog(vcIdList):
     orialupdatetime=updatetime
     index=0
     try:
+        log.info('start query---------dm_term_call_log')
         cc_agentcalldetailList=__zxdbkf.query(cc_agentcalldetail,cc_calldetail)\
                 .join(cc_calldetail,cc_calldetail.connectionid==cc_agentcalldetail.connectionid)\
                 .filter(cc_agentcalldetail.updatetime>orialupdatetime,cc_agentcalldetail.vcid.in_(vcIdList)).order_by(cc_agentcalldetail.updatetime)[:1000]
+        log.info('end query---------dm_term_call_log')
         agentcalldetail=None
         term_call_log=None
         for i,(agentcalldetail,calldetail) in enumerate(cc_agentcalldetailList):
@@ -596,6 +590,16 @@ def get_company_tf_nbr(company_tf_map,company_caller_nbr_map):
         except:
             log.exception('get_company_tf_nbr:增量执行SQL语句错误:%s',sql)
 
+def get_sNGCCCallinForeInsertNbrMap(sNGCCCallinForeInsertNbrMap):
+    """平台报表及录音的一些短号需要截取，获取需要截取的短号"""
+    sql="select T.CODE, T.VALUE from eccuc.ECC_CODE_DICT T where T.COMPANY_ID = '-1' and T.STS = 'A' and T.MODULE = 'AGENT' and T.GROUP_ID = 'sNGCCCallinForeInsertNbr'"
+    try:
+        log.info('获取需要截取的短号数据表的数据:%s',sql)
+        tfnbrResult=__eccdm.execute(sql)
+        for prefix_key,prefix_value in tfnbrResult:
+            sNGCCCallinForeInsertNbrMap[prefix_key]=prefix_value
+    except:
+        log.exception('获取平台固定短号的参数错误:执行SQL语句错误:%s',sql)
 def insertIntoDmTermCallLog(term_call_log):
     """将数据插入到dm_term_call_log表中"""
     bResult=True
@@ -671,6 +675,7 @@ if __name__ == '__main__':
               get_company_tf_nbr(company_tf_map,company_caller_nbr_map)
               get_company_staff(company_staff_map)
               get_skill_no_domain_map(skill_no_domain_map)
+              get_sNGCCCallinForeInsertNbrMap(dm.dm_call_log.sNGCCCallinForeInsertNbrMap)
               synDmCallLog(vcIdList)
               #synDmQueueLog(vcIdList)#已经被updateDmQueue方法代替
               synDmTermCallLog(vcIdList)
