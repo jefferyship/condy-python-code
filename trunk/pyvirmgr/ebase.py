@@ -7,10 +7,8 @@
 # LastChange: 2012-09-12 21:43:57
 #========================================================================
 import pyvirmgr
-import datetime 
 import logging
 import logging.handlers
-import os,sys
 import time
 import rabbitMQ
 import cx_Oracle
@@ -24,27 +22,33 @@ IS_START='1'
 RECYCLE_TIMES=0.2#0.2秒
 ECCUC_DB_USER_PWD='eccuc/eccuc@ecc10000'
 EBASE_URL='http://117.27.135.241:9087/EbaseAccess/webservice/ZteEbaseAccess?wsdl'
+__eccucDB=None
 def syn(notUsed):
     try:
          log.info('ebase:线程已启动')
+         __eccucDB=cx_Oracle.connect(ECCUC_DB_USER_PWD)
          while IS_START=='1':
             try:
                 global RECYCLE_TIMES,__eccucDB
-                synResult=syn_terminalInfo()
-                if synResult:
-                   __eccucDB=cx_Oracle.connect(ECCUC_DB_USER_PWD)
-                   insert_mointor()
+                vcidList=pyvirmgr.vcidList
+                for vcid in vcidList:
+                   synResult=syn_terminalInfo(vcid)
+                try:
+                    insert_mointor()
+                except Exception:
+                    log.exception('ebase.py:插入到大屏幕表数据异常')
                 if IS_START=='0':
                     log.info('ebase.py:IS_START value=:'+IS_START+' so scanDB exit!')
+                    break
             except Exception:
                 log.exception('ebase.py:系统错误')
-            finally:
-                __closeDB()
             time.sleep(float(RECYCLE_TIMES))
     except Exception:
         log.exception('ebase.py:系统报错')
+    finally:
+        __closeDB()
 def __closeDB():
-   if __eccucDB<>None:
+   if __eccucDB:
         __eccucDB.close()
         log.info('ebase.py:eccucDB oracle connect success close()')
 def insert_mointor():
@@ -71,6 +75,8 @@ def insert_mointor():
     key=None
     for company_id,companyTerminialInfoMap in fullTerminalInfoMap.items():
         for staff_id,terminalInfo in companyTerminialInfoMap.items():
+            if not terminalInfo.skills:# terminalInfo==None,go to next iteror
+                continue
             skill_nos=terminalInfo.skills.split(',')
             for skill_no in skill_nos:
                if skill_no=='' or skill_no==None:
@@ -102,6 +108,7 @@ def insert_mointor():
                elif terminalInfo.main_status=='2':#空闲
                    skill_monitor_object['agent_idle']+=1
                elif terminalInfo.main_status=='3':#通话中
+                   log.info("staff_id:%s,main_status:%s",terminalInfo.staff_id,str(terminalInfo.main_status))
                    skill_monitor_object['agent_working']+=1
                skill_monitor_object['agent_total']+=1
     sql="""
@@ -117,6 +124,7 @@ MERGE INTO obj_skill_queue_performance D
      d.sample_time=s.sample_time,
      d.agent_total=s.agent_total,
      d.agent_busy=s.agent_busy,
+     d.agent_working=s.agent_working,
      d.agent_idle=s.agent_idle,
      d.busy_rate=s.busy_rate,
      d.queued_call=s.queued_call,
@@ -131,7 +139,7 @@ MERGE INTO obj_skill_queue_performance D
     try:
         for skill_monitor_object in monitorskillMap.values():
             skill_monitor_objectList.append(skill_monitor_object)
-        log.info('总共更新:%s条记录',len(skill_monitor_objectList))
+        log.info('ebase.py obj_skill_queue_performance,总共更新:%s条记录',len(skill_monitor_objectList))
         if len(skill_monitor_objectList)>0:
            cursor.executemany(sql,skill_monitor_objectList)
            __eccucDB.commit()
@@ -142,53 +150,50 @@ MERGE INTO obj_skill_queue_performance D
         cursor.close()
 
 
-
-def syn_terminalInfo():
+def syn_terminalInfo(vcid):
     """1.取最新的ebase数据的终端状态的数据
        2.解析xml，将xml的数据更新到pyvirmgr的incrementTerminalInfoMap和fullTerminalInfoMap的全局Map中.
        3.根据incrementTerminalInfoMap生成对应的json格式数据
        4.将json格式呼叫推送的RabbitMQ服务器上，由各客户端获取
     """
-    resultxml=queryall_cc_moperstatus()
-    if resultxml==None:
-        return False
     terminalInfoMap=pyvirmgr.terminalInfoMap
     fullTerminalInfoMap=pyvirmgr.fullTerminalInfoMap
     incrementTerminalInfoMap=pyvirmgr.incrementTerminalInfoMap
-    #pyvirmgr.terminalInfoMap['105']=pyvirmgr.terminalInfo()
-    #pyvirmgr.terminalInfoMap['105'].company_id='1'
-    #pyvirmgr.terminalInfoMap['105'].staff_id='105'
-    #pyvirmgr.terminalInfoMap['105'].staff_no='26'
-    #pyvirmgr.terminalInfoMap['105'].staff_name='林桦'
-    #pyvirmgr.terminalInfoMap['107']=pyvirmgr.terminalInfo()
-    #pyvirmgr.terminalInfoMap['107'].company_id='1'
-    #pyvirmgr.terminalInfoMap['107'].staff_id='107'
-    #pyvirmgr.terminalInfoMap['107'].staff_no='08'
-    #pyvirmgr.terminalInfoMap['107'].staff_name='周德标'
+    resultxml=queryall_cc_moperstatus(vcid)
+    if resultxml==None:
+        return False
     log.debug(resultxml)
     parsexmlResult=parsexml(resultxml,terminalInfoMap,fullTerminalInfoMap,incrementTerminalInfoMap)
     if parsexmlResult==True and len(incrementTerminalInfoMap)>0:
+        starttime=time.time()
         rabbitMQ.productor_increment_terminal_mq()
+        endtime=time.time()
+        log.info('发布用户状态到rabbitMQ,消耗时间:%sms',str(round((endtime-starttime)*100)))
         return True
     else:
         return False
 
-def queryall_cc_moperstatus():
+def queryall_cc_moperstatus(vcid):
     """返回调用中兴ebase的ebase.queryall_cc_moperstatus服务的结果。这个服务的数据时在中兴的ebase服务器上配置，
     返回值:None表示获取数据失败，有XML表示获取数据成功
     """
-    client=Client(EBASE_URL)
-    ebase_name='ebase.queryall_cc_moperstatus'
-    queryxml='<variables><variable1>vcid,agentid,substatus,agentphone,starttime,mainstatus,skills</variable1><variable2>13</variable2></variables> '
-    result=client.service.queryBySqlRequest('1','13',ebase_name,queryxml,'','','','','')
-    if result.resultcode=='0':
-        log.debug(str(result.resultinfo))
-        return result.resultinfo
-    else:
-        log.warn('调用ebase.queryall_cc_moperstatus服务错误，输入xml:%s,输出resultcode:%s,resultinfo:%s',str(queryxml),str(result.resultcode),str(result.resultinfo))
-        return None
-        #print result.resultinfo
-    #if len(pyvirmgr.terminalInfoMap)==0:
+    resultinfo=None
+    try:
+       client=Client(EBASE_URL)
+       ebase_name='ebase.queryall_cc_moperstatus'
+       queryxml='<variables><variable1>vcid,agentid,substatus,agentphone,starttime,mainstatus,skills</variable1><variable2>'+vcid+'</variable2></variables> '
+       starttime=time.time()
+       result=client.service.queryBySqlRequest('1',vcid,ebase_name,queryxml,'','','','','')
+       endtime=time.time()
+       log.info('call webservice:%s,vcid:%s,used time:%sms',ebase_name,str(vcid),str(round((endtime-starttime)*100)))
+       if result.resultcode=='0':
+           log.debug(str(result.resultinfo))
+           resultinfo=result.resultinfo
+       else:
+           log.warn('调用ebase.queryall_cc_moperstatus服务错误，输入xml:%s,输出resultcode:%s,resultinfo:%s',str(queryxml),str(result.resultcode),str(result.resultinfo))
+    except Exception:
+       log.exception('ebase.py:调用ebase接口错误,url地址为:%s',EBASE_URL)
+    return resultinfo
 def parsexml(tempxml,terminalInfoMap,fullTerminalInfoMap,incrementTerminalInfoMap):
     """解析的xml格式为:<records><record><skills>205,605,606,</skills><substatus>202</substatus><starttime>2012-09-12 21:59:07.0</starttime><agentphone>1206</agentphone><vcid>13</vcid> <mainstatus>2</mainstatus><agentid>105</agentid></record></records>
     """

@@ -15,11 +15,13 @@ def syn(notUsed):
          log.info('scanDB线程已启动')
          while IS_START=='1':
             try:
-                global __eccucDB,__zxDB,RECYCLE_TIMES
+                global __eccucDB,RECYCLE_TIMES
                 __eccucDB=cx_Oracle.connect(ECCUC_DB_USER_PWD)
                 syn_terminalInfo()
+                pyvirmgr.vcidList=getvcIdList()
                 if IS_START=='0':
                     log.info('IS_START value=:'+IS_START+' so scanDB exit!')
+                    break
             except Exception:
                 log.exception('系统错误')
             finally:
@@ -68,7 +70,7 @@ def update_terminalInfo(terminalInfoMap):
         cursor.close()
     
 def scan_terminalInfo(terminalInfoMap):
-    global scan_update_time
+    global scan_update_time #记录上传扫描的时间，下次扫描，就从这个时间点开始扫描
     sql="select staff_id,staff_name,staff_no,a.dept_id,b.dept_name,a.company_id,a.tel_role_name,a.tel_role_id,\
             a.right_role_name,a.right_role_id from ecc_staff_manager a \
             left join ecc_dept_manager b on (a.dept_id=b.dept_id) where a.sts='A'"
@@ -95,6 +97,19 @@ def scan_terminalInfo(terminalInfoMap):
     finally:
         cursor.close()
 
+def getvcIdList():
+    """获取虚中心ID"""
+    sql="select distinct node_id from company where sts='A'"
+    vcidList=[]
+    cursor=__eccucDB.cursor()
+    try:
+        cursor.execute(sql)
+        for vcidrow in cursor:
+                vcidList.append(vcidrow[0])
+        log.debug('获取中兴虚中心的Id:'+sql)
+    except:
+        log.exception('scanDB.py:获取虚中心,执行SQL语句错误:%s',sql)
+    return vcidList
 def __closeDB():
    if __eccucDB<>None:
         __eccucDB.close()

@@ -19,6 +19,7 @@ import ebase
 terminalInfoMap={}#所以员工信息总表，包含有登入的，没有登入的.数据结构:{staff_id:terminalInfo}
 fullTerminalInfoMap={}#所以在线员工的信息，数据结构:{company_id:{staff_id:terminalInfo}}
 incrementTerminalInfoMap={}#需要增量更新的数据，数据推送到MQ服务器上后，这个Map就清空，数据结构:{company_id:{staff_id:terminalInfo}}
+vcidList=[]# ecc_cti_info的虚中心ID列表。通过scanDB.py模块更新vcidList的值
 class terminalInfo:
     def __init__(self):
         self.staff_id=None#ecc_staff_manager表的staff_id
@@ -152,7 +153,6 @@ if __name__ == '__main__':
             while IS_START=='1':
                 try:
                     getCommonConfig()
-                    print 'pyvirmgr:'+str(IS_START)
                     if scanDB_thread==None:
                         scanDB_thread=threading.Thread(target=scanDB.syn,args=('',))#启动线程.
                         scanDB_thread.start()
@@ -171,6 +171,7 @@ if __name__ == '__main__':
                         else:
                             log.info('退出rcpmq_thread失败')
                         log.info('IS_START value=:'+IS_START+' so pyvirmgr exit!')
+                        break
                 except Exception:
                     log.exception('系统错误')
                 time.sleep(RECYCLE_TIMES)
