@@ -12,6 +12,7 @@ import logging.handlers
 import time
 import rabbitMQ
 import cx_Oracle
+import scanDB 
 from suds.client import Client
 try:
     import xml.etree.cElementTree as ET
@@ -194,6 +195,27 @@ def queryall_cc_moperstatus(vcid):
     except Exception:
        log.exception('ebase.py:调用ebase接口错误,url地址为:%s',EBASE_URL)
     return resultinfo
+def get_terminalId(incrementTerminalInfoMap):
+    if len(incrementTerminalInfoMap)>0:
+        staffIdList=[]
+        for company_id,companyTerminalMap in incrementTerminalInfoMap.items():
+            for staffId,terminalInfo in companyTerminalMap.items():
+                if not terminalInfo.terminal_id:
+                   staffIdList.append("'"+staffId+"'")
+        if len(staffIdList)>0:
+           sql='select staff_id,t.term_code,online_ip from ecc_imr_term_online t where staff_id in('+','.join(staffIdList)+') and staff_id is not null order by action_time '
+           cursor=__eccucDB.cursor()
+           try:
+             cursor.execute(sql)
+             log.info(sql)
+             for row in cursor:#将终端ID设置到终端表中
+                 tempTerminalInfo=pyvirmgr.terminalInfoMap[row[0]]
+                 tempTerminalInfo.terminal_id=row[1]
+                 tempTerminalInfo.terminal_ip=row[2]
+                 log.info("staffid:%s,terminal_id:%s",str(row[0]),str(row[1]))
+           except:
+               log.exception('获取在线人员终端信息错误:',sql)
+
 def parsexml(tempxml,terminalInfoMap,fullTerminalInfoMap,incrementTerminalInfoMap):
     """解析的xml格式为:<records><record><skills>205,605,606,</skills><substatus>202</substatus><starttime>2012-09-12 21:59:07.0</starttime><agentphone>1206</agentphone><vcid>13</vcid> <mainstatus>2</mainstatus><agentid>105</agentid></record></records>
     """
@@ -217,6 +239,8 @@ def parsexml(tempxml,terminalInfoMap,fullTerminalInfoMap,incrementTerminalInfoMa
             fullTerminalInfoMap[tTerminalInfo.company_id]={}
             fullTerminalInfoMap[tTerminalInfo.company_id][tTerminalInfo.staff_id]=tTerminalInfo
         tTerminalInfo.starttime=recordElement.find('starttime').text
+        if  tTerminalInfo.starttime and tTerminalInfo.starttime.find('.')>-1:
+            tTerminalInfo.starttime=tTerminalInfo.starttime[0:tTerminalInfo.starttime.find('.')]
         tTerminalInfo.skills=recordElement.find('skills').text
         tTerminalInfo.agentphone=recordElement.find('agentphone').text
         sub_status=recordElement.find('substatus').text
@@ -226,13 +250,19 @@ def parsexml(tempxml,terminalInfoMap,fullTerminalInfoMap,incrementTerminalInfoMa
         tTerminalInfo.set_status(main_status,sub_status,scan_tag)
         add_incrementTerminalMap(tTerminalInfo,incrementTerminalInfoMap)
         #将最新数据放到增量的终端表中
+    get_terminalId(incrementTerminalInfoMap) 
     for company_id,companyTerminialInfoMap in fullTerminalInfoMap.items():
        for staff_id,tTerminalInfo in companyTerminialInfoMap.items():
            log.debug('check stat_id:%s,object:scan_tag:%s,used:scan_tag:%s',str(tTerminalInfo.staff_id),str(tTerminalInfo.scan_tag),str(scan_tag))
            if tTerminalInfo.scan_tag<>scan_tag:#说明已经迁出，将迁出的数据提交给增加量的推送Map
                del companyTerminialInfoMap[staff_id]
+               tTerminalInfo.set_logout()#标示为退出状态
+               #tTerminalInfo.main_status='99'#标识为退出状态
+               #tTerminalInfo.sub_status='99'
+               #tTerminalInfo.terminal_id=None
+               #tTerminalInfo.need_poll=True;
                add_incrementTerminalMap(tTerminalInfo,incrementTerminalInfoMap)
-               log.debug('staff_id:%s 已经签出',staff_id)
+               log.info('staff_id:%s 已经签出',staff_id)
     return True
 def add_incrementTerminalMap(tTerminalInfo,incrementTerminalInfoMap):
     if tTerminalInfo.need_poll==True:

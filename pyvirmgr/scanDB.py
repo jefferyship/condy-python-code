@@ -34,6 +34,7 @@ def syn_terminalInfo():
         scan_terminalInfo(pyvirmgr.terminalInfoMap)
     else:
         update_terminalInfo(pyvirmgr.terminalInfoMap)
+
 def update_terminalInfo(terminalInfoMap):
     global scan_update_time
     sql="select staff_id,staff_name,staff_no,a.dept_id,b.dept_name,a.company_id,a.tel_role_name,a.tel_role_id,\
