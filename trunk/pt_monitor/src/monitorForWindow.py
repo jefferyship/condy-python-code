@@ -57,17 +57,26 @@ def getCommonConfig():
 
     if len(URL)==0:
         URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
-def writeCommonConfig(option,value):
-    """
-     设置值到monitor.ini的common，section中.
-    """
-    config=ConfigParser.ConfigParser()
-    config.read(config_dir+'monitorForWindow.ini')
-    config.set('common',option,value)
-    ivrtrackFileObject=open(config_dir+'monitorForWindow.ini',"r+")
-    config.write(ivrtrackFileObject)
-    ivrtrackFileObject.close()
 
+def readLastmonitorFileSmContent():
+    global lastmonitorFileSmContent
+    try:
+        lastmonitorFileSmContentFileObject=open(config_dir+'lastSmContent.log','rb+')
+        lastmonitorFileSmContent=lastmonitorFileSmContentFileObject.read(2048)
+        lastmonitorFileSmContentFileObject.close()
+    except:
+        lastmonitorFileSmContent=''
+
+def writeLastmonitorFileSmContent(value):
+    """
+      写上次短信的记录到文件中.
+    """
+    try:
+        lastmonitorFileSmContentFileObject=open(config_dir+'lastSmContent.log','wb+')
+        lastmonitorFileSmContentFileObject.write(value)
+        lastmonitorFileSmContentFileObject.close()
+    except:
+        log.exception('写短信发送内容到,%s文件中失败',config_dir+'lastSmContent.log')
 def getMonitorService():
     """
        调用服务获取监控的文件
@@ -94,7 +103,7 @@ def getMonitorService():
     """
     #global URL='http://134.128.196.10:9081/iservuc/ServiceGate/SimpleXMLGate'
     monitorFileList=[]
-    paramUtil=ParamUtil()
+    paramUtil=ParamUtil(log)
     monitorSystemObject={}
     monitorProcObjectList=[]
     monitorNetstatObjectList=[]
@@ -305,7 +314,10 @@ def monitorDisk(monitorSystemObject,saveDbMsgDict):
     for monitorDiskObject in monitorDiskObjectList:
         try:
             log.info('磁盘告警配置：%s',str(monitorDiskObject))
-            if monitorDiskObject['hardspace_limit'].isdigit():
+            if monitorDiskObject['hardspace_name'].strip()=='':
+                break
+            #if monitorDiskObject['hardspace_limit'].isdigit():
+            try:
                 total,used,free,usedPecent=SystemInfo.getdiskByPath(monitorDiskObject['hardspace_name'])
                 saveToDBList.append((monitorDiskObject['hardspace_name'],str(total/1024),str(used/1024),str(free/1024),str(usedPecent),''))
                 limitPercent=float(monitorDiskObject['hardspace_limit'])
@@ -313,7 +325,7 @@ def monitorDisk(monitorSystemObject,saveDbMsgDict):
                     log.info("磁盘空间告警: hardspace_name:%s,limit_used_percent:%s,real_used_percent:%s",monitorDiskObject['hardspace_name'],monitorDiskObject['hardspace_limit'],str(round(usedPecent,2)))
                     warnStr=MONITOR_NAME+' 磁盘空间告警:hardspace_name:'+monitorDiskObject['hardspace_name']+' limit_used_percent:'+monitorDiskObject['hardspace_limit']+' real_used_percent:'+str(round(usedPecent,2))
                     warnToPersonList.append(warnStr)
-            else:
+            except ValueError:
                 log.info('磁盘告警配置,磁盘空间%s的阀值非数值=%s',monitorDiskObject['hardspace_name'],monitorDiskObject['hardspace_limit'])
         except Exception:
             log.exception('获取磁盘空间报错。磁盘为:'+monitorDiskObject['hardspace_name'])
@@ -359,16 +371,18 @@ def backupFile():
     if len(zipFileNameList)>0:
         strCurrDate=datetime.date.today().strftime('%Y%m%d')
         zipFileName=config_dir+strCurrDate+'.zip'
-        zipFile=zipfile.ZipFile(zipFileName,'w')#tarfile.open(zipFileName,"w:gz")
+        zipFile=zipfile.ZipFile(zipFileName,'w',zipfile.ZIP_DEFLATED)#tarfile.open(zipFileName,"w:gz")
         try:
             for filename in zipFileNameList:
                 log.info('备份'+filename)
                 zipFile.write(filename)
             zipFile.close()
+            zipFile=zipfile.ZipFile(zipFileName,'r')
+            log.info('文件压缩状态检测:%s',str(zipFile.testzip()))
+            zipFile.close()
         except Exception:
             isCreateZipFileSucess=False
             log.exception('压缩备用日志出错.文件名:%s',zipFileName)
-        #finally:
         if isCreateZipFileSucess==False:return#创建不成功返回.
         ################################上传到FTP服务器##########################
         ftp=FTP(backupObject['ip'],backupObject['user'],backupObject['password'])
@@ -382,13 +396,13 @@ def backupFile():
                 log.info('creating direcotry '+ ftp.mkd(ftpBackupPath))
                 ftp.cwd(ftpBackupPath)
         try:
-            uploadzipFile=open(zipFileName)
+            uploadzipFile=open(zipFileName,'rb')
             log.info('upload file:%s ',zipFileName)
             ftp.storbinary('STOR '+os.path.split(zipFileName)[1],uploadzipFile)
             uploadzipFile.close()
             os.remove(zipFileName)
         except Exception:
-            log.exception('上次日志备份文件错误，文件名:%s',zipFileName)
+            log.exception('日志备份文件错误，文件名:%s',zipFileName)
         return
 def sendToWarn(warnToPersonList):
     """
@@ -418,7 +432,7 @@ def sendToWarn(warnToPersonList):
         outputParam=paramUtil.invoke("Monitor_Warn_To_Person", inputStr, URL)
     if outputParam.is_success() :
         flag=outputParam.get_first_column_value()
-    writeCommonConfig('lastmonitorFileSmContent',currmonitorFileSmContent)
+        writeLastmonitorFileSmContent(currmonitorFileSmContent)
     return flag=='0'
 
 def sendToAlive():
@@ -430,25 +444,25 @@ def sendToAlive():
     outputParam=paramUtil.invoke("Monitor_alive", MONITOR_NAME, URL)
 
 def print_node():
-    version ='1.1.0.5'
+    version ='1.1.0.6'
     print '  monitorForWindow.py current version is %s               '%(version)
-    print '  author:Condy create time:2011.08.12 modify time:2011.11.27'
+    print '  author:Condy create time:2011.08.12 modify time:2012.09.17'
     print ' 功能点1.监控windows的磁盘空间'
     print ' 功能点2.对指定的目录进行备份'
     print ' 功能点3.增加系统是否死机的检测,及程序自动更新'
 
 def get_version():
-    version ='1.1.0.5'
+    version ='1.1.0.6'
     """
      获取版本信息.
     """
     log.info( '=========================================================================')
     log.info('  monitorForWindow.py current version is %s               '%(version))
-    log.info('  author:Condy create time:2011.08.12 modify time:2011.11.27')
+    log.info('  author:Condy create time:2011.08.12 modify time:2013.02.25')
     log.info(' 功能点1.监控windows的磁盘空间')
     log.info(' 功能点2.对指定的目录进行备份')
     log.info(' 功能点3.增加系统是否死机的检测,及程序自动更新')
-    paramUtil=ParamUtil()
+    paramUtil=ParamUtil(log)
     versionMsg={}
     outputParam=paramUtil.invoke("MGR_GetEccCodeDict", '-1'+LinkConst.SPLIT_COLUMN+'PT_MONITOR'+LinkConst.SPLIT_COLUMN+'WINPATCH', URL)
     if outputParam.is_success():
@@ -525,6 +539,7 @@ if __name__ == '__main__':
                 thread.start_new_thread(reloadProgram,('update.exe',))#tempPath需要修改成本程序的程序名.
                 break
             getCommonConfig()
+            readLastmonitorFileSmContent()
             saveDBMsgDict={}
             sendToAlive()
             monitorFileList,monitorSystemInfo,monitorProcList,monitorNetstatObjectList=getMonitorService()

@@ -388,7 +388,28 @@ def monitorNetstat(monitorNetstatObjectList):
         if int(real_count)>=int(monitorNetstatObject['netstat_limit']):
             warnStr=MONITOR_NAME+' netstat连接数告警:命令:'+str(monitorNetstatObject['command'])+'实际连接数:'+real_count+' 监控阀值为:'+str(monitorNetstatObject['netstat_limit'])
             warnToPersonList.append(warnStr)
-
+    return warnToPersonList
+def monitorTimeSync():
+    """
+      时间同步的判断
+    """
+    warnToPersonList=[]
+    currTime=datetime.datetime.now()
+    oneMiniuteBefore=datetime.timedelta(minutes=-1)#检查1分钟之前
+    oneMiniuteAfter=datetime.timedelta(minutes=1)#检查1分钟之后
+    paramUtil=ParamUtil()
+    outputParam=paramUtil.invoke("Monitor_get_sysdate", MONITOR_NAME, URL)
+    oracleDateStr=''
+    if outputParam.is_success() :
+        oracleDateStr=outputParam.get_first_column_value()
+        oracleDate=datetime.datetime(*(time.strptime(oracleDateStr,'%Y%m%d%H%M%S')[0:6]))#兼容python2.4
+        #oracleDate=datetime.datetime.strptime(oracleDateStr,'%Y%m%d%H%M%S') # python 2.5的方法
+        log.info('时间同步监控:服务器时间为:%s,数据库时间为:%s',currTime.strftime('%Y-%m-%d %H:%M:%S'),oracleDate.strftime('%Y-%m-%d %H:%M:%S'))
+        if (oracleDate+oneMiniuteAfter)<currTime or (oracleDate+oneMiniuteBefore)>currTime:
+            warnStr=MONITOR_NAME+' 时间同步告警:服务器的时间为:'+currTime.strftime('%Y-%m-%d %H:%M:%S')+',数据库的时间为:'+oracleDate.strftime('%Y-%m-%d %H:%M:%S')
+            warnToPersonList.append(warnStr)
+    else:
+         log.info('Monitor_get_sysdate服务失败，可能在(monitor_pt_time_nosyc表配置)不需要时间同步')
 
     return warnToPersonList
 def backupFile():
@@ -469,6 +490,9 @@ def sendToAlive():
     """
     paramUtil=ParamUtil()
     outputParam=paramUtil.invoke("Monitor_alive", MONITOR_NAME, URL)
+    if not outputParam.is_success():
+        log.info('调用Monitor_alive服务失败,机器存活告警失败')
+
 def saveSystemInfo(saveDbMsgDict):
     """
      将收集到的系统信息保存大数据库中.
@@ -607,7 +631,7 @@ def getNohupVersion(monitorList):
         log.exception('getNohupVersion办法执行异常')
 
 def get_version():
-    version ='1.2.0.8'
+    version ='1.3.0.1'
     """
      获取版本信息.
     """
@@ -695,6 +719,8 @@ if __name__ == '__main__':
     warnToPersonList=warnToPersonList+monitorHardSpace(monitorSystemInfo,saveDBMsgDict)
     #netstat监控
     warnToPersonList=warnToPersonList+monitorNetstat(monitorNetstatObjectList)
+    #时间同步
+    warnToPersonList=warnToPersonList+monitorTimeSync()
 
 
 

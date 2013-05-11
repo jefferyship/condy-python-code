@@ -237,19 +237,7 @@ create table MONITOR_PT_NETSTAT_INFO
   MONITOR_NAME VARCHAR2(32),
   COMMAND      VARCHAR2(256),
   COUNT_LIMIT  VARCHAR2(8)
-)
-tablespace TCCS_TELIS
-  pctfree 10
-  initrans 1
-  maxtrans 255
-  storage
-  (
-    initial 4M
-    next 4M
-    minextents 1
-    maxextents unlimited
-    pctincrease 0
-  );
+);
 -- Add comments to the table 
 comment on table MONITOR_PT_NETSTAT_INFO
   is 'netstat线程监控';
@@ -1235,19 +1223,7 @@ create table MONITOR_PT_BACKUP_INFO
   LAST_BACKUP_TIME DATE,
   NEXT_BACKUP_TIME DATE,
   BACKUP_CYCLE     INTEGER
-)
-tablespace TCCS_TELIS
-  pctfree 10
-  initrans 1
-  maxtrans 255
-  storage
-  (
-    initial 4M
-    next 4M
-    minextents 1
-    maxextents unlimited
-    pctincrease 0
-  );
+);
 -- Add comments to the table 
 comment on table MONITOR_PT_BACKUP_INFO
   is '平台备份配置表';
@@ -2172,19 +2148,7 @@ create table MONITOR_PT_NOHUP_VERSION
   MONITOR_NAME VARCHAR2(32),
   VERSION_MSG  VARCHAR2(512),
   UPDATE_TIME  DATE
-)
-tablespace TCCS_TELIS
-  pctfree 10
-  initrans 1
-  maxtrans 255
-  storage
-  (
-    initial 4M
-    next 4M
-    minextents 1
-    maxextents unlimited
-    pctincrease 0
-  );
+);
 -- Add comments to the table 
 comment on table MONITOR_PT_NOHUP_VERSION
   is '平台监控-获取程序的版本号';
@@ -2286,3 +2250,174 @@ end;
 set define on;
 alter table MONITOR_PT_NOHUP_VERSION
   add constraint pri_PT_NOHUP_VERSION primary key (MONITOR_NAME);
+
+
+set define off;
+declare
+V_APP_SOA_INTERFACE_ID_3803 Varchar2(10);
+V_APP_SOA_INPUT_ID_22296 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_22187 Varchar2(10);
+V_APP_SOA_SERVICE_ID_3671 Varchar2(10);
+V_APP_SOA_INPUT_ID_22297 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_22191 Varchar2(10);
+begin
+select SEQ_SOA_INTERFACE.nextval into V_APP_SOA_INTERFACE_ID_3803 from dual;
+select SEQ_SOA_INPUT.nextval into V_APP_SOA_INPUT_ID_22296 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_22187 from dual;
+select SEQ_SOA_SERVICE.nextval into V_APP_SOA_SERVICE_ID_3671 from dual;
+select SEQ_SOA_INPUT.nextval into V_APP_SOA_INPUT_ID_22297 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_22191 from dual;
+--插入接口信息
+insert into SOA_INTERFACE_INFO (INTERFACE_ID, INTERFACE_NAME, DESCRIPTION,IS_USED, IS_LOG, TYPE, MODULE_NAME, CALL_TYPE)
+values (V_APP_SOA_INTERFACE_ID_3803,'Monitor_get_sysdate','获取数据库的时间','Y','','0','平台监控','0');
+
+
+--插入接口输入信息
+insert into SOA_INTERFACE_INPUT (COLUMN_INDEX, I_INPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('1',V_APP_SOA_INPUT_ID_22296,'monitor_name','string','100','N','','N','','Y','告警的机器名','','',V_APP_SOA_INTERFACE_ID_3803);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_22187,'oracleDateStr','string','100','N','','N','','Y','告警机器名','','',V_APP_SOA_INTERFACE_ID_3803);
+
+
+--插入服务信息
+insert into SOA_SERVICE_INFO (SERVICE_ID, COMPANY_ID, SERVICE_NAME,SERVICE_ATTACH, SERVICE_CLASS, DATASOURCE,MODIFY_STAFF_ID, MODIFY_TIME)
+values (V_APP_SOA_SERVICE_ID_3671,'0','Monitor_get_sysdate','','com.ecc.service.sql.QueryService','select to_char(sysdate,''yyyymmddhh24miss'') oracleDateStr from dual','','');
+
+
+--插入服务输入信息
+insert into SOA_SERVICE_INPUT (COLUMN_INDEX, S_INPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('1',V_APP_SOA_INPUT_ID_22297,'monitor_name','string','100','N','','N','','Y','告警的机器名','','',V_APP_SOA_SERVICE_ID_3671);
+
+
+--插入输入映射信息
+insert into SOA_INPUT_MAPPING (I_INPUT_ID,S_INPUT_ID)
+values (V_APP_SOA_INPUT_ID_22296,V_APP_SOA_INPUT_ID_22297);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_22191,'oracleDateStr','string','100','N','','N','','Y','告警机器名','','',V_APP_SOA_SERVICE_ID_3671);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_22187,V_APP_SOA_OUTPUT_ID_22191);
+
+
+--插入服务组合信息
+insert into SOA_INTERFACE_SERVICE (ORDER_NO, INTERFACE_ID, SERVICE_ID)
+values ('',V_APP_SOA_INTERFACE_ID_3803,V_APP_SOA_SERVICE_ID_3671);
+
+
+commit;
+end;
+/
+set define on;
+
+
+-- Create table
+create table MONITOR_PT_TIME_NOSYC
+(
+  MONITOR_NAME VARCHAR2(32)
+)
+
+-- Add comments to the table 
+comment on table MONITOR_PT_TIME_NOSYC
+  is '监控系统不需要时间同步的服务器配置';
+-- Add comments to the columns 
+comment on column MONITOR_PT_TIME_NOSYC.MONITOR_NAME
+  is '机器名';
+
+--删除服务参数解码
+delete from soa_interface_decode where interface_id in(  select interface_id from soa_interface_info where interface_name in('Monitor_get_sysdate'));
+--删除服务错误代码
+delete from soa_interface_error_code where interface_id in(  select interface_id from soa_interface_info where interface_name in('Monitor_get_sysdate'));
+--删除输出映射信息
+delete from soa_output_mapping where s_output_id in (select s_output_id from soa_service_output where service_id in(select s.service_id from soa_interface_info i,soa_interface_service s where i.interface_id=s.interface_id and i.interface_name in ('Monitor_get_sysdate')));
+--删除输入映射信息
+delete from soa_input_mapping where s_input_id in (select s_input_id from soa_service_input where service_id in(select s.service_id from soa_interface_info i,soa_interface_service s where i.interface_id=s.interface_id and i.interface_name in ('Monitor_get_sysdate')));
+--删除服务输出参数信息
+delete from soa_service_output where service_id in(select s.service_id from soa_interface_info i,soa_interface_service s where i.interface_id=s.interface_id and i.interface_name in ('Monitor_get_sysdate'));
+--删除服务输入参数信息
+delete from soa_service_input where service_id in(select s.service_id from soa_interface_info i,soa_interface_service s where i.interface_id=s.interface_id and i.interface_name in ('Monitor_get_sysdate'));
+--删除服务组合信息
+delete from soa_interface_service where service_id in(select s.service_id from soa_interface_info i,soa_interface_service s where i.interface_id=s.interface_id and i.interface_name in ('Monitor_get_sysdate'));
+--删除服务实现信息
+delete from soa_service_info where service_id in(select service_id from soa_service_info where service_name in('Monitor_pt_get_sysdate'));
+--删除接口输出参数信息
+delete from soa_interface_output where interface_id in(select interface_id from soa_interface_info where interface_name in ('Monitor_get_sysdate'));
+--删除接口输入参数信息
+delete from soa_interface_input where interface_id in(select interface_id from soa_interface_info where interface_name in ('Monitor_get_sysdate'));
+--删除接口定义信息
+delete from soa_interface_info where interface_id in(select interface_id from soa_interface_info where interface_name in ('Monitor_get_sysdate'));
+commit;
+
+
+set define off;
+declare
+V_APP_SOA_INTERFACE_ID_3919 Varchar2(10);
+V_APP_SOA_INPUT_ID_22931 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_22845 Varchar2(10);
+V_APP_SOA_SERVICE_ID_3788 Varchar2(10);
+V_APP_SOA_INPUT_ID_22932 Varchar2(10);
+V_APP_SOA_OUTPUT_ID_22846 Varchar2(10);
+begin
+select SEQ_SOA_INTERFACE.nextval into V_APP_SOA_INTERFACE_ID_3919 from dual;
+select SEQ_SOA_INPUT.nextval into V_APP_SOA_INPUT_ID_22931 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_22845 from dual;
+select SEQ_SOA_SERVICE.nextval into V_APP_SOA_SERVICE_ID_3788 from dual;
+select SEQ_SOA_INPUT.nextval into V_APP_SOA_INPUT_ID_22932 from dual;
+select SEQ_SOA_OUTPUT.nextval into V_APP_SOA_OUTPUT_ID_22846 from dual;
+--插入接口信息
+insert into SOA_INTERFACE_INFO (INTERFACE_ID, INTERFACE_NAME, DESCRIPTION,IS_USED, IS_LOG, TYPE, MODULE_NAME, CALL_TYPE)
+values (V_APP_SOA_INTERFACE_ID_3919,'Monitor_get_sysdate','获取数据库的时间','Y','','0','系统监控','0');
+
+
+--插入接口输入信息
+insert into SOA_INTERFACE_INPUT (COLUMN_INDEX, I_INPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('1',V_APP_SOA_INPUT_ID_22931,'monitor_name','string','100','N','','N','','Y','机器名','','',V_APP_SOA_INTERFACE_ID_3919);
+
+
+--插入接口输出信息
+insert into SOA_INTERFACE_OUTPUT (COLUMN_INDEX, I_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, INTERFACE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_22845,'oracleDateStr','string','100','N','','N','','Y','数据库时间:格式:yyyymmddhh24miss','','',V_APP_SOA_INTERFACE_ID_3919);
+
+
+--插入服务信息
+insert into SOA_SERVICE_INFO (SERVICE_ID, COMPANY_ID, SERVICE_NAME,SERVICE_ATTACH, SERVICE_CLASS, DATASOURCE,MODIFY_STAFF_ID, MODIFY_TIME)
+values (V_APP_SOA_SERVICE_ID_3788,'0','Monitor_pt_get_sysdate','','com.telthink.link.service.CallFunctionImpl','','','');
+
+
+--插入服务输入信息
+insert into SOA_SERVICE_INPUT (COLUMN_INDEX, S_INPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('1',V_APP_SOA_INPUT_ID_22932,'monitor_name','string','100','N','','N','','Y','机器名','','',V_APP_SOA_SERVICE_ID_3788);
+
+
+--插入输入映射信息
+insert into SOA_INPUT_MAPPING (I_INPUT_ID,S_INPUT_ID)
+values (V_APP_SOA_INPUT_ID_22931,V_APP_SOA_INPUT_ID_22932);
+
+
+--插入服务输出信息
+insert into SOA_SERVICE_OUTPUT (COLUMN_INDEX, S_OUTPUT_ID, COLUMN_NAME,COLUMN_TYPE, COLUMN_LENGTH, NEED_DECODE,TABLE_INDEX, IS_MULTI, TABLE_NAME,IS_USED, COLUMN_DESC, MODIFY_STAFF_ID,MODIFY_TIME, SERVICE_ID)
+values ('1',V_APP_SOA_OUTPUT_ID_22846,'oracleDateStr','string','100','N','','N','','Y','数据库时间:格式:yyyymmddhh24miss','','',V_APP_SOA_SERVICE_ID_3788);
+
+
+--插入输出映射信息
+insert into SOA_OUTPUT_MAPPING (I_OUTPUT_ID,S_OUTPUT_ID)
+values (V_APP_SOA_OUTPUT_ID_22845,V_APP_SOA_OUTPUT_ID_22846);
+
+
+--插入服务组合信息
+insert into SOA_INTERFACE_SERVICE (ORDER_NO, INTERFACE_ID, SERVICE_ID)
+values ('',V_APP_SOA_INTERFACE_ID_3919,V_APP_SOA_SERVICE_ID_3788);
+
+
+commit;
+end;
+/
+set define on;
+

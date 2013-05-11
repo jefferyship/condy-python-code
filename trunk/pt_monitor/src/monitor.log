@@ -36,3 +36,25 @@
 2011-05-25 13:15:46,812 INFO upload file:F:\python_code\pt_monitor\src\20110525.zip 
 2011-05-25 13:16:20,974 INFO URL:http://134.128.196.6:9081/iservuc/ServiceGate/SimpleXMLGate,MONITOR_NAME:fjas1
 2011-05-25 13:16:21,000 INFO upload file:F:\python_code\pt_monitor\src\20110525.zip 
+2011-08-16 14:06:16,450 INFO =========================================================================
+2011-08-16 14:06:16,470 INFO   monitorForWindow.py current version is 1.1.0.0               
+2011-08-16 14:06:16,470 INFO   author:Condy create time:2011.08.12 modify time:2011.08.05
+2011-08-16 14:06:16,470 INFO  功能点1.监控windows的磁盘空间
+2011-08-16 14:06:16,559 ERROR 系统报错
+Traceback (most recent call last):
+  File "F:\python_code\pt_monitor\src\monitorForWindow.py", line 209, in <module>
+    get_version()
+  File "F:\python_code\pt_monitor\src\monitorForWindow.py", line 148, in get_version
+    convertUnicodeToStr(versionMsg)
+NameError: global name 'convertUnicodeToStr' is not defined
+2012-01-06 14:35:41,515 INFO =========================================================================
+2012-01-06 14:35:41,515 INFO   pt_monitor.py current version is 1.2.0.4               
+2012-01-06 14:35:41,515 INFO   author:Condy create time:2011.01.17 modify time:2011.11.18
+2012-01-06 14:35:41,515 INFO  功能点1.监控平台日志
+2012-01-06 14:35:41,515 INFO       2.监控CPU，内存、线程、硬盘告警信息
+2012-01-06 14:35:41,515 INFO       3.收集CPU，内存、线程、硬盘资源信息
+2012-01-06 14:35:41,515 INFO       4.监控平台下的core文件生成
+2012-01-06 14:35:41,515 INFO       5.备份平台的配置及程序
+2012-01-06 14:35:41,515 INFO       6.监控平台的指定的线程是否有存在
+2012-01-06 14:35:41,530 INFO       7.监控平台增加netstat命令的监控
+2012-01-06 14:35:41,530 INFO       8.增加系统是否死机的检测

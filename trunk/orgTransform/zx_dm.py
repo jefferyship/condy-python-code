@@ -662,7 +662,9 @@ if __name__ == '__main__':
     while IS_START=='1':
        try:
            getCommonConfig()
+           log.info('调用通过配置完成')
            eccdmengine = create_engine('oracle+cx_oracle://'+ECCUC_DB_USER_PWD,echo=False,poolclass=NullPool)#不要连接池，默认是启用5个连接的连接池
+           log.info('创建eccdmengine连接完成')
            global __eccdm,__zxdbkf,__eccdmConn
            __eccdmConn=eccdmengine.raw_connection()
            ECCDMSession= sessionmaker(bind=eccdmengine)
@@ -670,6 +672,7 @@ if __name__ == '__main__':
            ZXDBKFSession= sessionmaker(bind=zxdbkfdmengine)
            __eccdm= ECCDMSession()
            __zxdbkf= ZXDBKFSession()
+           log.info('创建zxdbkfdmengine连接完成')
            vcIdList=getvcIdList()
            if len(vcIdList)>0:
               get_company_tf_nbr(company_tf_map,company_caller_nbr_map)
@@ -688,5 +691,7 @@ if __name__ == '__main__':
            log.exception('系统错误')
        finally:
            __closeDB()
+       log.info('开始睡眠时长:'+str(RECYCLE_TIMES))
        time.sleep(RECYCLE_TIMES)
+       log.info('结束睡眠时长:'+str(RECYCLE_TIMES))
     h1.close()
