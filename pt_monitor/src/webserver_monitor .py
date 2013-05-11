@@ -186,13 +186,13 @@ def sendToWarn(warnToPersonList):
         log.exception('短信发送报错:')
     return flag=='0'
 def get_version():
-    version ='1.0.2'
+    version ='1.0.3'
     """
      获取版本信息.
     """
     log.info( '=========================================================================')
     log.info('  webserver_monitor.py current version is %s               '%(version))
-    log.info('  author:Condy create time:2012.03.13 modify time: 2012.08.16')
+    log.info('  author:Condy create time:2012.03.13 modify time: 2013.01.16')
     log.info('  使用方法:启动方法1.确认webserver_monitor.ini中的IS_START=1.启动 nohup ./webserver_monitor.py &  ')
     log.info('           关闭:修改webserver_monitor.ini中的IS_START参数更改为0.就会自动停止')
     log.info(' 功能点：监控应用服务器服务调用情况')
@@ -234,7 +234,9 @@ if __name__ == '__main__':
             warnToPersonList=warnToPersonList+httpPostAsServer(asServerList)
             if len(warnToPersonList)>0:
                 sendToWarn(warnToPersonList)
-            checkSMGateBlock()
+            elif len(lastmonitorFileSmContent)>0:
+                writeLastmonitorFileSmContent('')#不需要告警，就将上次的告警信息取消
+            #checkSMGateBlock()
             time.sleep(RECYCLE_TIMES)
             if IS_START=='0':
                 log.info('IS_START value=:'+IS_START+' so exit!')

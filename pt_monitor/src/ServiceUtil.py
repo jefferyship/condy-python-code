@@ -902,10 +902,11 @@ class ParamUtil:
     '''
 
 
-    def __init__(self):
+    def __init__(self,log=None):
         '''
         Constructor
         '''
+        self.log=log
     def getText(self,xmlElment):
         """
          获取XML的值
@@ -1180,7 +1181,7 @@ class ParamUtil:
         #return self.convert_encode(inputParamXml, 'UTF-8', 'GBK')
         return inputParamXml
 
-    def ouput_param_to_xml(self,outputParam):
+    def output_param_to_xml(self,outputParam):
         """
         <?xml version="1.0" encoding="GBK"?>
 <output_params>
@@ -1228,7 +1229,8 @@ class ParamUtil:
         rootElement.appendChild(tablesElement)
         outputParamXml=rootElement.toxml()
         outputParamXml='<?xml version="1.0" encoding="GBK"?>'+outputParamXml
-        return self.convert_encode(outputParamXml, 'UTF-8', 'GBK')
+        return outputParamXml
+        #return self.convert_encode(outputParamXml, 'UTF-8', 'GBK')
 
 
     def tables_to_xml(self,tables,document):
@@ -1323,23 +1325,36 @@ class ParamUtil:
         @ inputStr encode类型需要是GBK编码。column1||chr(1)||column2||chr(1)||column2||chr(3)||column1
         @ return  OutputParam对象.
         """
+        serviceInputStr=''
+        if isinstance(inputStr,list):
+            serviceInputStr=LinkConst.SPLIT_COLUMN.join(inputStr)
+        else:
+            serviceInputStr=inputStr
         inputParam=InputParam()
         serviceInfo=ServiceInfo()
         serviceInfo.set_service_local_name(serviceName)
         inputParam.set_service_info(serviceInfo)
-        tables=self.strToTables(inputStr)
+        tables=self.strToTables(serviceInputStr)
         inputParam.set_tables(tables)
         inputXML=self.input_param_to_xml(inputParam)
         outputParam=None
+        f=None
         try:
+            if self.log<>None:
+                self.log.debug(inputXML)
             f=urllib2.urlopen(serviceUrl,urllib.urlencode({'xmldata':inputXML}))
             outputXML=f.read()
             outputXML=outputXML.lstrip()
             #print outputXML
+            if self.log<>None:
+                self.log.debug(outputXML)
             outputParam=self.xml_to_ouput_param(outputXML)
+            f.close()
         except Exception:
             outputParam=OutputParam()
             outputParam.set_result_code('-1')
             outputParam.set_result_message('调用服务地址:'+serviceUrl+"失败")
             outputParam.set_service_name(serviceName)
+            if self.log<>None:
+                self.log.exception('调用(%s)服务错误',serviceName)
         return outputParam

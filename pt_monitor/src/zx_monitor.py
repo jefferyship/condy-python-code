@@ -365,14 +365,17 @@ if __name__ == '__main__':
         while IS_START=='1':
             time.sleep(4)
             getCommonConfig()
-            rawStr=tn.read_very_eager()
-            log.debug('recieve data: %s',rawStr)
-            alaramObjectList=parseReadData(rawStr)
-            alarmToPersonList=checkToWarn(alarmObjectMap,alaramObjectList)
-            if len(alarmToPersonList)>0:
-                alarmToPerson(alarmToPersonList)
-            if len(alaramObjectList)>0:
-                saveToDB(alaramObjectList)
+            try:
+               rawStr=tn.read_very_eager()
+               log.debug('recieve data: %s',rawStr)
+               alaramObjectList=parseReadData(rawStr)
+               alarmToPersonList=checkToWarn(alarmObjectMap,alaramObjectList)
+               if len(alarmToPersonList)>0:
+                   alarmToPerson(alarmToPersonList)
+               if len(alaramObjectList)>0:
+                   saveToDB(alaramObjectList)
+            except Exception:
+                log.exception('±®¥Ì¡À')
         tn.close()
         log.info('IS_START value=:'+IS_START+' so exit!')
     except Exception:
