@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import pika
 import uuid
+import simplejson as json
 RABBITMQ_HOST='117.27.135.204'
 RABBITMQ_PORT='30038'
 class fullTerminalInfoRpcClient(object):
@@ -33,5 +34,7 @@ class fullTerminalInfoRpcClient(object):
 fibonacci_rpc = fullTerminalInfoRpcClient()
 
 print " [x] Requesting fib(30)"
-response = fibonacci_rpc.call('1')
-print " [.] Got %r" % (response,)
+response = fibonacci_rpc.call('1146')
+jsonMap=json.loads(response)
+print jsonMap['data'][0]['staff_name']
+#print " [.] Got %r" % (response.decode('GBK'),)

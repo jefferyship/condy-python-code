@@ -41,8 +41,11 @@ class terminalInfo:
         self.scan_tag=None#更新main_status,sub_status的时间
         self.need_poll=False #是否需要推送
         self.agentphone=None
+        self.terminal_ip=None
         self.node_id=None # 虚中心ID
     def set_status(self,mainstatus,substatus,scan_tag):
+        if self.main_status=='99':
+           self.terminal_id=None
         if self.main_status==mainstatus and self.sub_status==substatus:
             self.need_poll=False
         else:
@@ -65,6 +68,10 @@ class terminalInfo:
         _json_map['sub_status']=str(self.sub_status)
         _json_map['agentphone']=str(self.agentphone)
         return _json_map
+    def set_logout(self):
+        self.main_status='99'
+        self.sub_status='1'
+        self.need_poll=True
 def getCommonConfig():
     """
       读取ivrtrack.ini的配置文件信息
